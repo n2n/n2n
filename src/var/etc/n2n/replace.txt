@@ -158,3 +158,6 @@ n2n\util\type\attrs\InvalidAttributeException
 
 n2n\\config\\LenientAttributeReader
 n2n\util\type\attrs\LenientAttributeReader
+
+n2n\\config\\MissingAttributeFieldException
+n2n\util\type\attrs\MissingAttributeFieldException
