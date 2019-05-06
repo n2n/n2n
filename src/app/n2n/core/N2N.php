@@ -26,7 +26,6 @@ use n2n\log4php\Logger;
 use n2n\core\container\PdoPool;
 use n2n\core\module\Module;
 use n2n\core\err\ExceptionHandler;
-use n2n\web\dispatch\DispatchContext;
 use n2n\l10n\N2nLocale;
 use n2n\web\http\Response;
 use n2n\io\IoUtils;
@@ -50,8 +49,6 @@ use n2n\core\container\impl\AppN2nContext;
 use n2n\web\http\HttpContext;
 use n2n\util\type\CastUtils;
 use n2n\web\http\ResponseCacheStore;
-use n2n\web\dispatch\map\CorruptedDispatchException;
-use n2n\web\http\BadRequestException;
 use n2n\core\module\impl\EtcModuleFactory;
 use n2n\web\http\Method;
 use n2n\web\http\MethodNotAllowedException;
@@ -59,7 +56,7 @@ use n2n\web\http\MethodNotAllowedException;
 define('N2N_CRLF', "\r\n");
 
 class N2N {
-	const VERSION = '7.2.6';
+	const VERSION = '7.2.7';
 	const LOG4PHP_CONFIG_FILE = 'log4php.xml'; 
 	const LOG_EXCEPTION_DETAIL_DIR = 'exceptions';
 	const LOG_MAIL_BUFFER_DIR = 'log-mail-buffer';
