@@ -191,13 +191,13 @@ class N2N {
 		
 		$this->n2nContext->setHttpContext($this->buildHttpContext());
 		
-		if ($this->n2nContext->isHttpContextAvailable()) {
-			try {
-				$this->n2nContext->lookup(DispatchContext::class)->analyzeRequest($this->n2nContext->getHttpContext()->getRequest());
-			} catch (CorruptedDispatchException $e) {
-				throw new BadRequestException(null, 0, $e);
-			}
-		}
+// 		if ($this->n2nContext->isHttpContextAvailable()) {
+// 			try {
+// 				$this->n2nContext->lookup(DispatchContext::class)->analyzeRequest($this->n2nContext->getHttpContext()->getRequest());
+// 			} catch (CorruptedDispatchException $e) {
+// 				throw new BadRequestException(null, 0, $e);
+// 			}
+// 		}
 	}
 	
 	private function buildHttpContext() {
