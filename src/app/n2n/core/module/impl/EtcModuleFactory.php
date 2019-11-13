@@ -36,6 +36,7 @@ class EtcModuleFactory implements ModuleFactory {
 	private $appIniFileName;
 	private $moduleIniFileName;
 	
+	private $mainFsPath = null;
 	private $additionalEtcFsPaths = array();
 	
 	private $mainAppConfigSource;
@@ -47,14 +48,18 @@ class EtcModuleFactory implements ModuleFactory {
 		$this->moduleIniFileName = $moduleIniFileName;
 	}
 	
+	public function setMainEtcFsPath(?FsPath $fsPath) {
+		$this->mainFsPath = $fsPath;
+	}
+	
 	public function setAdditionionalEtcFsPaths(array $fsPaths) {
 		ArgUtils::valArray($fsPaths, FsPath::class);
 		$this->additionalEtcFsPaths = $fsPaths;
 	}
 	
 	public function init(VarStore $varStore) {
-		$this->mainAppConfigSource = new IniFileConfigSource($varStore->requestFileFsPath(
-				VarStore::CATEGORY_ETC, null, null, $this->appIniFileName));
+		$this->mainAppConfigSource = new IniFileConfigSource($this->mainFsPath 
+				?? $varStore->requestFileFsPath(VarStore::CATEGORY_ETC, null, null, $this->appIniFileName));
 		
 		$this->modules = array();
 		
