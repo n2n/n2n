@@ -52,11 +52,13 @@ use n2n\web\http\ResponseCacheStore;
 use n2n\core\module\impl\EtcModuleFactory;
 use n2n\web\http\Method;
 use n2n\web\http\MethodNotAllowedException;
+use n2n\l10n\MessageContainer;
+use n2n\web\dispatch\DispatchContext;
 
 define('N2N_CRLF', "\r\n");
 
 class N2N {
-	const VERSION = '7.2.14';
+	const VERSION = '7.2.15';
 	const LOG4PHP_CONFIG_FILE = 'log4php.xml'; 
 	const LOG_EXCEPTION_DETAIL_DIR = 'exceptions';
 	const LOG_MAIL_BUFFER_DIR = 'log-mail-buffer';
@@ -722,14 +724,14 @@ class N2N {
 	 * @return \n2n\l10n\MessageContainer
 	 */
 	public static function getMessageContainer() {
-		return self::_i()->n2nContext->getMessageContainer();
+		return self::_i()->n2nContext->lookup(MessageContainer::class);
 	}
 	/**
 	 *
 	 * @return \n2n\web\dispatch\DispatchContext
 	 */
 	public static function getDispatchContext() {
-		return self::_i()->n2nContext->getDispatchContext();
+		return self::_i()->n2nContext->lookup(DispatchContext::class);
 	}
 	/**
 	 * 
