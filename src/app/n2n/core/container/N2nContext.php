@@ -27,6 +27,7 @@ use n2n\core\VarStore;
 use n2n\core\module\ModuleManager;
 use n2n\web\http\HttpContext;
 use n2n\web\http\HttpContextNotAvailableException;
+use n2n\context\LookupManager;
 
 interface N2nContext extends MagicContext {
 	
@@ -76,6 +77,11 @@ interface N2nContext extends MagicContext {
 	 * @param N2nLocale $n2nLocale
 	 */
 	public function setN2nLocale(N2nLocale $n2nLocale);
+	
+	/**
+	 * @return LookupManager
+	 */
+	public function getLookupManager(): LookupManager;
 	
 	/**
 	 * @param object $object
