@@ -329,5 +329,20 @@ class AppN2nContext implements N2nContext {
 	public function magicInit($object) {
 		MagicUtils::init($object, $this);
 	}
+	
+	/**
+	 * @param N2nContext $n2nContext
+	 * @return \n2n\core\container\impl\AppN2nContext
+	 */
+	static function createCopy(N2nContext $n2nContext) {
+		$appN2nContext = new AppN2nContext($n2nContext->getTransactionManager(), $n2nContext->getModuleManager(), 
+				$n2nContext->getAppCache(), $n2nContext->getVarStore(), $n2nContext->lookup(AppConfig::class));
+		
+		$appN2nContext->setLookupManager(new LookupManager($appN2nContext));
+		
+		$appN2nContext->setN2nLocale($n2nContext->getN2nLocale());
+		
+		return $appN2nContext;
+	}
 
 }

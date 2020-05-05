@@ -109,6 +109,31 @@ class PdoPool implements ThreadScoped {
 	}
 	
 	/**
+	 * @return Pdo[]
+	 */
+	function getInitializedPdos() {
+		return $this->dbhs;
+	}
+	
+	/**
+	 * @param string $persistenceUnitName
+	 * @param Pdo $pdo
+	 * @throws \InvalidArgumentException
+	 */
+	function setPdo(string $persistenceUnitName, Pdo $pdo) {
+		if ($persistenceUnitName === null) {
+			$persistenceUnitName = self::DEFAULT_DS_NAME;
+		}
+		
+		if (isset($this->dbhs[$persistenceUnitName])) {
+			throw new \InvalidArgumentException('Pdo for persistence unit already initialized: ' . $persistenceUnitName);
+		}
+		
+		$this->dbhs[$persistenceUnitName] = $pdo;
+	}
+	
+	
+	/**
 	 * @param PersistenceUnitConfig $persistenceUnitConfig
 	 * @return Pdo
 	 */

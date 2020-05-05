@@ -54,6 +54,7 @@ use n2n\web\http\Method;
 use n2n\web\http\MethodNotAllowedException;
 use n2n\l10n\MessageContainer;
 use n2n\web\dispatch\DispatchContext;
+use n2n\web\http\VarsSession;
 
 define('N2N_CRLF', "\r\n");
 
@@ -208,23 +209,7 @@ class N2N {
 		
 		$request = new VarsRequest($_SERVER, $_GET, $_POST, $_FILES); 
 		
-		$session = new Session($generalConfig->getApplicationName());
-		
-		$response = new Response($request);
-		$response->setResponseCachingEnabled($webConfig->isResponseCachingEnabled());
-		$response->setResponseCacheStore($this->n2nContext->lookup(ResponseCacheStore::class));
-		$response->setHttpCachingEnabled($webConfig->isResponseBrowserCachingEnabled());
-		$response->setSendEtagAllowed($webConfig->isResponseSendEtagAllowed());
-		$response->setSendLastModifiedAllowed($webConfig->isResponseSendLastModifiedAllowed());
-		$response->setServerPushAllowed($webConfig->isResponseServerPushAllowed());
-		
-		$assetsUrl = $filesConfig->getAssetsUrl();
-		if ($assetsUrl->isRelative() && !$assetsUrl->getPath()->hasLeadingDelimiter()) {
-			$assetsUrl = $request->getContextPath()->toUrl()->ext($assetsUrl);
-		}
-
-		$httpContext = new HttpContext($request, $response, $session, $assetsUrl, 
-				$webConfig->getSupersystem(), $webConfig->getSubsystems(), $this->n2nContext);
+		$session = new VarsSession($generalConfig->getApplicationName());
 		
 		$subsystem = $this->detectSubsystem($request->getHostName(), $request->getContextPath());
 		$request->setSubsystem($subsystem);
@@ -235,7 +220,7 @@ class N2N {
 		}
 		$request->setN2nLocale($this->detectN2nLocale($n2nLocales));
 		
-		return $httpContext;
+		return HttpContextFactory::createFromAppConfig($this->appConfig, $request, $session, $this->n2nContext);
 	}
 	
 	
