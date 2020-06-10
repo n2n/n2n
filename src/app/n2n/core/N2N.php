@@ -659,8 +659,8 @@ class N2N {
 		$response = $n2nContext->getHttpContext()->getResponse();
 		
 		if ($request->getOrigMethodName() != Method::toString(Method::HEAD) 
-				&& ($request->getMethod() == Method::OPTIONS || $request->getOrigMethodName() != Method::toString($request->getMethod()))) {
-			throw new MethodNotAllowedException(Method::HEAD|Method::GET|Method::POST|Method::PUT|Method::PATCH|Method::DELETE|Method::TRACE);
+				&& ($request->getOrigMethodName() != Method::toString($request->getMethod()))) {
+			throw new MethodNotAllowedException(Method::HEAD|Method::GET|Method::POST|Method::PUT|Method::OPTIONS|Method::PATCH|Method::DELETE|Method::TRACE);
 		}
 		
 		if ($response->sendCachedPayload()) {
