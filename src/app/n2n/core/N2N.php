@@ -56,7 +56,7 @@ use n2n\web\http\VarsSession;
 define('N2N_CRLF', "\r\n");
 
 class N2N {
-	const VERSION = '7.2.28';
+	const VERSION = '7.2.29';
 	const LOG4PHP_CONFIG_FILE = 'log4php.xml'; 
 	const LOG_EXCEPTION_DETAIL_DIR = 'exceptions';
 	const LOG_MAIL_BUFFER_DIR = 'log-mail-buffer';
@@ -201,7 +201,7 @@ class N2N {
 		
 		$generalConfig = $this->appConfig->general();
 		$webConfig = $this->appConfig->web();
-		$filesConfig = $this->appConfig->files();
+// 		$filesConfig = $this->appConfig->files();
 		
 		$request = new VarsRequest($_SERVER, $_GET, $_POST, $_FILES); 
 		
