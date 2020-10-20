@@ -35,8 +35,9 @@ class WebConfig {
 	private $responseServerPushAllowed;
 	private $viewCachingEnabled; 
 	private $viewClassNames; 
-	private $mainControllerDefs; 
-	private $filterControllerDefs; 
+	private $mainControllerDefs;
+	private $filterControllerDefs;
+	private $precacheControllerDefs;
 	private $supersystem;
 	private $subsystems;
 	private $dispatchPropertyProviderClassNames;
@@ -59,10 +60,11 @@ class WebConfig {
 	 * @param string $dispatchTargetCryptAlgorithm
 	 * @param N2nLocale[] $aliasN2nLocales
 	 */
-	public function __construct(bool $responseCachingEnabled, bool $responseBrowserCachingEnabled, bool $responseSendEtagAllowed, 
-			bool $responseServerPushAllowed, bool $responseSendLastModifiedAllowed, bool $viewCachingEnabled, array $viewClassNames, array $mainControllerDefs,
-			array $filterControllerDefs, Supersystem $supersystem, array $subsystems, array $dispatchPropertyProviderClassNames,
-			string $dispatchTargetCryptAlgorithm = null, array $aliasN2nLocales) {
+	public function __construct(bool $responseCachingEnabled, bool $responseBrowserCachingEnabled, 
+			bool $responseSendEtagAllowed, bool $responseServerPushAllowed, bool $responseSendLastModifiedAllowed, 
+			bool $viewCachingEnabled, array $viewClassNames, array $mainControllerDefs, array $filterControllerDefs, 
+			array $precacheControllerDefs, Supersystem $supersystem, array $subsystems, 
+			array $dispatchPropertyProviderClassNames, string $dispatchTargetCryptAlgorithm = null, array $aliasN2nLocales) {
 		ArgUtils::valArray($subsystems, Subsystem::class);
 				
 		$this->responseCachingEnabled = $responseCachingEnabled;
@@ -74,6 +76,7 @@ class WebConfig {
 		$this->viewClassNames = $viewClassNames;
 		$this->mainControllerDefs = $mainControllerDefs;
 		$this->filterControllerDefs = $filterControllerDefs;
+		$this->precacheControllerDefs = $precacheControllerDefs;
 		$this->supersystem = $supersystem;
 		$this->subsystems = $subsystems;
 		$this->dispatchPropertyProviderClassNames = $dispatchPropertyProviderClassNames;
@@ -84,70 +87,77 @@ class WebConfig {
 	/**
 	 * @return boolean
 	 */
-	public function isResponseCachingEnabled(): bool {
+	public function isResponseCachingEnabled() {
 		return $this->responseCachingEnabled;
 	}
 	
 	/**
 	 * @return boolean
 	 */
-	public function isResponseBrowserCachingEnabled(): bool {
+	public function isResponseBrowserCachingEnabled() {
 		return $this->responseBrowserCachingEnabled;
 	}
 	
 	/**
 	 * @return boolean
 	 */
-	public function isResponseSendEtagAllowed(): bool {
+	public function isResponseSendEtagAllowed() {
 		return $this->responseSendEtagAllowed;
 	}
 	
 	/**
 	 * @return boolean
 	 */
-	public function isResponseSendLastModifiedAllowed(): bool {
+	public function isResponseSendLastModifiedAllowed() {
 		return $this->responseSendLastModifiedAllowed;
 	}
 		
 	/**
 	* @return boolean
 	*/
-	public function isResponseServerPushAllowed(): bool {
+	public function isResponseServerPushAllowed() {
 		return $this->responseServerPushAllowed;
 	}
 	
 	/**
 	 * @return boolean
 	 */
-	public function isViewCachingEnabled(): bool {
+	public function isViewCachingEnabled() {
 		return $this->viewCachingEnabled;
 	}
 	
 	/**
 	 * @return string[]
 	 */
-	public function getViewClassNames(): array {
+	public function getViewClassNames() {
 		return $this->viewClassNames;
 	}
 	
 	/**
 	 * @return ControllerDef[]
 	 */
-	public function getMainControllerDefs(): array {
+	public function getMainControllerDefs() {
 		return $this->mainControllerDefs;
 	}
 	
 	/**
 	 * @return ControllerDef[]
 	 */
-	public function getFilterControllerDefs(): array {
+	public function getFilterControllerDefs() {
 		return $this->filterControllerDefs;
+	}
+	
+	/**
+	 * @return ControllerDef[]
+	 */
+	public function getPrecacheControllerDefs() {
+		return $this->precacheControllerDefs;
 	}
 	
 	/**
 	 * @return \n2n\l10n\N2nLocale[]
 	 */
-	public function getAllN2nLocales(): array {
+	public function getAllN2nLocales() {
 		$n2nLocales = $this->supersystem->getN2nLocales();
 		foreach ($this->subsystems as $supersystem) {
 			$n2nLocales = array_merge($n2nLocales, $supersystem->getN2nLocales());
@@ -172,14 +182,14 @@ class WebConfig {
 	/**
 	 * @return Subsystem[]
 	 */
-	public function getSubsystems(): array {
+	public function getSubsystems() {
 		return $this->subsystems;
 	}
 	
 	/**
 	 * @return string[] 
 	 */
-	public function getDispatchPropertyProviderClassNames(): array {
+	public function getDispatchPropertyProviderClassNames() {
 		return $this->dispatchPropertyProviderClassNames;
 	}
 	

@@ -133,8 +133,10 @@ class AppConfigFactory {
 	const VIEW_TYPE_KEY_PREFIX = 'view.type.';
 	
 	const CONTROLLERS_KEY = 'controllers';
-
+	
 	const FILTERS_KEY = 'filters';
+	
+	const PRECACHE_FILTERS_KEY = 'precache_filters';
 	
 	const HOST_KEY = 'host';
 	const CONTEXT_PATH_KEY = 'context_path';
@@ -164,6 +166,7 @@ class AppConfigFactory {
 				self::extractStringPropertyArray($groupReader, self::VIEW_TYPE_KEY_PREFIX),
 				$this->createControllerDefs($supersystemGroupReader, $subsystemGroupReaders, self::CONTROLLERS_KEY),
 				$this->createControllerDefs($supersystemGroupReader, $subsystemGroupReaders, self::FILTERS_KEY),
+				$this->createControllerDefs($supersystemGroupReader, $subsystemGroupReaders, self::PRECACHE_FILTERS_KEY),
 				$this->createSupersystem($supersystemGroupReader),
 				$this->createSubsystemConfigs($subsystemGroupReaders),
 				array_unique($groupReader->getScalarArray(self::DISPATCH_PROPERTY_FACTORIES_NAMES_KEY, false, array())),
