@@ -58,7 +58,7 @@ class PdoPool implements ThreadScoped {
 		$this->entityModelManager = new EntityModelManager($ormConfig->getEntityClassNames(), 
 				new EntityModelFactory($ormConfig->getEntityPropertyProviderClassNames(),
 						$ormConfig->getNamingStrategyClassName()));
-		$this->entityProxyManager = new EntityProxyManager();
+		$this->entityProxyManager = EntityProxyManager::getInstance();
 		$this->transactionManager = $n2nContext->getTransactionManager();
 		$this->magicContext = $n2nContext;
 	}
