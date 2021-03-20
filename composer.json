@@ -23,14 +23,14 @@
 	],
 	"require" : {
 		"php" : ">=7.0",
-		"n2n/n2n-composer-module-installer" : "master-dev",
-		"n2n/n2n-config" : "master-dev",
-		"n2n/n2n-io" : "master-dev",
-		"n2n/n2n-l10n" : "master-dev",
-		"n2n/n2n-log4php" : "master-dev",
-		"n2n/n2n-mail" : "master-dev",
-		"n2n/n2n-reflection" : "master-dev",
-		"n2n/n2n-util" : "master-dev"
+		"n2n/n2n-composer-module-installer" : "^7.1",
+		"n2n/n2n-config" : "^7.2.33",
+		"n2n/n2n-io" : "^7.2.33",
+		"n2n/n2n-l10n" : "^7.2.33",
+		"n2n/n2n-log4php" : "^7.2.33",
+		"n2n/n2n-mail" : "^7.2.33",
+		"n2n/n2n-reflection" : "^7.2.33",
+		"n2n/n2n-util" : "^7.2.33"
 	},
 	"autoload" : {
 		"psr-4" : {
