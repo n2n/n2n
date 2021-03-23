@@ -21,6 +21,7 @@
  */
 namespace n2n\core;
 
+use InvalidArgumentException;
 use n2n\util\cache\impl\FileCacheStore;
 use n2n\core\config\AppConfig;
 use n2n\core\container\N2nContext;
@@ -68,7 +69,7 @@ class FileN2nCache implements N2nCache {
 	
 	public function requestCacheStore($module, $componentName) {
 		if (!strlen($componentName) || !IoUtils::hasStrictSpecialChars($componentName)) {
-			throw new \InvalidArgumentException('Component name is empty or contains strict special chars: ' . $componentName);
+			throw new InvalidArgumentException('Component name is empty or contains strict special chars: ' . $componentName);
 		}
 		
 		return new FileCacheStore($this->varStore->requestDirFsPath(VarStore::CATEGORY_TMP, $module,
@@ -102,5 +103,13 @@ class FileAppCache implements AppCache {
 		}
 		
 		return new FileCacheStore($dirFsPath, $this->dirPerm, $this->filePerm);
+	}
+
+	/**
+	 * {@inheritDoc}
+	 * @see \n2n\core\container\AppCache::clear()
+	 */
+	public function clear() {
+		$this->dirFsPath->delete();
 	}
 }

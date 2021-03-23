@@ -29,4 +29,9 @@ interface AppCache {
 	 * @return CacheStore
 	 */
 	public function lookupCacheStore(string $namespace): CacheStore;
+
+	/**
+	 * Clear the cache of every cachestore belonging to this {@see AppCache} instance.
+	 */
+	public function clear();
 }
