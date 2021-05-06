@@ -42,6 +42,11 @@
 			"n2n\\core\\" : "src/app/n2n/core"
 		}
 	},
+	"autoload-dev" : {
+		"psr-4" : {
+			"n2n\\core\\" : "src/test/n2n/core"
+		}
+	},
 	"require-dev" : {
 		"phpunit/phpunit" : "^9.5"
 	}
