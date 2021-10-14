@@ -122,4 +122,8 @@ class ErrorConfig {
 	public function getErrorViewNames(): array {
 		return $this->errorViewNames;
 	}
+	
+	function getDefaultErrorViewName() {
+		return $this->errorViewNames[self::ERROR_VIEW_DEFAULT_KEY_SUFFIX] ?? null;
+	}
 }
