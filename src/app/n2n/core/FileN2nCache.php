@@ -22,13 +22,13 @@
 namespace n2n\core;
 
 use InvalidArgumentException;
-use n2n\util\cache\impl\FileCacheStore;
 use n2n\core\config\AppConfig;
 use n2n\core\container\N2nContext;
-use n2n\io\IoUtils;
+use n2n\util\io\IoUtils;
 use n2n\core\container\AppCache;
-use n2n\io\fs\FsPath;
+use n2n\util\io\fs\FsPath;
 use n2n\util\cache\CacheStore;
+use n2n\util\cache\impl\FileCacheStore;
 
 class FileN2nCache implements N2nCache {
 	const STARTUP_CACHE_DIR = 'startupcache';

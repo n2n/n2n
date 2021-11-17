@@ -27,7 +27,7 @@ use n2n\core\container\PdoPool;
 use n2n\core\module\Module;
 use n2n\core\err\ExceptionHandler;
 use n2n\l10n\N2nLocale;
-use n2n\io\IoUtils;
+use n2n\util\io\IoUtils;
 use n2n\l10n\Language;
 use n2n\l10n\Region;
 use n2n\batch\BatchJobRegistry;
@@ -38,7 +38,7 @@ use n2n\web\http\VarsRequest;
 use n2n\util\uri\Path;
 use n2n\core\module\ModuleFactory;
 use n2n\core\module\impl\LazyModule;
-use n2n\io\fs\FsPath;
+use n2n\util\io\fs\FsPath;
 use n2n\core\config\build\CombinedConfigSource;
 use n2n\core\config\build\AppConfigFactory;
 use n2n\l10n\L10n;
@@ -52,6 +52,7 @@ use n2n\web\http\MethodNotAllowedException;
 use n2n\l10n\MessageContainer;
 use n2n\web\dispatch\DispatchContext;
 use n2n\web\http\VarsSession;
+use n2n\web\http\controller\ControllingPlan;
 
 define('N2N_CRLF', "\r\n");
 
@@ -287,17 +288,24 @@ class N2N {
 	/*
 	 * STATIC
 	 */
+	/**
+	 * @var ExceptionHandler|null;
+	 */
 	private static $exceptionHandler;
 	private static $n2n;
 	private static $shutdownListeners = array();
 	
+	
+	
 	public static function setup(string $publicDirPath, string $varDirPath,
-			N2nCache $n2nCache, ModuleFactory $moduleFactory = null) {
+	       N2nCache $n2nCache, ModuleFactory $moduleFactory = null, bool $enableExceptionHandler = true) {
 		mb_internal_encoding(self::CHARSET);
 		// 		ini_set('default_charset', self::CHARSET);
 		
-		self::$exceptionHandler = new ExceptionHandler(N2N::isDevelopmentModeOn());
-		register_shutdown_function(array('n2n\core\N2N', 'shutdown'));
+		if ($enableExceptionHandler) {
+    		self::$exceptionHandler = new ExceptionHandler(N2N::isDevelopmentModeOn());
+    		register_shutdown_function(array('n2n\core\N2N', 'shutdown'));
+		}
 		
 		self::$n2n = new N2N(new FsPath(IoUtils::realpath($publicDirPath)),
 				new FsPath(IoUtils::realpath($varDirPath)));
@@ -319,7 +327,7 @@ class N2N {
 	 * @param array $moduleDirPaths
 	 */
 	public static function initialize(string $publicDirPath, string $varDirPath, 
-			N2nCache $n2nCache, ModuleFactory $moduleFactory = null) {
+			N2nCache $n2nCache, ModuleFactory $moduleFactory = null, bool $enableExceptionHandler = true) {
 		self::setup($publicDirPath, $varDirPath, $n2nCache, $moduleFactory);
 		
 		self::$n2n->init($n2nCache);
@@ -328,7 +336,9 @@ class N2N {
 		// @todo move up so exception will be grouped earlier.
 		self::initLogging(self::$n2n);
 		
-		self::$exceptionHandler->checkForStartupErrors();
+		if (self::$exceptionHandler) {
+            self::$exceptionHandler->checkForStartupErrors();
+		}
 	}
 	/**
 	 * @param \n2n\core\N2N $n2n
@@ -384,8 +394,10 @@ class N2N {
 	 * 
 	 */
 	public static function shutdown() {
-		self::$exceptionHandler->checkForFatalErrors();
-		if (!self::$exceptionHandler->isStable()) return;
+	    if (self::$exceptionHandler !== null) {
+    		self::$exceptionHandler->checkForFatalErrors();
+    		if (!self::$exceptionHandler->isStable()) return;
+	    }
 		
 		try {
 			if (!N2N::isInitialized()) return;
@@ -394,6 +406,10 @@ class N2N {
 				N2N::getCurrentResponse()->flush();
 			}
 		} catch (\Throwable $t) {
+		    if (self::$exceptionHandler === null) {
+		        throw $t;
+		    }
+		    
 			self::$exceptionHandler->handleThrowable($t);
 		}
 	}
@@ -662,10 +678,6 @@ class N2N {
 			throw new MethodNotAllowedException(Method::HEAD|Method::GET|Method::POST|Method::PUT|Method::OPTIONS|Method::PATCH|Method::DELETE|Method::TRACE);
 		}
 		
-// 		if ($response->sendCachedPayload()) {
-// 			return;
-// 		}
-		
 		$controllerRegistry = $n2nContext->lookup(ControllerRegistry::class);
 		$controllerRegistry->createControllingPlan($request->getCmdPath(), $request->getSubsystemName())->execute(); 
 	}
@@ -680,7 +692,8 @@ class N2N {
 			$subsystem = $httpContext->getAvailableSubsystemByName($subsystemName);
 		}
 		$request->setSubsystem($subsystem);
-				
+			
+		
 		$controllerRegistry = $n2nContext->lookup(ControllerRegistry::class);
 		
 		if ($cmdPath === null) {

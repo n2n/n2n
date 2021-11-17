@@ -21,7 +21,7 @@
  */
 namespace n2n\core\config;
 
-use n2n\io\fs\FsPath;
+use n2n\util\io\fs\FsPath;
 use n2n\util\uri\Url;
 
 class FilesConfig {

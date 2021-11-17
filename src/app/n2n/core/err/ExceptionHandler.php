@@ -26,13 +26,13 @@ use n2n\web\http\StatusException;
 use n2n\persistence\PdoPreparedExecutionException;
 use n2n\web\http\Response;
 use n2n\core\N2N;
-use n2n\io\IoUtils;
+use n2n\util\io\IoUtils;
 use n2n\web\http\BadRequestException;
 use n2n\util\ex\QueryStumble;
 use n2n\core\TypeLoader;
 use n2n\web\http\controller\ControllerContext;
 use n2n\web\ui\ViewFactory;
-use n2n\io\IoException;
+use n2n\util\io\IoException;
 use n2n\util\type\TypeUtils;
 
 // define('N2N_EXCEPTION_HANDLING_PHP_SEVERITIES', E_ALL | E_STRICT);
@@ -49,8 +49,7 @@ class ExceptionHandler {
 	
 	const LOG_FILE_EXTENSION = '.log';
 	const DEFAULT_500_DEV_VIEW = 'n2n\core\view\errorpages\500Dev.html';
-	const DEFAULT_STATUS_DEV_VIEW = 'n2n\core\view\errorpages\statusDev.html';
-	const DEFAULT_STATUS_LIVE_VIEW = 'n2n\core\view\errorpages\statusLive.html';
+	const DEFAULT_500_LIVE_VIEW = 'n2n\core\view\errorpages\500Live.html';
 	
 	private $developmentMode;
 	
@@ -73,7 +72,6 @@ class ExceptionHandler {
 	private $logger;
 	
 	private $detectStartupErrorsEnabled = true;
-	private $detectBadRequestsOnStartupEnabled = true;
 	private $prevError;
 	/**
 	 * 
@@ -88,7 +86,14 @@ class ExceptionHandler {
 		set_error_handler(array($this, 'handleTriggeredError'), self::HANDLED_PHP_SEVERITIES);
 		set_exception_handler(array($this, 'handleThrowable'));
 		
-		$this->prevError = error_get_last();
+		$this->prevError = TriggeredError::last();
+	}
+	
+	/**
+	 * @return \n2n\util\ex\err\TriggeredError|null
+	 */
+	function getPrevError() {
+		return $this->prevError;
 	}
 	
 	public function setDetectStartupErrorsEnabled(bool $detectStartupErrorsEnabled) {
@@ -97,14 +102,6 @@ class ExceptionHandler {
 	
 	public function isDetectStartupErrorsEnabled(): bool {
 		return $this->detectStartupErrorsEnabled;
-	}
-	
-	public function setDetectBadRequestsOnStartupEnabled(bool $detectBadRequestsOnStartup) {
-		$this->detectBadRequestsOnStartupEnabled = $detectBadRequestsOnStartup;
-	}
-	
-	public function isDetectBadRequestsOnStartupEnabled(): bool {
-		return $this->detectBadRequestsOnStartupEnabled;
 	}
 	
 	/**
@@ -186,18 +183,6 @@ class ExceptionHandler {
 		return $this->stable;	
 	}
 	
-	private $ignoredNextTriggeredErrNo = 0;
-	private $ignoredErrorMessage = null;
-	
-	public function ignoreNextTriggeredErrNo(int $errNo) {
-		$this->ignoredNextTriggeredErrNo = $errNo;
-		$this->ignoredErrorMessage = null;
-	}
-	
-	public function getIgnoredErrorMessage() {
-		return $this->ignoredErrorMessage;
-	} 
-	
 	/**
 	 * <p>Will be registered as php error_handler while ExceptionHandler initialization
 	 * {@link http://php.net/manual/de/function.set-error-handler.php}</p>
@@ -213,14 +198,7 @@ class ExceptionHandler {
 	 */
 	public function handleTriggeredError($errno, $errstr, $errfile, $errline, $errcontext = null, $forceThrow = false) {
 		$this->registerError($errno, $errfile, $errline, $errstr);
-		$ignoredNextTriggeredErrNo = $this->ignoredNextTriggeredErrNo;
-		$this->ignoredNextTriggeredErrNo = 0;
 		
-		if (!$forceThrow && $ignoredNextTriggeredErrNo & $errno) {
-			$this->ignoredErrorMessage = $errstr;
-			return true;
-		}
-
 		if ($this->isMemoryLimitExhaustedMessage($errstr)) {
 			// @todo find out if dangerous
 			//$this->stable = false;
@@ -279,20 +257,20 @@ class ExceptionHandler {
 			return;
 		}
 		
-		if ($this->detectBadRequestsOnStartupEnabled && $this->isPrevBadRequestMessage($this->prevError['message'])) {
-			$this->registerError($this->prevError['type'], $this->prevError['file'], 
-					$this->prevError['line'], $this->prevError['message']);
-			$e = $this->createPhpError($this->prevError['type'], $this->prevError['message'], 
-					$this->prevError['file'], $this->prevError['line']);
-			throw new BadRequestException('Php prev error deteced: ' . $e->getMessage());
-		}
+// 		if ($this->detectBadRequestsOnStartupEnabled && $this->isPrevBadRequestMessage($this->prevError['message'])) {
+// 			$this->registerError($this->prevError['type'], $this->prevError['file'], 
+// 					$this->prevError['line'], $this->prevError['message']);
+// 			$e = $this->createPhpError($this->prevError['type'], $this->prevError['message'], 
+// 					$this->prevError['file'], $this->prevError['line']);
+// 			throw new BadRequestException('Php prev error deteced: ' . $e->getMessage());
+// 		}
 		
 		if ($this->detectStartupErrorsEnabled) {
-			$this->handleTriggeredError($this->prevError['type'], $this->prevError['message'], 
-					$this->prevError['file'], $this->prevError['line']);
+			$this->handleTriggeredError($this->prevError->getType(), $this->prevError->getMessage(), 
+					$this->prevError->getFile(), $this->prevError->getLine());
 		} else {
-			$this->registerError($this->prevError['type'], $this->prevError['file'],
-					$this->prevError['line'], $this->prevError['message']);
+			$this->registerError($this->prevError->getType(), $this->prevError->getFile(),
+					$this->prevError->getLine(), $this->prevError->getMessage());
 		}
 	}
 	/**
@@ -337,46 +315,7 @@ class ExceptionHandler {
 		$this->pendingLogException = array();
 	}
 	
-	/**
-	 * Creates an exception based on a triggered error
-	 * 
-	 * @param string $errno
-	 * @param string $errstr
-	 * @param string $errfile
-	 * @param string $errline
-	 * @return \Error created exception
-	 */
-	private function createPhpError($errno, $errstr, $errfile, $errline) {
-		switch($errno) {
-			case E_ERROR:
-// 				if (!is_null($exception = $this->checkForTypeLoaderException($errno, $errstr, $errfile, $errline))) {
-// 					return $exception;
-// 				}
-			case E_USER_ERROR:
-			case E_COMPILE_ERROR:
-			case E_CORE_ERROR:
-				return new FatalError($errstr, $errno, $errfile, $errline);
-			case E_WARNING:
-			case E_USER_WARNING:
-			case E_COMPILE_WARNING:
-			case E_CORE_WARNING:
-				return new WarningError($errstr, $errno, $errfile, $errline);
-			case E_NOTICE:
-			case E_USER_NOTICE:
-				return new NoticeError($errstr, $errno, $errfile, $errline);
-			case E_RECOVERABLE_ERROR:
-				return new RecoverableError($errstr, $errno, $errfile, $errline);
-			case E_STRICT:
-				return new StrictError($errstr, $errno, $errfile, $errline);
-			case E_PARSE:
-				return new ParseError($errstr, $errno, $errfile, $errline);
-			case E_DEPRECATED:
-			case E_USER_DEPRECATED:
-				return new DeprecatedError($errstr, $errno, $errfile, $errline);
-			default:
-				return new FatalError($errstr, $errno, $errfile, $errline);
-		}
-	}
+	
 	
 	
 	/**
@@ -443,18 +382,7 @@ class ExceptionHandler {
 	}
 	
 	
-	// 	Warning: POST Content-Length of 60582676 bytes exceeds the limit of 8388608 bytes in Unknown on line 0
-	const POST_LENGTH_ERROR_MSG_PREFIX = 'POST Content-Length';
-	// 	Warning: Maximum number of allowable file uploads has been exceeded in Unknown on line 0
-	const UPLOAD_NUM_ERROR_MSG_PREFIX = 'Maximum number';
-	// Warning: Unknown: Input variables exceeded 2. To increase the limit change max_input_vars in php.ini. in Unknown on line 0
-	const INPUT_VARS_NUM_ERROR_MSG_PREFIX = 'Unknown: Input variables exceeded';
 	
-	private function isPrevBadRequestMessage($message) {
-		return self::POST_LENGTH_ERROR_MSG_PREFIX == substr($message, 0, strlen(self::POST_LENGTH_ERROR_MSG_PREFIX))
-				|| self::UPLOAD_NUM_ERROR_MSG_PREFIX == substr($message, 0, strlen(self::UPLOAD_NUM_ERROR_MSG_PREFIX))
-				|| self::INPUT_VARS_NUM_ERROR_MSG_PREFIX == substr($message, 0, strlen(self::INPUT_VARS_NUM_ERROR_MSG_PREFIX));
-	}
 	/**
 	 * An Error Hash is a unique hash of an triggered error.
 	 *	
@@ -472,6 +400,13 @@ class ExceptionHandler {
 		$this->errorHashes[] = $this->buildErrorHash($errno, $errfile, $errline, $errstr);
 	}
 	
+	/**
+	 * @param int $errno
+	 * @param string $errfile
+	 * @param int $errline
+	 * @param string $errstr
+	 * @return boolean
+	 */
 	private function checkForError($errno, $errfile, $errline, $errstr) {
 		return in_array($this->buildErrorHash($errno, $errfile, $errline, $errstr), $this->errorHashes);
 	}
@@ -756,13 +691,7 @@ class ExceptionHandler {
 	private function renderBeautifulExceptionView(\Throwable $e) {
 		$request = N2N::getCurrentRequest();
 		$response = N2N::getCurrentResponse();
-		$status = null;
-		$viewName = null;
-		if ($e instanceof StatusException) {
-			$status = $e->getStatus();
-		} else {
-			$status = Response::STATUS_500_INTERNAL_SERVER_ERROR;
-		}
+		$status = Response::STATUS_500_INTERNAL_SERVER_ERROR;
 		
 		$throwableModel = null;
 // 		if ($e instanceof StatusException && isset($viewName)) {
@@ -783,13 +712,9 @@ class ExceptionHandler {
 			
 		if ($viewName === null) {
 			if (!N2N::isDevelopmentModeOn()) {
-				$viewName = self::DEFAULT_STATUS_LIVE_VIEW;
+				$viewName = self::DEFAULT_500_LIVE_VIEW;
 			} else {
-				if ($status == Response::STATUS_500_INTERNAL_SERVER_ERROR) {
-					$viewName = self::DEFAULT_500_DEV_VIEW;
-				} else {
-					$viewName = self::DEFAULT_STATUS_DEV_VIEW;
-				}
+				$viewName = self::DEFAULT_500_DEV_VIEW;
 			}	
 		}
 		
@@ -797,9 +722,6 @@ class ExceptionHandler {
 		$view->setControllerContext(new ControllerContext($request->getCmdPath(), $request->getCmdContextPath()));
 		$response->reset();
 		$response->setStatus($status);
-		if ($e instanceof StatusException) {
-			$e->prepareResponse($response);
-		}
 		$response->send($view);
 	}
 	/**
@@ -998,7 +920,7 @@ class LoggingFailedException extends \RuntimeException {
 
 // }
 
-abstract class ErrorAdapter extends \Error {
+abstract class TriggeredError extends \Error {
 	public function __construct(string $message, int $code = null, string $fileFsPath = null,
 			int $line = null, \Throwable $previous = null) {
 		parent::__construct($message, $code, $previous);
@@ -1006,44 +928,113 @@ abstract class ErrorAdapter extends \Error {
 		$this->file = $fileFsPath;
 		$this->line = $line;
 	}
+	
+	/**
+	 * @return string
+	 */
+	function getFile() {
+		return $this->file;
+	}
+	
+	/**
+	 * @return int
+	 */
+	function getLine() {
+		return $this->line;
+	}
+	
+	/**
+	 * @return boolean
+	 */
+	function isBadRequest() {
+		return self::isPrevBadRequestMessage($this->message);
+	}
+	
+	/**
+	 * @param int $type
+	 * @param string $errstr
+	 * @param string $file
+	 * @param int $line
+	 * @return TriggeredError
+	 */
+	static function create(int $type, string $errstr, string $file, int $line): TriggeredError {
+		switch($type) {
+			case E_ERROR:
+			case E_USER_ERROR:
+			case E_COMPILE_ERROR:
+			case E_CORE_ERROR:
+				return new FatalError($errstr, $errfile, $errline);
+			case E_WARNING:
+			case E_USER_WARNING:
+			case E_COMPILE_WARNING:
+			case E_CORE_WARNING:
+				return new WarningError($errstr, $errfile, $errline);
+			case E_NOTICE:
+			case E_USER_NOTICE:
+				return new NoticeError($errstr, $errfile, $errline);
+			case E_RECOVERABLE_ERROR:
+				return new RecoverableError($errstr, $errfile, $errline);
+			case E_STRICT:
+				return new StrictError($errstr, $errfile, $errline);
+			case E_PARSE:
+				return new ParseError($errstr, $errfile, $errline);
+			case E_DEPRECATED:
+			case E_USER_DEPRECATED:
+				return new DeprecatedError($errstr, $errfile, $errline);
+			default:
+				return new FatalError($errstr, $errfile, $errline);
+		}
+	}
+	
+	// 	Warning: POST Content-Length of 60582676 bytes exceeds the limit of 8388608 bytes in Unknown on line 0
+	const POST_LENGTH_ERROR_MSG_PREFIX = 'POST Content-Length';
+	// 	Warning: Maximum number of allowable file uploads has been exceeded in Unknown on line 0
+	const UPLOAD_NUM_ERROR_MSG_PREFIX = 'Maximum number';
+	// Warning: Unknown: Input variables exceeded 2. To increase the limit change max_input_vars in php.ini. in Unknown on line 0
+	const INPUT_VARS_NUM_ERROR_MSG_PREFIX = 'Unknown: Input variables exceeded';
+	
+	private static function isPrevBadRequestMessage($message) {
+		return self::POST_LENGTH_ERROR_MSG_PREFIX == substr($message, 0, strlen(self::POST_LENGTH_ERROR_MSG_PREFIX))
+				|| self::UPLOAD_NUM_ERROR_MSG_PREFIX == substr($message, 0, strlen(self::UPLOAD_NUM_ERROR_MSG_PREFIX))
+				|| self::INPUT_VARS_NUM_ERROR_MSG_PREFIX == substr($message, 0, strlen(self::INPUT_VARS_NUM_ERROR_MSG_PREFIX));
+	}
+	
+	static function last() {
+		$lastErrData = error_get_last();
+		
+		if ($lastErrData === null) {
+			return null;
+		}
+		
+		return self::create($lastErrData['type'], $lastErrData['message'],
+				$lastErrData['file'], $lastErrData['line']);
+	}
 }
 
-class WarningError extends ErrorAdapter {
+class WarningError extends TriggeredError {
 
 }
 
-class NoticeError extends ErrorAdapter {
+class NoticeError extends TriggeredError {
 	
 }
 
-class RecoverableError extends ErrorAdapter {
+class RecoverableError extends TriggeredError {
 
 }
 
-class FatalError extends ErrorAdapter {
+class FatalError extends TriggeredError {
 	
 }
 
-class StrictError extends ErrorAdapter {
+class StrictError extends TriggeredError {
 
 }
 
-class ParseError extends ErrorAdapter {
+class ParseError extends TriggeredError {
 	
 }
 
-class DeprecatedError extends ErrorAdapter {
+class DeprecatedError extends TriggeredError {
 	
 }
-
-// class PHPParseException extends PHPErrorException {
-
-// }
-
-// class PHPDeprecatedException extends PHPErrorException {
-	
-// }
-
-// class PHPStrictException extends PHPErrorException {
-
-// }

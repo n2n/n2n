@@ -21,7 +21,7 @@
  */
 namespace n2n\core;
 
-use n2n\io\IoUtils;
+use n2n\util\io\IoUtils;
 
 class N2nVars {
 	private static $mimeTypeDetector;

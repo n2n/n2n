@@ -29,7 +29,7 @@ use n2n\l10n\N2nLocale;
 use n2n\web\http\Subsystem;
 use n2n\persistence\PersistenceUnitConfig;
 use n2n\util\crypt\EncryptionDescriptor;
-use n2n\io\fs\FsPath;
+use n2n\util\io\fs\FsPath;
 use n2n\util\uri\Url;
 use n2n\core\config\AppConfig;
 use n2n\core\config\GeneralConfig;

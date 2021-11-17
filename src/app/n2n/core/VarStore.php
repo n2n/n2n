@@ -21,11 +21,11 @@
  */
 namespace n2n\core;
 
-use n2n\io\InvalidPathException;
-use n2n\io\fs\FsPath;
-use n2n\io\IoUtils;
+use n2n\util\io\InvalidPathException;
+use n2n\util\io\fs\FsPath;
+use n2n\util\io\IoUtils;
 use n2n\util\ex\IllegalStateException;
-use n2n\io\IoException;
+use n2n\util\io\IoException;
 use n2n\util\type\ArgUtils;
 use n2n\util\type\TypeUtils;
 
@@ -94,7 +94,7 @@ class VarStore {
 	 * @throws \InvalidArgumentException
 	 * @throws IoException
 	 * @throws IllegalStateException
-	 * @return \n2n\io\fs\FsPath
+	 * @return \n2n\util\io\fs\FsPath
 	 */
 	public function requestDirFsPath(string $category, string $moduleNamespace = null, string $directoryName = null, bool $create = true, bool $required = true) {
 		if (!in_array($category, self::getCategories())) {

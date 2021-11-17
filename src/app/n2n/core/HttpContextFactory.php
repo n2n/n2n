@@ -29,6 +29,7 @@ use n2n\web\http\Session;
 use n2n\web\http\HttpContext;
 use n2n\web\http\Response;
 use n2n\web\http\ResponseCacheStore;
+use n2n\web\http\BadRequestException;
 
 class HttpContextFactory {
 	
@@ -56,7 +57,13 @@ class HttpContextFactory {
 			$assetsUrl = $request->getContextPath()->toUrl()->ext($assetsUrl);
 		}
 		
-		return new HttpContext($request, $response, $session, $assetsUrl,
+		$httpContext = new HttpContext($request, $response, $session, $assetsUrl,
 				$webConfig->getSupersystem(), $webConfig->getSubsystems(), $n2nContext);
+		
+		$prevError = N2N::getExceptionHandler()->getPrevError();
+		if ($prevError !== null && $appConfig->error()->isStartupDetectBadRequestsEnabled() && $prevError->isBadRequest() 
+				&& $httpContext->isDetectBadRequestsOnStartupEnabled()) {
+			$httpContext->setPevStatusException(new BadRequestException($prevError->getMessage(), null, $prevError));
+		}
 	}
 }

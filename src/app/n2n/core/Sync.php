@@ -21,9 +21,9 @@
  */
 namespace n2n\core;
 
-use n2n\io\fs\FsPath;
+use n2n\util\io\fs\FsPath;
 use n2n\util\HashUtils;
-use n2n\io\IoUtils;
+use n2n\util\io\IoUtils;
 use n2n\util\ex\IllegalStateException;
 
 // @todo accept for same thread

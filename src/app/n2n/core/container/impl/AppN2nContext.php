@@ -326,9 +326,9 @@ class AppN2nContext implements N2nContext {
 		}
 	}
 	
-	public function magicInit($object) {
-		MagicUtils::init($object, $this);
-	}
+// 	public function magicInit($object) {
+// 		MagicUtils::init($object, $this);
+// 	}
 	
 	/**
 	 * @param N2nContext $n2nContext
