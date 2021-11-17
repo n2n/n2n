@@ -53,6 +53,8 @@ use n2n\l10n\MessageContainer;
 use n2n\web\dispatch\DispatchContext;
 use n2n\web\http\VarsSession;
 use n2n\web\http\controller\ControllingPlan;
+use n2n\core\container\N2nContext;
+use n2n\web\http\BadRequestException;
 
 define('N2N_CRLF', "\r\n");
 
@@ -77,8 +79,8 @@ class N2N {
 	protected $varStore;
 	protected $combinedConfigSource;
 	protected $moduleManager;
-	protected $appConfig;
-	protected $n2nContext;
+	protected AppConfig $appConfig;
+	protected N2nContext $n2nContext;
 	
 	private static $initialized = false;
 	/**
@@ -154,8 +156,7 @@ class N2N {
 		$errorConfig = $this->appConfig->error();
 		self::$exceptionHandler->setStrictAttitude($errorConfig->isStrictAttitudeEnabled());
 		self::$exceptionHandler->setDetectStartupErrorsEnabled($errorConfig->isDetectStartupErrorsEnabled());
-		self::$exceptionHandler->setDetectBadRequestsOnStartupEnabled($errorConfig->isStartupDetectBadRequestsEnabled());
-		
+
 		if ($errorConfig->isLogSendMailEnabled()) {
 			self::$exceptionHandler->setLogMailRecipient($errorConfig->getLogMailRecipient(), 
 					$this->appConfig->mail()->getDefaultAddresser());
@@ -202,6 +203,7 @@ class N2N {
 		
 		$generalConfig = $this->appConfig->general();
 		$webConfig = $this->appConfig->web();
+		$errorConfig = $this->appConfig->error();
 // 		$filesConfig = $this->appConfig->files();
 		
 		$request = new VarsRequest($_SERVER, $_GET, $_POST, $_FILES); 
@@ -216,7 +218,8 @@ class N2N {
 			$n2nLocales = array_merge($n2nLocales, $subsystem->getN2nLocales());
 		}
 		$request->setN2nLocale($this->detectN2nLocale($n2nLocales));
-		
+
+		$errorConfig->isStartupDetectBadRequestsEnabled();
 		return HttpContextFactory::createFromAppConfig($this->appConfig, $request, $session, $this->n2nContext);
 	}
 	
@@ -292,7 +295,7 @@ class N2N {
 	 * @var ExceptionHandler|null;
 	 */
 	private static $exceptionHandler;
-	private static $n2n;
+	private static N2N $n2n;
 	private static $shutdownListeners = array();
 	
 	
@@ -337,7 +340,17 @@ class N2N {
 		self::initLogging(self::$n2n);
 		
 		if (self::$exceptionHandler) {
-            self::$exceptionHandler->checkForStartupErrors();
+			self::$exceptionHandler->checkForStartupErrors();
+
+			$e = self::$exceptionHandler->getPrevError();
+
+			if ($e !== null
+					&& self::$n2n->n2nContext->isHttpContextAvailable()
+					&& self::$n2n->appConfig->error()->isStartupDetectBadRequestsEnabled()
+					&& $e->isBadRequest()) {
+				self::$n2n->n2nContext->getHttpContext()->setPrevStatusException(
+						new BadRequestException(null, null, $e));
+			}
 		}
 	}
 	/**

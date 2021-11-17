@@ -60,7 +60,7 @@ class HttpContextFactory {
 		$httpContext = new HttpContext($request, $response, $session, $assetsUrl,
 				$webConfig->getSupersystem(), $webConfig->getSubsystems(), $n2nContext);
 		
-		$prevError = N2N::getExceptionHandler()->getPrevError();
+		$prevError = N2N::get()->getPrevError();
 		if ($prevError !== null && $appConfig->error()->isStartupDetectBadRequestsEnabled() && $prevError->isBadRequest() 
 				&& $httpContext->isDetectBadRequestsOnStartupEnabled()) {
 			$httpContext->setPevStatusException(new BadRequestException($prevError->getMessage(), null, $prevError));

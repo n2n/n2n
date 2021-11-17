@@ -207,7 +207,7 @@ class ExceptionHandler {
 			if (!$forceThrow && !error_reporting()) return false;
 		}
 		
-		$e = $this->createPhpError($errno, $errstr, $errfile, $errline);
+		$e = TriggeredError::create($errno, $errstr, $errfile, $errline);
 		$e = $this->checkForTypeLoaderThrowable($e);
 	
 		$this->log($e);
@@ -925,22 +925,9 @@ abstract class TriggeredError extends \Error {
 			int $line = null, \Throwable $previous = null) {
 		parent::__construct($message, $code, $previous);
 
+
 		$this->file = $fileFsPath;
 		$this->line = $line;
-	}
-	
-	/**
-	 * @return string
-	 */
-	function getFile() {
-		return $this->file;
-	}
-	
-	/**
-	 * @return int
-	 */
-	function getLine() {
-		return $this->line;
 	}
 	
 	/**
@@ -957,32 +944,32 @@ abstract class TriggeredError extends \Error {
 	 * @param int $line
 	 * @return TriggeredError
 	 */
-	static function create(int $type, string $errstr, string $file, int $line): TriggeredError {
+	static function create(int $type, string $errstr, string $errfile, int $errline): TriggeredError {
 		switch($type) {
 			case E_ERROR:
 			case E_USER_ERROR:
 			case E_COMPILE_ERROR:
 			case E_CORE_ERROR:
-				return new FatalError($errstr, $errfile, $errline);
+				return new FatalError($errstr, $type, $errfile, $errline);
 			case E_WARNING:
 			case E_USER_WARNING:
 			case E_COMPILE_WARNING:
 			case E_CORE_WARNING:
-				return new WarningError($errstr, $errfile, $errline);
+				return new WarningError($errstr, $type, $errfile, $errline);
 			case E_NOTICE:
 			case E_USER_NOTICE:
-				return new NoticeError($errstr, $errfile, $errline);
+				return new NoticeError($errstr, $type,$errfile, $errline);
 			case E_RECOVERABLE_ERROR:
-				return new RecoverableError($errstr, $errfile, $errline);
+				return new RecoverableError($errstr, $type, $errfile, $errline);
 			case E_STRICT:
-				return new StrictError($errstr, $errfile, $errline);
+				return new StrictError($errstr, $type, $errfile, $errline);
 			case E_PARSE:
-				return new ParseError($errstr, $errfile, $errline);
+				return new ParseError($errstr, $type, $errfile, $errline);
 			case E_DEPRECATED:
 			case E_USER_DEPRECATED:
-				return new DeprecatedError($errstr, $errfile, $errline);
+				return new DeprecatedError($errstr, $type, $errfile, $errline);
 			default:
-				return new FatalError($errstr, $errfile, $errline);
+				return new FatalError($errstr, $type, $errfile, $errline);
 		}
 	}
 	
