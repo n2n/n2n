@@ -35,6 +35,8 @@ use n2n\batch\BatchJobRegistry;
 use n2n\context\LookupManager;
 use n2n\web\http\controller\ControllerRegistry;
 use n2n\core\config\AppConfig;
+use n2n\web\http\Request;
+use n2n\web\http\Session;
 use n2n\web\http\VarsRequest;
 use n2n\util\uri\Path;
 use n2n\core\module\ModuleFactory;
@@ -183,35 +185,37 @@ class N2N {
 	private function initN2nContext(N2nCache $n2nCache) {
 		$this->n2nContext = new AppN2nContext(new TransactionManager(), $this->moduleManager, $n2nCache->getAppCache(),
 				$this->varStore, $this->appConfig);
+        self::registerShutdownListener($this->n2nContext);
 
-        $httpContext = $this->buildHttpContext();
-
-
-        $lookupSession = ($httpContext !== null ? $httpContext->getSession() : new SimpleLookupSession());
+        $lookupSession = null;
+        $request = null;
+        $session = null;
+		if (!isset($_SERVER['REQUEST_URI'])) {
+            $lookupSession = new SimpleLookupSession();
+        } else {
+            $request = new VarsRequest($_SERVER, $_GET, $_POST, $_FILES);
+            $lookupSession = $session = new VarsSession($this->appConfig->general()->getApplicationName());
+        }
 
 		$lookupManager = new LookupManager($lookupSession, $n2nCache->getAppCache()->lookupCacheStore(LookupManager::class),
                 $this->n2nContext);
-
-		self::registerShutdownListener($lookupManager);
 		$this->n2nContext->setLookupManager($lookupManager);
-		
-		$this->n2nContext->setHttpContext($httpContext);
+
+        if ($request !== null) {
+            $this->n2nContext->setHttpContext($this->createHttpContext($request, $session));
+        }
 	}
 
     /**
      * @return HttpContext
      */
-	private function buildHttpContext() {
-		if (!isset($_SERVER['REQUEST_URI'])) return null;
+	private function createHttpContext(Request $request, Session $session) {
 		
 		$generalConfig = $this->appConfig->general();
 		$webConfig = $this->appConfig->web();
 		$errorConfig = $this->appConfig->error();
 // 		$filesConfig = $this->appConfig->files();
-		
-		$request = new VarsRequest($_SERVER, $_GET, $_POST, $_FILES); 
-		
-		$session = new VarsSession($generalConfig->getApplicationName());
+
 		
 		$subsystem = $this->detectSubsystem($request->getHostName(), $request->getContextPath());
 		$request->setSubsystem($subsystem);
@@ -222,8 +226,8 @@ class N2N {
 		}
 		$request->setN2nLocale($this->detectN2nLocale($n2nLocales));
 
-		$errorConfig->isStartupDetectBadRequestsEnabled();
-		return HttpContextFactory::createFromAppConfig($this->appConfig, $request, $session, $this->n2nContext);
+		return HttpContextFactory::createFromAppConfig($this->appConfig, $request, $session, $this->n2nContext,
+                self::$exceptionHandler);
 	}
 	
 	
@@ -344,16 +348,6 @@ class N2N {
 		
 		if (self::$exceptionHandler) {
 			self::$exceptionHandler->checkForStartupErrors();
-
-			$e = self::$exceptionHandler->getPrevError();
-
-			if ($e !== null
-					&& self::$n2n->n2nContext->isHttpContextAvailable()
-					&& self::$n2n->appConfig->error()->isStartupDetectBadRequestsEnabled()
-					&& $e->isBadRequest()) {
-				self::$n2n->n2nContext->getHttpContext()->setPrevStatusException(
-						new BadRequestException(null, null, $e));
-			}
 		}
 	}
 	/**

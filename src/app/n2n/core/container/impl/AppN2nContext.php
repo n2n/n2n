@@ -21,6 +21,7 @@
  */
 namespace n2n\core\container\impl;
 
+use n2n\core\ShutdownListener;
 use n2n\web\http\Request;
 use n2n\web\http\Response;
 use n2n\l10n\N2nLocale;
@@ -54,7 +55,7 @@ use n2n\core\container\PdoPool;
 use n2n\web\http\Session;
 use n2n\util\magic\MagicObjectUnavailableException;
 
-class AppN2nContext implements N2nContext {
+class AppN2nContext implements N2nContext, ShutdownListener {
 	private $transactionManager;
 	private $moduleManager;
 	private $appCache;
@@ -63,7 +64,7 @@ class AppN2nContext implements N2nContext {
 	private $moduleConfigs = array();
 	private $httpContext;
 	private $n2nLocale;
-	private $lookupManager;
+	private ?LookupManager $lookupManager;
 	
 	public function __construct(TransactionManager $transactionManager, ModuleManager $moduleManager, AppCache $appCache, 
 			VarStore $varStore, AppConfig $appConfig) {
@@ -325,6 +326,17 @@ class AppN2nContext implements N2nContext {
 				return $this->lookup($parameterClass->getName(), true);
 		}
 	}
+
+
+    function finalize(): void {
+        if ($this->lookupManager !== null) {
+            $this->lookupManager->shutdown();
+        }
+    }
+
+    function onShutdown(): void {
+        $this->finalize();
+    }
 	
 // 	public function magicInit($object) {
 // 		MagicUtils::init($object, $this);
