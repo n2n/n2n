@@ -82,9 +82,4 @@ interface N2nContext extends MagicContext {
 	 * @return LookupManager
 	 */
 	public function getLookupManager(): LookupManager;
-	
-	/**
-	 * @param object $object
-	 */
-	public function magicInit($object);
 }

@@ -21,6 +21,7 @@
  */
 namespace n2n\core;
 
+use n2n\context\config\SimpleLookupSession;
 use n2n\core\container\TransactionManager;
 use n2n\log4php\Logger;
 use n2n\core\container\PdoPool;
@@ -182,22 +183,24 @@ class N2N {
 	private function initN2nContext(N2nCache $n2nCache) {
 		$this->n2nContext = new AppN2nContext(new TransactionManager(), $this->moduleManager, $n2nCache->getAppCache(),
 				$this->varStore, $this->appConfig);
-		
-		$lookupManager = new LookupManager($this->n2nContext);
+
+        $httpContext = $this->buildHttpContext();
+
+
+        $lookupSession = ($httpContext !== null ? $httpContext->getSession() : new SimpleLookupSession());
+
+		$lookupManager = new LookupManager($lookupSession, $n2nCache->getAppCache()->lookupCacheStore(LookupManager::class),
+                $this->n2nContext);
+
 		self::registerShutdownListener($lookupManager);
 		$this->n2nContext->setLookupManager($lookupManager);
 		
-		$this->n2nContext->setHttpContext($this->buildHttpContext());
-		
-// 		if ($this->n2nContext->isHttpContextAvailable()) {
-// 			try {
-// 				$this->n2nContext->lookup(DispatchContext::class)->analyzeRequest($this->n2nContext->getHttpContext()->getRequest());
-// 			} catch (CorruptedDispatchException $e) {
-// 				throw new BadRequestException(null, 0, $e);
-// 			}
-// 		}
+		$this->n2nContext->setHttpContext($httpContext);
 	}
-	
+
+    /**
+     * @return HttpContext
+     */
 	private function buildHttpContext() {
 		if (!isset($_SERVER['REQUEST_URI'])) return null;
 		
