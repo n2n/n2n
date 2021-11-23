@@ -698,7 +698,9 @@ class ExceptionHandler {
 // 			$throwableModel = new ThrowableModel($e, null);
 // 		} else {
 			$throwableModel = new ThrowableModel($e);
-			$this->pendingOutputs[] = $response->fetchBufferedOutput(false);
+            if ($response->isBuffering()) {
+                $this->pendingOutputs[] = $response->fetchBufferedOutput(false);
+            }
 			$that = $this;
 			$throwableModel->setOutputCallback(function () use ($that) {
 				$output = implode('', $this->pendingOutputs);
@@ -720,7 +722,7 @@ class ExceptionHandler {
 		
 		$view = N2N::getN2nContext()->lookup(ViewFactory::class)->create($viewName, array('throwableModel' => $throwableModel));
 		$view->setControllerContext(new ControllerContext($request->getCmdPath(), $request->getCmdContextPath()));
-		$response->reset();
+
 		$response->setStatus($status);
 		$response->send($view);
 	}

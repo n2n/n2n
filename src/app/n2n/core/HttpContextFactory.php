@@ -67,5 +67,7 @@ class HttpContextFactory {
 				&& $httpContext->isDetectBadRequestsOnStartupEnabled()) {
 			$httpContext->setPevStatusException(new BadRequestException($prevError->getMessage(), null, $prevError));
 		}
+
+        return $httpContext;
 	}
 }

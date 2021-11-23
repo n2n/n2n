@@ -55,7 +55,6 @@ use n2n\web\http\MethodNotAllowedException;
 use n2n\l10n\MessageContainer;
 use n2n\web\dispatch\DispatchContext;
 use n2n\web\http\VarsSession;
-use n2n\web\http\controller\ControllingPlan;
 use n2n\core\container\N2nContext;
 use n2n\web\http\BadRequestException;
 
@@ -202,7 +201,9 @@ class N2N {
 		$this->n2nContext->setLookupManager($lookupManager);
 
         if ($request !== null) {
-            $this->n2nContext->setHttpContext($this->createHttpContext($request, $session));
+            $httpContext = $this->createHttpContext($request, $session);
+            $httpContext->getResponse()->capturePrevBuffer();
+            $this->n2nContext->setHttpContext($httpContext);
         }
 	}
 
@@ -210,13 +211,11 @@ class N2N {
      * @return HttpContext
      */
 	private function createHttpContext(Request $request, Session $session) {
-		
 		$generalConfig = $this->appConfig->general();
 		$webConfig = $this->appConfig->web();
 		$errorConfig = $this->appConfig->error();
 // 		$filesConfig = $this->appConfig->files();
 
-		
 		$subsystem = $this->detectSubsystem($request->getHostName(), $request->getContextPath());
 		$request->setSubsystem($subsystem);
 		
@@ -337,7 +336,8 @@ class N2N {
 	 * @param array $moduleDirPaths
 	 */
 	public static function initialize(string $publicDirPath, string $varDirPath, 
-			N2nCache $n2nCache, ModuleFactory $moduleFactory = null, bool $enableExceptionHandler = true) {
+			N2nCache $n2nCache, ModuleFactory $moduleFactory = null, bool $enableExceptionHandler = true,
+            bool $httpResponsePrevBufferCapture = true) {
 		self::setup($publicDirPath, $varDirPath, $n2nCache, $moduleFactory);
 		
 		self::$n2n->init($n2nCache);
@@ -696,8 +696,8 @@ class N2N {
 		$n2nContext = self::_i()->n2nContext;
 		$httpContext = $n2nContext->getHttpContext();
 		$request = $httpContext->getRequest();
-		
-		$subsystem = null;
+
+        $subsystem = null;
 		if ($subsystemName !== null) {
 			$subsystem = $httpContext->getAvailableSubsystemByName($subsystemName);
 		}
