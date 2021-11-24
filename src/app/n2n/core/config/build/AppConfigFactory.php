@@ -211,14 +211,15 @@ class AppConfigFactory {
 	}
 	
 	private function createSubsystemConfigs(array $subsystemGroupReaders): array {
-		$subsystemConfigs = array();
+		$subsystemBuilder = new SubsystemBuilder();
 		foreach ($subsystemGroupReaders as $subsystemName => $subsystemGroupReader) {
-			$subsystemConfigs[$subsystemName] = new Subsystem($subsystemName, 
+			$subsystemBuilder->addSchema($subsystemName,
+					$subsystemGroupReader->getString(self::NAME_KEY, false),
 					$subsystemGroupReader->getString(self::HOST_KEY, false), 
 					$subsystemGroupReader->getString(self::CONTEXT_PATH_KEY, false),
 					$subsystemGroupReader->getN2nLocaleArray(self::LOCALES_KEY));
 		}
-		return $subsystemConfigs;
+		return $subsystemBuilder->getSubsystems();
 	}
 
 	const MAIL_SENDING_ENABLED_KEY = 'mail_sending_enabled';
