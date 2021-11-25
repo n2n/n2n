@@ -254,7 +254,7 @@ class N2N {
 		return $n2nLocale;
 	}
 	
-	private function detectSubsystem($hostName, Path $contextPath) {		
+	private function detectSubsystem(string $hostName, Path $contextPath) {
 		foreach ($this->appConfig->web()->getSubsystems() as $subsystem) {
 			if (null !== ($subsystemHostName = $subsystem->getHostName())) {
 				if ($hostName != $subsystemHostName) continue;
@@ -268,7 +268,6 @@ class N2N {
 		}
 		
 		return null;
-			
 	}
 	
 // 	private function initRegistry() {

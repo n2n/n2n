@@ -137,7 +137,8 @@ class AppConfigFactory {
 	const FILTERS_KEY = 'filters';
 	
 	const PRECACHE_FILTERS_KEY = 'precache_filters';
-	
+
+	const NAME_KEY = 'name';
 	const HOST_KEY = 'host';
 	const CONTEXT_PATH_KEY = 'context_path';
 	const LOCALES_KEY = 'locales';
@@ -150,6 +151,12 @@ class AppConfigFactory {
 	
 	const LOCALE_ALIASES_KEY = 'locale_aliases';
 
+	/**
+	 * @param GroupReader $groupReader
+	 * @param GroupReader $supersystemGroupReader
+	 * @param array $subsystemGroupReaders
+	 * @return WebConfig
+	 */
 	private function createWebConfig(GroupReader $groupReader, GroupReader $supersystemGroupReader, array $subsystemGroupReaders) {
 		return new WebConfig(
 				$groupReader->getBool(self::RESPONSE_CACHING_ENABLED_KEY, false, 

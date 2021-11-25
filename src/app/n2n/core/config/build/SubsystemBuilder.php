@@ -3,6 +3,7 @@
 namespace n2n\core\config\build;
 
 use n2n\web\http\SubsystemMatcher;
+use n2n\web\http\Subsystem;
 
 class SubsystemBuilder {
 	/**
@@ -17,7 +18,7 @@ class SubsystemBuilder {
 		$key = $subsystemName ?? $matcherName;
 
 		if (!isset($this->subsystems[$key])) {
-			$this->subsystems[$key] = new Subsystem($key, $subsystemName);
+			$this->subsystems[$key] = new Subsystem($key);
 		}
 
 		$subsystem = $this->subsystems[$key];
