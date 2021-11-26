@@ -56,7 +56,7 @@
 					<h3>Output</h3>
 					<pre class="stack-trace"><?php $html->esc($output)?></pre>
 				</div>
-			<?php endif ?>		
+			<?php endif ?>
 		</section>
 	</div>
 </div>
