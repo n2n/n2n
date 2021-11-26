@@ -2,7 +2,7 @@
 
 namespace n2n\core\config\build;
 
-use n2n\web\http\SubsystemMatcher;
+use n2n\web\http\SubsystemRule;
 use n2n\web\http\Subsystem;
 
 class SubsystemBuilder {
@@ -22,7 +22,7 @@ class SubsystemBuilder {
 		}
 
 		$subsystem = $this->subsystems[$key];
-		$subsystem->addMatcher(new SubsystemMatcher($matcherName, $hostName, $contextPath, $n2nLocales));
+		$subsystem->createRule($matcherName, $hostName, $contextPath, $n2nLocales);
 	}
 
 	/**

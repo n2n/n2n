@@ -204,6 +204,7 @@ class N2N {
             $httpContext = $this->createHttpContext($request, $session);
             $httpContext->getResponse()->capturePrevBuffer();
             $this->n2nContext->setHttpContext($httpContext);
+			$this->n2nContext->setN2nLocale($httpContext->determineBestN2nLocale());
         }
 	}
 
@@ -216,59 +217,12 @@ class N2N {
 		$errorConfig = $this->appConfig->error();
 // 		$filesConfig = $this->appConfig->files();
 
-		$subsystem = $this->detectSubsystem($request->getHostName(), $request->getContextPath());
-		$request->setSubsystem($subsystem);
-		
-		$n2nLocales = $webConfig->getSupersystem()->getN2nLocales();
-		if ($subsystem !== null) {
-			$n2nLocales = array_merge($n2nLocales, $subsystem->getN2nLocales());
-		}
-		$request->setN2nLocale($this->detectN2nLocale($n2nLocales));
 
 		return HttpContextFactory::createFromAppConfig($this->appConfig, $request, $session, $this->n2nContext,
                 self::$exceptionHandler);
 	}
 	
-	
-	private function detectN2nLocale(array $n2nLocales) {
-		$n2nLocale = null;
-		if (!empty($n2nLocales)) {
-			$n2nLocale = reset($n2nLocales);
-		} else {
-			$n2nLocale = N2nLocale::getDefault();
-		}
-		
-		if (!isset($_SERVER['HTTP_ACCEPT_LANGUAGE'])) {
-			return $n2nLocale;	
-		} 
-		
-		if (null !== ($n2nLocaleId = N2nLocale::acceptFromHttp($_SERVER['HTTP_ACCEPT_LANGUAGE']))) {
-			if (isset($n2nLocales[$n2nLocaleId])) {
-				return $n2nLocales[$n2nLocaleId];
-			}
-		
-			$n2nLocaleId = \Locale::lookup(array_keys($n2nLocales), $n2nLocaleId);
-			if ($n2nLocaleId) return $n2nLocales[$n2nLocaleId];
-		}
-	
-		return $n2nLocale;
-	}
-	
-	private function detectSubsystem(string $hostName, Path $contextPath) {
-		foreach ($this->appConfig->web()->getSubsystems() as $subsystem) {
-			if (null !== ($subsystemHostName = $subsystem->getHostName())) {
-				if ($hostName != $subsystemHostName) continue;
-			}
-				
-			if (null !== ($subsystemContextPath = $subsystem->getContextPath())) {
-				if (!$contextPath->equals($subsystemContextPath)) continue;
-			}
-				
-			return $subsystem;
-		}
-		
-		return null;
-	}
+
 	
 // 	private function initRegistry() {
 // 		$this->batchJobRegistry = new BatchJobRegistry($this->n2nContext->getLookupManager(),

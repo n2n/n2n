@@ -175,7 +175,7 @@ class AppN2nContext implements N2nContext, ShutdownListener {
 	 * @return N2nLocale
 	 */
 	public function getN2nLocale(): N2nLocale {
-		return $this->httpContext !== null ? $this->httpContext->getRequest()->getN2nLocale() : $this->n2nLocale;
+		return $this->n2nLocale;
 	}
 	
 	/**
@@ -183,11 +183,6 @@ class AppN2nContext implements N2nContext, ShutdownListener {
 	 * @see \n2n\core\container\N2nContext::setN2nLocale($n2nLocale)
 	 */
 	public function setN2nLocale(N2nLocale $n2nLocale) {
-		if ($this->httpContext !== null) {
-			$this->httpContext->getRequest()->setN2nLocale($n2nLocale);
-			return;
-		}
-		
 		$this->n2nLocale = $n2nLocale;
 	}
 	

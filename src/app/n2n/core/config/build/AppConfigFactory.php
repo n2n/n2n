@@ -138,7 +138,7 @@ class AppConfigFactory {
 	
 	const PRECACHE_FILTERS_KEY = 'precache_filters';
 
-	const NAME_KEY = 'name';
+	const GROUP_KEY = 'name';
 	const HOST_KEY = 'host';
 	const CONTEXT_PATH_KEY = 'context_path';
 	const LOCALES_KEY = 'locales';
@@ -193,24 +193,24 @@ class AppConfigFactory {
 			$controllerDefs[] =  $this->createControllerDef($controllerClassName, null, $contextPath);
 		}
 		
-		foreach ($subsystemGroupReaders as $subsystemName => $subsystemGroupReader) {
+		foreach ($subsystemGroupReaders as $subsystemRuleName => $subsystemGroupReader) {
 			foreach ($subsystemGroupReader->getScalarArray($attributeName) as $contextPath => $controllerClassName) {
 				if (!strlen($controllerClassName)) continue;
 				
-				$controllerDefs[] =  $this->createControllerDef($controllerClassName, $subsystemName, $contextPath);
+				$controllerDefs[] =  $this->createControllerDef($controllerClassName, $subsystemRuleName, $contextPath);
 			}
 		}
 		
 		return $controllerDefs;
 	}
 	
-	private function createControllerDef(string $controllerClassName, string $subsystemName = null, string $contextPath) {
+	private function createControllerDef(string $controllerClassName, ?string $subsystemRuleName, string $contextPath) {
 		$parts = explode(self::CONTR_SEPARATOR, $controllerClassName, 2);
 		if (count($parts) > 1) {
 			$contextPath = trim($parts[0]);
 			$controllerClassName = trim($parts[1]);
 		}
-		return new ControllerDef($controllerClassName, $subsystemName, $contextPath);
+		return new ControllerDef($controllerClassName, $subsystemRuleName, $contextPath);
 	}
 	
 	private function createSupersystem(GroupReader $groupReader) {
@@ -219,9 +219,9 @@ class AppConfigFactory {
 	
 	private function createSubsystemConfigs(array $subsystemGroupReaders): array {
 		$subsystemBuilder = new SubsystemBuilder();
-		foreach ($subsystemGroupReaders as $subsystemName => $subsystemGroupReader) {
-			$subsystemBuilder->addSchema($subsystemName,
-					$subsystemGroupReader->getString(self::NAME_KEY, false),
+		foreach ($subsystemGroupReaders as $subsystemRuleName => $subsystemGroupReader) {
+			$subsystemBuilder->addSchema($subsystemRuleName,
+					$subsystemGroupReader->getString(self::GROUP_KEY, false),
 					$subsystemGroupReader->getString(self::HOST_KEY, false), 
 					$subsystemGroupReader->getString(self::CONTEXT_PATH_KEY, false),
 					$subsystemGroupReader->getN2nLocaleArray(self::LOCALES_KEY));
