@@ -190,27 +190,30 @@ class AppConfigFactory {
 		foreach ((array) $groupReader->getScalarArray($attributeName) as $contextPath => $controllerClassName) {
 			if (!strlen($controllerClassName)) continue;
 			
-			$controllerDefs[] =  $this->createControllerDef($controllerClassName, null, $contextPath);
+			$controllerDefs[] =  $this->createControllerDef($controllerClassName, null, null, $contextPath);
 		}
 		
 		foreach ($subsystemGroupReaders as $subsystemRuleName => $subsystemGroupReader) {
 			foreach ($subsystemGroupReader->getScalarArray($attributeName) as $contextPath => $controllerClassName) {
 				if (!strlen($controllerClassName)) continue;
+
+				$subsystemName = $subsystemGroupReader->getString(self::NAME_KEY);
 				
-				$controllerDefs[] =  $this->createControllerDef($controllerClassName, $subsystemRuleName, $contextPath);
+				$controllerDefs[] =  $this->createControllerDef($controllerClassName, $subsystemName ?? $subsystemRuleName,
+						$subsystemRuleName, $contextPath);
 			}
 		}
 		
 		return $controllerDefs;
 	}
 	
-	private function createControllerDef(string $controllerClassName, ?string $subsystemRuleName, string $contextPath) {
+	private function createControllerDef(string $controllerClassName, ?string $subsystemName, ?string $subsystemRuleName, string $contextPath) {
 		$parts = explode(self::CONTR_SEPARATOR, $controllerClassName, 2);
 		if (count($parts) > 1) {
 			$contextPath = trim($parts[0]);
 			$controllerClassName = trim($parts[1]);
 		}
-		return new ControllerDef($controllerClassName, $subsystemRuleName, $contextPath);
+		return new ControllerDef($controllerClassName, $subsystemName, $subsystemRuleName, $contextPath);
 	}
 	
 	private function createSupersystem(GroupReader $groupReader) {

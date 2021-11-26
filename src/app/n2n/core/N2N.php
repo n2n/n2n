@@ -632,7 +632,8 @@ class N2N {
 	
 	public static function autoInvokeControllers() {
 		$n2nContext = self::_i()->n2nContext;
-		
+
+		$httpContext = $n2nContext->getHttpContext();
 		$request = $n2nContext->getHttpContext()->getRequest();
 		$response = $n2nContext->getHttpContext()->getResponse();
 		
@@ -642,7 +643,7 @@ class N2N {
 		}
 		
 		$controllerRegistry = $n2nContext->lookup(ControllerRegistry::class);
-		$controllerRegistry->createControllingPlan($request->getCmdPath(), $request->getSubsystemName())->execute(); 
+		$controllerRegistry->createControllingPlan($request->getCmdPath(), $httpContext->getActiveSubsystemRule())->execute();
 	}
 	
 	public static function invokerControllers(string $subsystemName = null, Path $cmdPath = null) {
