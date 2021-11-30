@@ -138,7 +138,7 @@ class AppConfigFactory {
 	
 	const PRECACHE_FILTERS_KEY = 'precache_filters';
 
-	const GROUP_KEY = 'name';
+	const GROUP_KEY = 'subsystem';
 	const HOST_KEY = 'host';
 	const CONTEXT_PATH_KEY = 'context_path';
 	const LOCALES_KEY = 'locales';
