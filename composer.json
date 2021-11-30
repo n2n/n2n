@@ -29,12 +29,12 @@
 	"require" : {
 		"php" : ">=7.0",
 		"n2n/n2n-composer-module-installer" : "^7.1",
-		"n2n/n2n-config" : "dev-develop",
-		"n2n/n2n-l10n" : "dev-develop",
+		"n2n/n2n-config" : "^7.3",
+		"n2n/n2n-l10n" : "^7.3",
 		"n2n/n2n-log4php" : "^7.2.33",
-		"n2n/n2n-mail" : "dev-develop",
-		"n2n/n2n-reflection" : "dev-develop",
-		"n2n/n2n-util" : "dev-develop"
+		"n2n/n2n-mail" : "^7.2.33",
+		"n2n/n2n-reflection" : "^7.3",
+		"n2n/n2n-util" : "^7.3"
 	},
 	"autoload" : {
 		"psr-4" : {
