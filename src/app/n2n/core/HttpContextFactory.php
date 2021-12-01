@@ -38,13 +38,14 @@ class HttpContextFactory {
 	 * @param AppConfig $appConfig
 	 * @param Request $request
 	 * @param N2nContext $n2nContext
-	 * @return \n2n\core\HttpContext
+	 * @return \n2n\web\http\HttpContext
 	 */
 	static function createFromAppConfig(AppConfig $appConfig, Request $request, Session $session, N2nContext $n2nContext,
             ExceptionHandler $exceptionHandler) {
 		$generalConfig = $appConfig->general();
 		$webConfig = $appConfig->web();
 		$filesConfig = $appConfig->files();
+		$errorConfig = $appConfig->error();
 		
 		$response = new Response($request);
 		$response->setResponseCachingEnabled($webConfig->isResponseCachingEnabled());
@@ -61,7 +62,10 @@ class HttpContextFactory {
 		
 		$httpContext = new HttpContext($request, $response, $session, $assetsUrl,
 				$webConfig->getSupersystem(), $webConfig->getSubsystems(), $n2nContext);
-		
+
+		$httpContext->setErrorStatusViewNames($errorConfig->getErrorViewNames());
+		$httpContext->setErrorStatusDefaultViewName($errorConfig->getDefaultErrorViewName());
+
 		$prevError = $exceptionHandler->getPrevError();
 		if ($prevError !== null && $appConfig->error()->isStartupDetectBadRequestsEnabled() && $prevError->isBadRequest() 
 				&& $httpContext->isDetectBadRequestsOnStartupEnabled()) {
