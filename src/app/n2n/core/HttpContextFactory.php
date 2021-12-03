@@ -33,7 +33,10 @@ use n2n\web\http\ResponseCacheStore;
 use n2n\web\http\BadRequestException;
 
 class HttpContextFactory {
-	
+
+	const DEFAULT_STATUS_DEV_VIEW = 'n2n\core\view\errorpages\statusDev.html';
+	const DEFAULT_STATUS_LIVE_VIEW = 'n2n\core\view\errorpages\statusLive.html';
+
 	/**
 	 * @param AppConfig $appConfig
 	 * @param Request $request
@@ -64,12 +67,12 @@ class HttpContextFactory {
 				$webConfig->getSupersystem(), $webConfig->getSubsystems(), $n2nContext);
 
 		$httpContext->setErrorStatusViewNames($errorConfig->getErrorViewNames());
-		$httpContext->setErrorStatusDefaultViewName($errorConfig->getDefaultErrorViewName());
+		$httpContext->setErrorStatusDefaultViewName($errorConfig->getDefaultErrorViewName()
+				?? (N2N::isDevelopmentModeOn() ? self::DEFAULT_STATUS_DEV_VIEW : self::DEFAULT_STATUS_LIVE_VIEW));
 
 		$prevError = $exceptionHandler->getPrevError();
-		if ($prevError !== null && $appConfig->error()->isStartupDetectBadRequestsEnabled() && $prevError->isBadRequest() 
-				&& $httpContext->isDetectBadRequestsOnStartupEnabled()) {
-			$httpContext->setPevStatusException(new BadRequestException($prevError->getMessage(), null, $prevError));
+		if ($prevError !== null && $appConfig->error()->isStartupDetectBadRequestsEnabled() && $prevError->isBadRequest()) {
+			$httpContext->setPrevStatusException(new BadRequestException($prevError->getMessage(), null, $prevError));
 		}
 
         return $httpContext;
