@@ -193,6 +193,7 @@ class N2N {
             $lookupSession = new SimpleLookupSession();
         } else {
             $request = new VarsRequest($_SERVER, $_GET, $_POST, $_FILES);
+			$request->legacyN2nContext = $this->n2nContext;
             $lookupSession = $session = new VarsSession($this->appConfig->general()->getApplicationName());
         }
 
