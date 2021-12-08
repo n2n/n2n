@@ -726,6 +726,7 @@ class ExceptionHandler {
 		$response->reset();
 		$response->setStatus($status);
 		$response->send($view);
+		$response->flush();
 	}
 	/**
 	 * Create html description of an exception for fatal error view if development
