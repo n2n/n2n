@@ -366,7 +366,7 @@ class N2N {
 		try {
 			if (!N2N::isInitialized()) return;
 				
-			if (N2N::isHttpContextAvailable()) {
+			if (N2N::isHttpContextAvailable() && !N2N::getCurrentResponse()->isFlushed()) {
 				N2N::getCurrentResponse()->flush();
 			}
 		} catch (\Throwable $t) {
