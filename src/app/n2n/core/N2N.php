@@ -80,7 +80,7 @@ class N2N {
 	protected $publicDirPath;
 	protected $varStore;
 	protected $combinedConfigSource;
-	protected $moduleManager;
+	protected ModuleManager $moduleManager;
 	protected AppConfig $appConfig;
 	protected N2nContext $n2nContext;
 	
@@ -544,42 +544,43 @@ class N2N {
 //	public static function hasLanguage($languageShort) {
 //		return isset(self::_i()->languages[(string) $languageShort]);
 //	}
-//	/**
-//	 *
-//	 * @return \n2n\core\module\Module[]
-//	 */
-//	public static function getModules() {
-//		return self::_i()->modules;
-//	}
-//
-//	public static function registerModule(Module $module) {
-//		self::_i()->modules[(string) $module] = $module;
-//		if (null !== ($appConfigSource = $module->getAppConfigSource())) {
-//			self::_i()->combinedConfigSource->putAdditional((string) $module, $appConfigSource);
-//		}
-//	}
-//
-//	public static function unregisterModule($module) {
-//		$namespace = (string) $module;
-//		unset(self::_i()->modules[$namespace]);
-//		self::_i()->combinedConfigSource->removeAdditionalByKey($namespace);
-//	}
-//
-//	public static function containsModule($module) {
-//		return self::_i()->getN2nContext()->getModuleManager()->containsModuleNs($module);
-//	}
+	/**
+	 *
+	 * @return \n2n\core\module\Module[]
+	 */
+	public static function getModules() {
+		return self::_i()->moduleManager->getModules();
+	}
+
+	public static function registerModule(Module $module) {
+		self::_i()->moduleManager->registerModule($module);
+		if (null !== ($appConfigSource = $module->getAppConfigSource())) {
+			self::_i()->combinedConfigSource->putAdditional((string) $module, $appConfigSource);
+		}
+	}
+
+	public static function unregisterModule($module) {
+		$namespace = (string) $module;
+
+		self::_i()->moduleManager->unregisterModuleByNamespace($namespace);
+		self::_i()->combinedConfigSource->removeAdditionalByKey($namespace);
+	}
+
+	public static function containsModule($module) {
+		return self::_i()->getN2nContext()->getModuleManager()->containsModuleNs($module);
+	}
 	
-// 	public static function getModuleByClassName($className) {
-// 		foreach (self::_i()->modules as $namespace => $module) {
-// 			if (StringUtils::startsWith($namespace, $className)) {
-// 				return $module;
-// 			}
-// 		}
+ 	public static function getModuleByClassName($className) {
+ 		foreach (self::_i()->modules as $namespace => $module) {
+ 			if (StringUtils::startsWith($namespace, $className)) {
+ 				return $module;
+ 			}
+ 		}
 		
-// 		throw new ClassNotInAModuleNamespaceException(
-// 				SysTextUtils::get('n2n_error_core_class_is_not_in_a_namespace_of_an_installed_module', 
-// 						array('class' => $className)));	
-// 	}
+ 		throw new ClassNotInAModuleNamespaceException(
+ 				SysTextUtils::get('n2n_error_core_class_is_not_in_a_namespace_of_an_installed_module',
+ 						array('class' => $className)));
+ 	}
 	
 	public static function getN2nContext() {
 		return self::_i()->n2nContext;
