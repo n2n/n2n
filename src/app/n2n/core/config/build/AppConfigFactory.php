@@ -126,6 +126,7 @@ class AppConfigFactory {
 	const RESPONSE_SEND_LAST_MODIFIED_ALLOWED_DEFAULT = true;
 	const RESPONSE_SERVER_PUSH_ALLOWED_KEY = 'response.server_push';
 	const RESPONSE_SERVER_PUSH_ALLOWED_DEFAULT = true;
+	const RESPONSE_DEFAULT_HEADERS_KEY = 'response.default_headers';
 	
 	const VIEW_CACHING_ENABLED_KEY = 'view.caching_enabled';
 	const VIEW_CACHING_ENABLED_DEFAULT = true;
@@ -151,6 +152,7 @@ class AppConfigFactory {
 	
 	const LOCALE_ALIASES_KEY = 'locale_aliases';
 
+
 	/**
 	 * @param GroupReader $groupReader
 	 * @param GroupReader $supersystemGroupReader
@@ -169,6 +171,7 @@ class AppConfigFactory {
 						self::RESPONSE_SEND_LAST_MODIFIED_ALLOWED_DEFAULT),
 				$groupReader->getBool(self::RESPONSE_SERVER_PUSH_ALLOWED_KEY, false,
 						self::RESPONSE_SERVER_PUSH_ALLOWED_DEFAULT),
+				$groupReader->getScalarArray(self::RESPONSE_DEFAULT_HEADERS_KEY),
 				$groupReader->getBool(self::VIEW_CACHING_ENABLED_KEY, false, self::VIEW_CACHING_ENABLED_DEFAULT),
 				self::extractStringPropertyArray($groupReader, self::VIEW_TYPE_KEY_PREFIX),
 				$this->createControllerDefs($supersystemGroupReader, $subsystemGroupReaders, self::CONTROLLERS_KEY),

@@ -38,33 +38,43 @@ class WebConfig {
 	private $mainControllerDefs;
 	private $filterControllerDefs;
 	private $precacheControllerDefs;
+	/**
+	 * @var Supersystem[]
+	 */
 	private $supersystem;
+	/**
+	 * @var Subsystem[]
+	 */
 	private $subsystems;
 	private $dispatchPropertyProviderClassNames;
 	private $dispatchTargetCryptAlgorithm;
 	private $aliasN2nLocales;
-	
+	private $responseDefaultHeaders;
+
 	/**
 	 * @param bool $responseCachingEnabled
 	 * @param bool $responseBrowserCachingEnabled
 	 * @param bool $responseSendEtagAllowed
-	 * @param bool $responseSendLastModifiedAllowed
 	 * @param bool $responseServerPushAllowed
+	 * @param bool $responseSendLastModifiedAllowed
+	 * @param array $responseDefaultHeaders
 	 * @param bool $viewCachingEnabled
 	 * @param string[] $viewClassNames
 	 * @param ControllerDef[] $mainControllerDefs
 	 * @param ControllerDef[] $filterControllerDefs
+	 * @param array $precacheControllerDefs
 	 * @param Supersystem $supersystem
-	 * @param Supersystem[] $subsystems
+	 * @param Subsystem[] $subsystems
 	 * @param string[] $dispatchPropertyProviderClassNames
 	 * @param string $dispatchTargetCryptAlgorithm
 	 * @param N2nLocale[] $aliasN2nLocales
 	 */
 	public function __construct(bool $responseCachingEnabled, bool $responseBrowserCachingEnabled, 
-			bool $responseSendEtagAllowed, bool $responseServerPushAllowed, bool $responseSendLastModifiedAllowed, 
+			bool $responseSendEtagAllowed, bool $responseServerPushAllowed, bool $responseSendLastModifiedAllowed,
+			array $responseDefaultHeaders,
 			bool $viewCachingEnabled, array $viewClassNames, array $mainControllerDefs, array $filterControllerDefs, 
-			array $precacheControllerDefs, Supersystem $supersystem, array $subsystems, 
-			array $dispatchPropertyProviderClassNames, string $dispatchTargetCryptAlgorithm = null, array $aliasN2nLocales) {
+			array $precacheControllerDefs, Supersystem $supersystem, array $subsystems,
+			array $dispatchPropertyProviderClassNames, string $dispatchTargetCryptAlgorithm, array $aliasN2nLocales) {
 		ArgUtils::valArray($subsystems, Subsystem::class);
 				
 		$this->responseCachingEnabled = $responseCachingEnabled;
@@ -72,6 +82,7 @@ class WebConfig {
 		$this->responseSendEtagAllowed = $responseSendEtagAllowed;
 		$this->responseSendLastModifiedAllowed = $responseSendLastModifiedAllowed;
 		$this->responseServerPushAllowed = $responseServerPushAllowed;
+		$this->responseDefaultHeaders = $responseDefaultHeaders;
 		$this->viewCachingEnabled = $viewCachingEnabled;
 		$this->viewClassNames = $viewClassNames;
 		$this->mainControllerDefs = $mainControllerDefs;
@@ -117,6 +128,13 @@ class WebConfig {
 	*/
 	public function isResponseServerPushAllowed() {
 		return $this->responseServerPushAllowed;
+	}
+
+	/**
+	 * @return string[]
+	 */
+	function getResponseDefaultHeaders() {
+		return $this->responseDefaultHeaders;
 	}
 	
 	/**

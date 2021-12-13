@@ -138,12 +138,12 @@ class N2N {
 		$characteristics = array('version' => N2N::VERSION, 'stage' => N2N::getStage(),
 				'hashCode' => $hashCode, 'publicDir' => (string) $this->publicDirPath);
 		if (null !== ($cacheItem = $cacheStore->get(self::CONFIG_CACHE_NAME, $characteristics))) {
-			$this->appConfig = $cacheItem->getData();
-			if ($this->appConfig instanceof AppConfig) {
+			$cachedAppConfig = $cacheItem->getData();
+			if ($cachedAppConfig instanceof AppConfig) {
+				$this->appConfig = $cachedAppConfig;
 				$this->applyConfiguration($n2nCache);
 				return;
-			} 
-			$this->appConfig = null;
+			}
 		}
 		
 
@@ -290,9 +290,8 @@ class N2N {
 	 * @param array $moduleDirPaths
 	 */
 	public static function initialize(string $publicDirPath, string $varDirPath, 
-			N2nCache $n2nCache, ModuleFactory $moduleFactory = null, bool $enableExceptionHandler = true,
-            bool $httpResponsePrevBufferCapture = true) {
-		self::setup($publicDirPath, $varDirPath, $n2nCache, $moduleFactory);
+			N2nCache $n2nCache, ModuleFactory $moduleFactory = null, bool $enableExceptionHandler = true) {
+		self::setup($publicDirPath, $varDirPath, $n2nCache, $moduleFactory, $enableExceptionHandler);
 		
 		self::$n2n->init($n2nCache);
 		self::$initialized = true;
@@ -477,98 +476,98 @@ class N2N {
 		
 		throw new N2nLocaleNotFoundException('N2nLocale not found: ' . $n2nLocaleId);
 	}
-	/**
-	 * 
-	 * @return array
-	 */
-	public static function getN2nLocaleIds() {
-		return array_keys(self::_i()->n2nLocales);
-	}
-	/**
-	 * 
-	 * @param \n2n\l10n\Language $language
-	 * @return array<\n2n\l10n\N2nLocale>
-	 */
-	public static function getN2nLocalesByLanguage(Language $language) {
-		return self::getN2nLocalesByLanguageId($language);
-	}
-	/**
-	 * 
-	 * @param string $languageShort
-	 * @return array<\n2n\l10n\N2nLocale>
-	 */
-	public static function getN2nLocalesByLanguageId($languageShort) {
-		$languageShort = (string) $languageShort;
-		$n2nLocales = array();
-		foreach (self::getN2nLocales() as $n2nLocale) {
-			if ($n2nLocale->getLanguage()->getShort() == $languageShort) {
-				$n2nLocales[] = $n2nLocale;
-			}
-		}
-		return $n2nLocales;
-	}
-	/**
-	 * 
-	 * @param \n2n\l10n\Region $region
-	 * @return array<\n2n\l10n\N2nLocale>
-	 */
-	public static function getN2nLocalesByRegion(Region $region) {
-		return self::getN2nLocalesByLanguageId($region);
-	}
-	/**
-	 * 
-	 * @param string $regionShort
-	 * @return array<\n2n\l10n\N2nLocale>
-	 */
-	public static function getN2nLocalesByRegionShort($regionShort) {
-		$regionShort = (string) $regionShort;
-		$n2nLocales = array();
-		foreach (self::getN2nLocales() as $n2nLocale) {
-			if ($n2nLocale->getRegion()->getShort() == $regionShort) {
-				$n2nLocales[] = $n2nLocale;
-			}
-		}
-		return $n2nLocales;
-	}
-	/**
-	 * 
-	 * @return array<\n2n\l10n\Language>
-	 */
-	public static function getLanguages() {
-		return self::_i()->languages;
-	}
-	/**
-	 * 
-	 * @param string $languageShort
-	 * @return boolean
-	 */
-	public static function hasLanguage($languageShort) {
-		return isset(self::_i()->languages[(string) $languageShort]);
-	}
-	/**
-	 * 
-	 * @return \n2n\core\module\Module[]
-	 */
-	public static function getModules() {
-		return self::_i()->modules;
-	}
-	
-	public static function registerModule(Module $module) {
-		self::_i()->modules[(string) $module] = $module;
-		if (null !== ($appConfigSource = $module->getAppConfigSource())) {
-			self::_i()->combinedConfigSource->putAdditional((string) $module, $appConfigSource);
-		}
-	}
-	
-	public static function unregisterModule($module) {
-		$namespace = (string) $module;
-		unset(self::_i()->modules[$namespace]);		
-		self::_i()->combinedConfigSource->removeAdditionalByKey($namespace);
-	}
-	
-	public static function containsModule($module) {
-		return self::_i()->getN2nContext()->getModuleManager()->containsModuleNs($module);
-	}
+//	/**
+//	 *
+//	 * @return array
+//	 */
+//	public static function getN2nLocaleIds() {
+//		return array_keys(self::_i()->n2nLocales);
+//	}
+//	/**
+//	 *
+//	 * @param \n2n\l10n\Language $language
+//	 * @return array<\n2n\l10n\N2nLocale>
+//	 */
+//	public static function getN2nLocalesByLanguage(Language $language) {
+//		return self::getN2nLocalesByLanguageId($language);
+//	}
+//	/**
+//	 *
+//	 * @param string $languageShort
+//	 * @return array<\n2n\l10n\N2nLocale>
+//	 */
+//	public static function getN2nLocalesByLanguageId($languageShort) {
+//		$languageShort = (string) $languageShort;
+//		$n2nLocales = array();
+//		foreach (self::getN2nLocales() as $n2nLocale) {
+//			if ($n2nLocale->getLanguage()->getShort() == $languageShort) {
+//				$n2nLocales[] = $n2nLocale;
+//			}
+//		}
+//		return $n2nLocales;
+//	}
+//	/**
+//	 *
+//	 * @param \n2n\l10n\Region $region
+//	 * @return array<\n2n\l10n\N2nLocale>
+//	 */
+//	public static function getN2nLocalesByRegion(Region $region) {
+//		return self::getN2nLocalesByLanguageId($region);
+//	}
+//	/**
+//	 *
+//	 * @param string $regionShort
+//	 * @return array<\n2n\l10n\N2nLocale>
+//	 */
+//	public static function getN2nLocalesByRegionShort($regionShort) {
+//		$regionShort = (string) $regionShort;
+//		$n2nLocales = array();
+//		foreach (self::getN2nLocales() as $n2nLocale) {
+//			if ($n2nLocale->getRegion()->getShort() == $regionShort) {
+//				$n2nLocales[] = $n2nLocale;
+//			}
+//		}
+//		return $n2nLocales;
+//	}
+//	/**
+//	 *
+//	 * @return array<\n2n\l10n\Language>
+//	 */
+//	public static function getLanguages() {
+//		return self::_i()->languages;
+//	}
+//	/**
+//	 *
+//	 * @param string $languageShort
+//	 * @return boolean
+//	 */
+//	public static function hasLanguage($languageShort) {
+//		return isset(self::_i()->languages[(string) $languageShort]);
+//	}
+//	/**
+//	 *
+//	 * @return \n2n\core\module\Module[]
+//	 */
+//	public static function getModules() {
+//		return self::_i()->modules;
+//	}
+//
+//	public static function registerModule(Module $module) {
+//		self::_i()->modules[(string) $module] = $module;
+//		if (null !== ($appConfigSource = $module->getAppConfigSource())) {
+//			self::_i()->combinedConfigSource->putAdditional((string) $module, $appConfigSource);
+//		}
+//	}
+//
+//	public static function unregisterModule($module) {
+//		$namespace = (string) $module;
+//		unset(self::_i()->modules[$namespace]);
+//		self::_i()->combinedConfigSource->removeAdditionalByKey($namespace);
+//	}
+//
+//	public static function containsModule($module) {
+//		return self::_i()->getN2nContext()->getModuleManager()->containsModuleNs($module);
+//	}
 	
 // 	public static function getModuleByClassName($className) {
 // 		foreach (self::_i()->modules as $namespace => $module) {
@@ -618,8 +617,13 @@ class N2N {
 		if ($subsystemName === null) {
 			$subsystemName = $request->getSubsystemName();
 		}
-		
-		return self::_i()->contextControllerRegistry->createControllingPlan(
+
+		/**
+		 * @var ControllerRegistry
+		 */
+		$controllerRegistry = self::_i()->n2nContext->lookup(ControllerRegistry::class);
+
+		return $controllerRegistry->createControllingPlan(
 				self::_i()->n2nContext, $request->getCmdPath(), $subsystemName);
 	}
 	
