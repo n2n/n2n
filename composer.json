@@ -29,7 +29,8 @@
 	"require" : {
 		"php" : ">=7.0",
 		"n2n/n2n-composer-module-installer" : "^7.1",
-		"n2n/n2n-config" : "^7.3",
+        "n2n/n2n-config" : "^7.3",
+        "n2n/n2n-context" : "^7.3",
 		"n2n/n2n-l10n" : "^7.3",
 		"n2n/n2n-log4php" : "^7.2.33",
 		"n2n/n2n-mail" : "^7.2.33",
