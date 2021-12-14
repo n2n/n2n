@@ -57,11 +57,13 @@ use n2n\web\dispatch\DispatchContext;
 use n2n\web\http\VarsSession;
 use n2n\core\container\N2nContext;
 use n2n\web\http\BadRequestException;
+use n2n\util\StringUtils;
+use n2n\core\module\UnknownModuleException;
 
 define('N2N_CRLF', "\r\n");
 
 class N2N {
-	const VERSION = '7.2.36';
+	const VERSION = '7.3';
 	const LOG4PHP_CONFIG_FILE = 'log4php.xml'; 
 	const LOG_EXCEPTION_DETAIL_DIR = 'exceptions';
 	const LOG_MAIL_BUFFER_DIR = 'log-mail-buffer';
@@ -570,16 +572,14 @@ class N2N {
 		return self::_i()->getN2nContext()->getModuleManager()->containsModuleNs($module);
 	}
 	
- 	public static function getModuleByClassName($className) {
- 		foreach (self::_i()->modules as $namespace => $module) {
+ 	public static function getModuleByClassName(string $className) {
+ 		foreach (self::_i()->getN2nContext()->getModuleManager()->getModules() as $namespace => $module) {
  			if (StringUtils::startsWith($namespace, $className)) {
  				return $module;
  			}
  		}
 		
- 		throw new ClassNotInAModuleNamespaceException(
- 				SysTextUtils::get('n2n_error_core_class_is_not_in_a_namespace_of_an_installed_module',
- 						array('class' => $className)));
+ 		throw new UnknownModuleException('Class does not belong to any module: ' . $className);
  	}
 	
 	public static function getN2nContext() {
