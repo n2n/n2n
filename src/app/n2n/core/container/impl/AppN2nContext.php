@@ -344,8 +344,10 @@ class AppN2nContext implements N2nContext, ShutdownListener {
 	static function createCopy(N2nContext $n2nContext) {
 		$appN2nContext = new AppN2nContext($n2nContext->getTransactionManager(), $n2nContext->getModuleManager(), 
 				$n2nContext->getAppCache(), $n2nContext->getVarStore(), $n2nContext->lookup(AppConfig::class));
-		
-		$appN2nContext->setLookupManager(new LookupManager($appN2nContext));
+
+		$appN2nContext->setLookupManager(new LookupManager($n2nContext->getLookupManager()->getLookupSession(),
+				$n2nContext->getLookupManager()->getApplicationCacheStore(),
+				$appN2nContext));
 		
 		$appN2nContext->setN2nLocale($n2nContext->getN2nLocale());
 		

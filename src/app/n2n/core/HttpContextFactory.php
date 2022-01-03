@@ -44,7 +44,7 @@ class HttpContextFactory {
 	 * @return \n2n\web\http\HttpContext
 	 */
 	static function createFromAppConfig(AppConfig $appConfig, Request $request, Session $session, N2nContext $n2nContext,
-            ExceptionHandler $exceptionHandler) {
+            ?ExceptionHandler $exceptionHandler) {
 		$generalConfig = $appConfig->general();
 		$webConfig = $appConfig->web();
 		$filesConfig = $appConfig->files();
@@ -79,9 +79,11 @@ class HttpContextFactory {
 		$httpContext->setErrorStatusDefaultViewName($errorConfig->getDefaultErrorViewName()
 				?? (N2N::isDevelopmentModeOn() ? self::DEFAULT_STATUS_DEV_VIEW : self::DEFAULT_STATUS_LIVE_VIEW));
 
-		$prevError = $exceptionHandler->getPrevError();
-		if ($prevError !== null && $appConfig->error()->isStartupDetectBadRequestsEnabled() && $prevError->isBadRequest()) {
-			$httpContext->setPrevStatusException(new BadRequestException($prevError->getMessage(), null, $prevError));
+		if ($exceptionHandler !== null) {
+			$prevError = $exceptionHandler->getPrevError();
+			if ($prevError !== null && $appConfig->error()->isStartupDetectBadRequestsEnabled() && $prevError->isBadRequest()) {
+				$httpContext->setPrevStatusException(new BadRequestException($prevError->getMessage(), null, $prevError));
+			}
 		}
 
         return $httpContext;
