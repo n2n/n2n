@@ -59,6 +59,7 @@ use n2n\core\container\N2nContext;
 use n2n\web\http\BadRequestException;
 use n2n\util\StringUtils;
 use n2n\core\module\UnknownModuleException;
+use n2n\web\http\controller\ControllingPlan;
 
 define('N2N_CRLF', "\r\n");
 
@@ -648,8 +649,15 @@ class N2N {
 			throw new MethodNotAllowedException(Method::HEAD|Method::GET|Method::POST|Method::PUT|Method::OPTIONS|Method::PATCH|Method::DELETE|Method::TRACE);
 		}
 		
+		/**
+		 * @var ControllerRegistry $controllerRegistry
+		 */
 		$controllerRegistry = $n2nContext->lookup(ControllerRegistry::class);
-		$controllerRegistry->createControllingPlan($request->getCmdPath(), $httpContext->getActiveSubsystemRule())->execute();
+		$controllingPlan = $controllerRegistry->createControllingPlan($request->getCmdPath(), $httpContext->getActiveSubsystemRule());
+		$result = $controllingPlan->execute();
+		if (!$result->isSuccessful()) {
+			$controllingPlan->sendStatusView($result->getStatusException());
+		}
 	}
 	
 	public static function invokerControllers(string $subsystemName = null, Path $cmdPath = null) {
