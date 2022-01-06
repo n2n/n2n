@@ -200,8 +200,8 @@ class AppConfigFactory {
 			foreach ($subsystemGroupReader->getScalarArray($attributeName) as $contextPath => $controllerClassName) {
 				if (!strlen($controllerClassName)) continue;
 
-				$subsystemName = $subsystemGroupReader->getString(self::GROUP_KEY);
-				
+				$subsystemName = $subsystemGroupReader->getString(self::GROUP_KEY, false);
+
 				$controllerDefs[] =  $this->createControllerDef($controllerClassName, $subsystemName ?? $subsystemRuleName,
 						$subsystemRuleName, $contextPath);
 			}
