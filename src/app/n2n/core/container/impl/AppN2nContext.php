@@ -188,7 +188,7 @@ class AppN2nContext implements N2nContext, ShutdownListener {
 		$this->n2nLocale = $n2nLocale;
 	}
 
-	function addLookupInjection(string $id, object $obj): void {
+	function putLookupInjection(string $id, object $obj): void {
 		ArgUtils::valType($obj, $id, false, 'obj');
 
 		$this->injectedObjects[$id] = $obj;

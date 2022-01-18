@@ -89,7 +89,7 @@ interface N2nContext extends MagicContext {
 	 * @param object $obj
 	 * @return void
 	 */
-	function addLookupInjection(string $id, object $obj): void;
+	function putLookupInjection(string $id, object $obj): void;
 
 	/**
 	 * @param string $id
