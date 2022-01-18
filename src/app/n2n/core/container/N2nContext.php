@@ -28,6 +28,7 @@ use n2n\core\module\ModuleManager;
 use n2n\web\http\HttpContext;
 use n2n\web\http\HttpContextNotAvailableException;
 use n2n\context\LookupManager;
+use n2n\util\type\ArgUtils;
 
 interface N2nContext extends MagicContext {
 	
@@ -82,4 +83,17 @@ interface N2nContext extends MagicContext {
 	 * @return LookupManager
 	 */
 	public function getLookupManager(): LookupManager;
+
+	/**
+	 * @param string $id
+	 * @param object $obj
+	 * @return void
+	 */
+	function addLookupInjection(string $id, object $obj): void;
+
+	/**
+	 * @param string $id
+	 * @return void
+	 */
+	function removeLookupInjection(string $id): void;
 }

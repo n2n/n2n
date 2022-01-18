@@ -54,6 +54,7 @@ use n2n\persistence\orm\EntityManager;
 use n2n\core\container\PdoPool;
 use n2n\web\http\Session;
 use n2n\util\magic\MagicObjectUnavailableException;
+use n2n\util\type\ArgUtils;
 
 class AppN2nContext implements N2nContext, ShutdownListener {
 	private $transactionManager;
@@ -65,6 +66,7 @@ class AppN2nContext implements N2nContext, ShutdownListener {
 	private $httpContext;
 	private $n2nLocale;
 	private ?LookupManager $lookupManager;
+	private $injectedObjects = [];
 	
 	public function __construct(TransactionManager $transactionManager, ModuleManager $moduleManager, AppCache $appCache, 
 			VarStore $varStore, AppConfig $appConfig) {
@@ -185,7 +187,17 @@ class AppN2nContext implements N2nContext, ShutdownListener {
 	public function setN2nLocale(N2nLocale $n2nLocale) {
 		$this->n2nLocale = $n2nLocale;
 	}
-	
+
+	function addLookupInjection(string $id, object $obj): void {
+		ArgUtils::valType($obj, $id, false, 'obj');
+
+		$this->injectedObjects[$id] = $obj;
+	}
+
+	function removeLookupInjection(string $id): void {
+		unset($this->injectedObjects[$id]);
+	}
+
 	/**
 	 * {@inheritDoc}
 	 * @see \n2n\util\magic\MagicContext::lookup()

@@ -350,7 +350,7 @@ class N2N {
 	}
 	
 	public static function finalize() {
-		foreach(self::$shutdownListeners as $shutdownListener) {
+		foreach (self::$shutdownListeners as $shutdownListener) {
 			$shutdownListener->onShutdown();
 		}
 		
@@ -364,7 +364,7 @@ class N2N {
     		self::$exceptionHandler->checkForFatalErrors();
     		if (!self::$exceptionHandler->isStable()) return;
 	    }
-		
+
 		try {
 			if (!N2N::isInitialized()) return;
 				
