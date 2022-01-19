@@ -209,6 +209,8 @@ class AppN2nContext implements N2nContext, ShutdownListener {
 		
 		// @todo check $required
 		switch ($id) {
+			case isset($this->injectedObjects[$id]):
+				return $this->injectedObjects[$id];
 			case Request::class:
 				try {
 					return $this->getHttpContext()->getRequest();
