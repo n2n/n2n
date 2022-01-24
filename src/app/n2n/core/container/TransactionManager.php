@@ -64,17 +64,23 @@ class TransactionManager extends ObjectAdapter {
 	public function isReadyOnly() {
 		return $this->readOnly;
 	}
-	
+
+	private function ensureTransactionOpen(): void {
+		if ($this->rootTransaction !== null) {
+			return;
+		}
+
+		throw new TransactionStateException('No active transaction.');
+	}
+
 	/**
 	 * @return \n2n\core\container\Transaction
 	 * @throws TransactionStateException if no transaction is open.
 	 */
 	public function getRootTransaction() {
-		if ($this->rootTransaction !== null) {
-			return $this->rootTransaction;
-		}
-		
-		throw new TransactionStateException('No active transaction.');
+		$this->ensureTransactionOpen();
+
+		return $this->rootTransaction;
 	}
 	
 	/**
@@ -215,5 +221,32 @@ class TransactionManager extends ObjectAdapter {
 	
 	public function unregisterCommitListener(CommitListener $commitListener) {
 		unset($this->commitListeners[spl_object_hash($commitListener)]);
+	}
+
+	function preNextCommit(\Closure $callback) {
+		$this->ensureTransactionOpen();
+
+		$commitListener = new ClosureCommitListener();
+		$commitListener->setPreCommitCallback(function () use ($commitListener) {
+			$this->unregisterCommitListener($commitListener);
+		});
+	}
+
+	function postNextCommit(\Closure $callback) {
+		$this->ensureTransactionOpen();
+
+		$commitListener = new ClosureCommitListener();
+		$commitListener->setPostCommitCallback(function () use ($commitListener) {
+			$this->unregisterCommitListener($commitListener);
+		});
+	}
+
+	function failedNextCommit(\Closure $callback) {
+		$this->ensureTransactionOpen();
+
+		$commitListener = new ClosureCommitListener();
+		$commitListener->setCommitFailedCallback(function () use ($commitListener) {
+			$this->unregisterCommitListener($commitListener);
+		});
 	}
 }
