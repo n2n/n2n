@@ -207,7 +207,7 @@ class AppN2nContext implements N2nContext, ShutdownListener {
 			$id = $id->getName();
 		}
 		
-		if (isset($this->injectedObjects[$id]) {
+		if (isset($this->injectedObjects[$id])) {
 			return $this->injectedObjects[$id]; 
 		}
 		
