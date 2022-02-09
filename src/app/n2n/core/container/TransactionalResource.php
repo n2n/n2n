@@ -33,7 +33,7 @@ interface TransactionalResource {
 	
 	/**
 	 * @param Transaction $transaction
-	 * @return boolean if ok true, failed causes the transaction to roll back
+	 * @return boolean if ok true, false causes the transaction to roll back
 	 */
 	public function prepareCommit(Transaction $transaction): bool;
 	

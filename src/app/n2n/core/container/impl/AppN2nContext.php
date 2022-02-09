@@ -366,7 +366,12 @@ class AppN2nContext implements N2nContext, ShutdownListener {
 				$appN2nContext));
 		
 		$appN2nContext->setN2nLocale($n2nContext->getN2nLocale());
-		
+
+		$pdoPool = $appN2nContext->lookup(PdoPool::class);
+		foreach ($n2nContext->lookup(PdoPool::class)->getInitializedPdos() as $puName => $pdo) {
+			$pdoPool->setPdo($puName, $pdo);
+		}
+
 		return $appN2nContext;
 	}
 
