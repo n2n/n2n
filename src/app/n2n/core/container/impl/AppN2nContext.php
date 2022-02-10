@@ -198,6 +198,10 @@ class AppN2nContext implements N2nContext, ShutdownListener {
 		unset($this->injectedObjects[$id]);
 	}
 
+	function clearLookupInjections(): void {
+		$this->injectedObjects = [];
+	}
+
 	/**
 	 * {@inheritDoc}
 	 * @see \n2n\util\magic\MagicContext::lookup()

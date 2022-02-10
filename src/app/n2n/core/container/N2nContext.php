@@ -96,4 +96,9 @@ interface N2nContext extends MagicContext {
 	 * @return void
 	 */
 	function removeLookupInjection(string $id): void;
+
+	/**
+	 * @return void
+	 */
+	function clearLookupInjections(): void;
 }
