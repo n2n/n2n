@@ -65,7 +65,7 @@ class TransactionManager extends ObjectAdapter {
 		return $this->readOnly;
 	}
 
-	private function ensureTransactionOpen(): void {
+	function ensureTransactionOpen(): void {
 		if ($this->rootTransaction !== null) {
 			return;
 		}
@@ -223,30 +223,4 @@ class TransactionManager extends ObjectAdapter {
 		unset($this->commitListeners[spl_object_hash($commitListener)]);
 	}
 
-	function preNextCommit(\Closure $callback) {
-		$this->ensureTransactionOpen();
-
-		$commitListener = new ClosureCommitListener();
-		$commitListener->setPreCommitCallback(function () use ($commitListener) {
-			$this->unregisterCommitListener($commitListener);
-		});
-	}
-
-	function postNextCommit(\Closure $callback) {
-		$this->ensureTransactionOpen();
-
-		$commitListener = new ClosureCommitListener();
-		$commitListener->setPostCommitCallback(function () use ($commitListener) {
-			$this->unregisterCommitListener($commitListener);
-		});
-	}
-
-	function failedNextCommit(\Closure $callback) {
-		$this->ensureTransactionOpen();
-
-		$commitListener = new ClosureCommitListener();
-		$commitListener->setCommitFailedCallback(function () use ($commitListener) {
-			$this->unregisterCommitListener($commitListener);
-		});
-	}
 }

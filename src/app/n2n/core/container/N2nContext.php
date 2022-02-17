@@ -29,9 +29,15 @@ use n2n\web\http\HttpContext;
 use n2n\web\http\HttpContextNotAvailableException;
 use n2n\context\LookupManager;
 use n2n\util\type\ArgUtils;
+use n2n\core\util\N2nUtil;
 
 interface N2nContext extends MagicContext {
-	
+
+	/**
+	 * @return N2nUtil
+	 */
+	function util(): N2nUtil;
+
 	/**
 	 * @return \n2n\core\container\TransactionManager
 	 */

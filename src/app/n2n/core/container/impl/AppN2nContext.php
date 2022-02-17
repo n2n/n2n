@@ -55,6 +55,7 @@ use n2n\core\container\PdoPool;
 use n2n\web\http\Session;
 use n2n\util\magic\MagicObjectUnavailableException;
 use n2n\util\type\ArgUtils;
+use n2n\core\util\N2nUtil;
 
 class AppN2nContext implements N2nContext, ShutdownListener {
 	private $transactionManager;
@@ -77,7 +78,11 @@ class AppN2nContext implements N2nContext, ShutdownListener {
 		$this->appConfig = $appConfig;
 		$this->n2nLocale = N2nLocale::getDefault();
 	}
-	
+
+	function util(): N2nUtil {
+		return new N2nUtil($this);
+	}
+
 	/**
 	 * @param LookupManager $lookupManager
 	 */
@@ -248,6 +253,8 @@ class AppN2nContext implements N2nContext, ShutdownListener {
 				}
 			case N2nContext::class:
 				return $this;
+			case N2nUtil::class:
+				return $this->util();
 			case LookupManager::class:
 				return $this->getLookupManager();
 			case N2nLocale::class:
