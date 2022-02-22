@@ -78,27 +78,35 @@ class ContainerUtil {
 			$tm->unregisterCommitListener($commitListener);
 		});
 
+		$tm->registerCommitListener($commitListener);
+
 		return $commitListener;
 	}
 
 	function preCommit(\Closure $callback) {
 		$mmi = $this->createMmiFromClosure($callback);
-		$this->createClosureCommitListener()->setPreCommitCallback(function () use ($mmi) {
-			$mmi->invoike();
+		$commitListener = $this->createClosureCommitListener();
+		$commitListener->setPreCommitCallback(function () use ($commitListener, $mmi) {
+			$this->getTransactionManager()->unregisterCommitListener($commitListener);
+			$mmi->invoke();
 		});
 	}
 
 	function postCommit(\Closure $callback) {
 		$mmi = $this->createMmiFromClosure($callback);
-		$this->createClosureCommitListener()->setPostCommitCallback(function () use ($mmi) {
-			$mmi->invoike();
+		$commitListener = $this->createClosureCommitListener();
+		$commitListener->setPostCommitCallback(function () use ($commitListener, $mmi) {
+			$this->getTransactionManager()->unregisterCommitListener($commitListener);
+			$mmi->invoke();
 		});
 	}
 
 	function failedCommit(\Closure $callback) {
 		$mmi = $this->createMmiFromClosure($callback);
-		$this->createClosureCommitListener()->setCommitFailedCallback(function () use ($mmi) {
-			$mmi->invoike();
+		$commitListener = $this->createClosureCommitListener();
+		$commitListener->setCommitFailedCallback(function () use ($commitListener, $mmi) {
+			$this->getTransactionManager()->unregisterCommitListener($commitListener);
+			$mmi->invoke();
 		});
 	}
 }

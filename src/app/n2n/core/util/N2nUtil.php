@@ -25,18 +25,23 @@ use n2n\core\container\N2nContext;
 
 class N2nUtil {
 
-	function __construct(private N2nContext $n2NContext) {
-
+	/**
+	 * @param N2nContext $n2nContext
+	 */
+	function __construct(private N2nContext $n2nContext) {
 	}
 
 	/**
 	 * @return N2nContext
 	 */
-	public function getN2nContext(): N2nContext {
+	public function getN2NContext(): N2nContext {
 		return $this->n2nContext;
 	}
 
+	/**
+	 * @return ContainerUtil
+	 */
 	function container(): ContainerUtil {
-		return new ContainerUtil($this->n2NContext);
+		return new ContainerUtil($this->n2nContext);
 	}
 }

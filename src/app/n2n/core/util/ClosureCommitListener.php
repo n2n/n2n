@@ -23,6 +23,7 @@ namespace n2n\core\util;
 
 use n2n\core\container\CommitFailedException;
 use n2n\core\container\Transaction;
+use n2n\core\container\CommitListener;
 
 class ClosureCommitListener implements CommitListener {
 
@@ -108,7 +109,7 @@ class ClosureCommitListener implements CommitListener {
 			($this->postCommitCallback)($transaction);
 		}
 
-		$this->callFinally();
+		$this->callFinally($transaction);
 	}
 
 	/**
@@ -119,6 +120,6 @@ class ClosureCommitListener implements CommitListener {
 			($this->commitFailedCallback)($transaction);
 		}
 
-		$this->callFinally();
+		$this->callFinally($transaction);
 	}
 }
