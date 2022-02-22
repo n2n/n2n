@@ -34,6 +34,7 @@ use n2n\web\http\controller\ControllerContext;
 use n2n\web\ui\ViewFactory;
 use n2n\util\io\IoException;
 use n2n\util\type\TypeUtils;
+use PHPUnit\Util\Exception;
 
 // define('N2N_EXCEPTION_HANDLING_PHP_SEVERITIES', E_ALL | E_STRICT);
 // define('N2N_EXCEPTION_HANDLING_PHP_STRICT_ATTITUTE_SEVERITIES', E_STRICT | E_WARNING | E_NOTICE | E_CORE_WARNING | E_USER_WARNING | E_USER_NOTICE | E_DEPRECATED);
@@ -69,6 +70,7 @@ class ExceptionHandler {
 	private $logMailBufferDirPath;
 	private $logStatusExceptionsEnabled = true;
 	private $logExcludedHttpStatus = array();
+	private ?LogMailer $logMailer = null;
 	private $logger;
 	
 	private $detectStartupErrorsEnabled = true;
@@ -418,7 +420,7 @@ class ExceptionHandler {
 	 * 
 	 * @param \Throwable $e
 	 */
-	private function log(\Throwable $e) {
+	private function log(\Throwable $e, bool $preventMail = false) {
 		if ($e instanceof StatusException && (!$this->logStatusExceptionsEnabled 
 				|| in_array($e->getStatus(), $this->logExcludedHttpStatus))) {
 			return;
@@ -427,10 +429,10 @@ class ExceptionHandler {
 		$simpleMessage = $this->createSimpleLogMessage($e);
 		error_log($simpleMessage, 0);
 		
-		if (isset($this->logDetailDirPath) || isset($this->logMailRecipient)) {
+		if (isset($this->logDetailDirPath) || (!$preventMail && isset($this->logMailRecipient))) {
 			$detailMessage = $this->createDetailLogMessage($e);
-			
-			if (isset($this->logMailRecipient)) {
+
+			if (!$preventMail && isset($this->logMailRecipient)) {
 				$this->sendLogMail($e, $detailMessage);
 			}
 			
@@ -473,19 +475,37 @@ class ExceptionHandler {
 			
 			if ($times == 0) return;
 		}
-		
-		$header = 'From: ' . $this->logMailAddresser . "\r\n" .
-				'Reply-To: ' . $this->logMailAddresser  . "\r\n" .
-				'X-Mailer: PHP/' . phpversion();
-		
+
 		$subject = get_class($e) . ' occurred';
 		if ($times > 1) {
 			$subject .= ' ' . $times . ' times';
 		}
+
+		if ($this->logMailer !== null) {
+			try {
+				$this->logMailer->sendLogMail($this->logMailAddresser, $this->logMailRecipient, $subject,
+						$detailMessage);
+			} catch (\Throwable $t) {
+				$this->log($t, true);
+			}
+			return;
+		}
+
+		$header = 'From: ' . $this->logMailAddresser . "\r\n" .
+				'Reply-To: ' . $this->logMailAddresser  . "\r\n" .
+				'X-Mailer: PHP/' . phpversion();
 		
 		@mail($this->logMailRecipient, $subject, $detailMessage, $header);
 	}
-	
+
+	function setLogMailer(?LogMailer $logMailer) {
+		$this->logMailer = $logMailer;
+	}
+
+	function getLogMailer(): ?ExceptionMailer {
+		return $this->logMailer;
+	}
+
 	private function createLoggingFailedException(\Throwable $reasonE) {
 		throw new LoggingFailedException('Exception logging failed.', 0, $reasonE);
 	}

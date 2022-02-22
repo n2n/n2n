@@ -60,6 +60,7 @@ use n2n\web\http\BadRequestException;
 use n2n\util\StringUtils;
 use n2n\core\module\UnknownModuleException;
 use n2n\web\http\controller\ControllingPlan;
+use n2n\core\err\LogMailer;
 
 define('N2N_CRLF', "\r\n");
 
@@ -264,13 +265,18 @@ class N2N {
 	
 	
 	public static function setup(string $publicDirPath, string $varDirPath,
-	       N2nCache $n2nCache, ModuleFactory $moduleFactory = null, bool $enableExceptionHandler = true) {
+			N2nCache $n2nCache, ModuleFactory $moduleFactory = null, bool $enableExceptionHandler = true,
+			LogMailer $logMailer = null) {
 		mb_internal_encoding(self::CHARSET);
 		// 		ini_set('default_charset', self::CHARSET);
 		
 		if ($enableExceptionHandler) {
     		self::$exceptionHandler = new ExceptionHandler(N2N::isDevelopmentModeOn());
     		register_shutdown_function(array('n2n\core\N2N', 'shutdown'));
+
+			if ($logMailer !== null) {
+				self::$exceptionHandler->setLogMailer($logMailer);
+			}
 		}
 		
 		self::$n2n = new N2N(new FsPath(IoUtils::realpath($publicDirPath)),
@@ -293,8 +299,9 @@ class N2N {
 	 * @param array $moduleDirPaths
 	 */
 	public static function initialize(string $publicDirPath, string $varDirPath, 
-			N2nCache $n2nCache, ModuleFactory $moduleFactory = null, bool $enableExceptionHandler = true) {
-		self::setup($publicDirPath, $varDirPath, $n2nCache, $moduleFactory, $enableExceptionHandler);
+			N2nCache $n2nCache, ModuleFactory $moduleFactory = null, bool $enableExceptionHandler = true,
+			LogMailer $logMailer = null) {
+		self::setup($publicDirPath, $varDirPath, $n2nCache, $moduleFactory, $enableExceptionHandler, $logMailer);
 		
 		self::$n2n->init($n2nCache);
 		self::$initialized = true;
