@@ -45,7 +45,7 @@ class ContainerUtil {
 	 */
 	private function createMmiFromClosure(\Closure $closure) {
 		$mmi = new MagicMethodInvoker($this->n2nContext);
-		$mmi->setMethod(new \ReflectionFunction($callback));
+		$mmi->setMethod(new \ReflectionFunction($closure));
 		return $mmi;
 	}
 
