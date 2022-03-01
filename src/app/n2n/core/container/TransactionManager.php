@@ -177,10 +177,12 @@ class TransactionManager extends ObjectAdapter {
 
 			$this->reset();
 		} catch (CommitFailedException $e) {
+			$this->reset();
+
 			$tsm = array();
 			foreach ($this->commitListeners as $commitListener) {
 				try {
-					$commitListener->commitFailed($this->rootTransaction, $e);
+					$commitListener->commitFailed($transaction, $e);
 				} catch (\Throwable $t) {
 					$tsm[] = get_class($t) . ': ' . $t->getMessage();
 				}
