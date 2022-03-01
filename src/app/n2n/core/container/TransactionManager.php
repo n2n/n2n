@@ -163,15 +163,19 @@ class TransactionManager extends ObjectAdapter {
 
 	private function commit() {
 		$this->tRef++;
+
+		$transaction = $this->rootTransaction;
 		
 		foreach ($this->commitListeners as $commitListener) {
-			$commitListener->preCommit($this->rootTransaction);
+			$commitListener->preCommit($transaction);
 		}
 		
 		try {
 			foreach ($this->transactionalResources as $resource) {
-				$resource->commit($this->rootTransaction);
+				$resource->commit($transaction);
 			}
+
+			$this->reset();
 		} catch (CommitFailedException $e) {
 			$tsm = array();
 			foreach ($this->commitListeners as $commitListener) {
@@ -189,15 +193,16 @@ class TransactionManager extends ObjectAdapter {
 			throw new CommitFailedException('Commit failed with CommitListener exceptions: ' . implode(', ', $tsm), 
 					0, $e);
 		}
+
 		
 		foreach ($this->commitListeners as $commitListener) {
-			$commitListener->postCommit($this->rootTransaction);
+			$commitListener->postCommit($transaction);
 		}
 	}
 
 	private function rollBack() {
 		$this->tRef++;
-		
+
 		foreach ($this->transactionalResources as $listener) {
 			$listener->rollBack($this->rootTransaction);
 		}

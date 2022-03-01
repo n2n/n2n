@@ -414,7 +414,7 @@ class ExceptionHandler {
 	}
 	/**
 	 * Logs the passed Exception. This includes a mail and error info file if it is enabled in 
-	 * the app.ini. A log entry is also sent to log4php. If logging failed this method must throw 
+	 * the app.ini. A log entry is also sent to log4php. If logging failed this method must not throw
 	 * any exceptions. Exceptions must be registered in the 
 	 * {@link ExceptionHandler::$pendingLogExceptions} property.
 	 * 
@@ -486,7 +486,7 @@ class ExceptionHandler {
 				$this->logMailer->sendLogMail($this->logMailAddresser, $this->logMailRecipient, $subject,
 						$detailMessage);
 			} catch (\Throwable $t) {
-				$this->log($t, true);
+				$this->pendingLogException[] = $t;
 			}
 			return;
 		}
