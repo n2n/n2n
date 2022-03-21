@@ -252,6 +252,7 @@ class ExceptionHandler {
 			$this->dispatchException($throwable);
 		}
 		$this->checkForPendingLogExceptions();
+		$this->renderException();
 	}
 	
 	public function checkForStartupErrors() {
@@ -305,6 +306,7 @@ class ExceptionHandler {
 		}
 
 		$this->checkForPendingLogExceptions();
+		$this->renderException();
 	}
 	/**
 	 * Possible exceptions which were thrown while logging will be handled. 
@@ -483,8 +485,7 @@ class ExceptionHandler {
 
 		if ($this->logMailer !== null) {
 			try {
-				$this->logMailer->sendLogMail($this->logMailAddresser, $this->logMailRecipient, $subject,
-						$detailMessage);
+				$this->logMailer->sendLogMail($this->logMailAddresser, $this->logMailRecipient, $subject, $detailMessage);
 			} catch (\Throwable $t) {
 				$this->pendingLogException[] = $t;
 			}
@@ -619,19 +620,22 @@ class ExceptionHandler {
 	 */
 	private function dispatchException(\Throwable $t) {
 		array_unshift($this->dispatchingThrowables, $t);
+	}
+
+	private function renderException() {
 		$numDispatchingThrowables = sizeof($this->dispatchingThrowables);
-		
-		if (!N2N::isInitialized() || 2 < $numDispatchingThrowables || (2 == $numDispatchingThrowables 
-				&& !($this->dispatchingThrowables[1] instanceof StatusException)) || !$this->stable) {
+
+		if (!N2N::isInitialized() || 2 < $numDispatchingThrowables || (2 == $numDispatchingThrowables
+						&& !($this->dispatchingThrowables[1] instanceof StatusException)) || !$this->stable) {
 			if (!isset($_SERVER['HTTP_HOST'])) {
 				$this->renderExceptionConsoleInfo($t);
 				return;
 			}
-			
+
 			$this->renderFatalExceptionsHtmlInfo($this->dispatchingThrowables);
 			return;
 		}
-		
+
 		if (!N2N::isHttpContextAvailable()) {
 			$this->renderExceptionConsoleInfo($t);
 			return;
@@ -643,6 +647,7 @@ class ExceptionHandler {
 			$this->handleThrowable($t);
 		}
 	}
+
 	/**
 	 * prints fatal exception infos in html 
 	 * 
