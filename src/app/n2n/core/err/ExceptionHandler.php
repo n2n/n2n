@@ -625,6 +625,10 @@ class ExceptionHandler {
 	private function renderException() {
 		$numDispatchingThrowables = sizeof($this->dispatchingThrowables);
 
+		if ($numDispatchingThrowables === 0) {
+			return;
+		}
+
 		if (!N2N::isInitialized() || 2 < $numDispatchingThrowables || (2 == $numDispatchingThrowables
 						&& !($this->dispatchingThrowables[1] instanceof StatusException)) || !$this->stable) {
 			if (!isset($_SERVER['HTTP_HOST'])) {
@@ -635,6 +639,8 @@ class ExceptionHandler {
 			$this->renderFatalExceptionsHtmlInfo($this->dispatchingThrowables);
 			return;
 		}
+
+		$t = $this->dispatchingThrowables[0];
 
 		if (!N2N::isHttpContextAvailable()) {
 			$this->renderExceptionConsoleInfo($t);
