@@ -690,7 +690,7 @@ class ExceptionHandler {
 				. '<body>' . "\r\n"
 				. '<h1>Fatal Error occurred</h1>' . "\r\n";
 		
-		if (N2N::isLiveStageOn()) {
+		if (!N2N::isDevelopmentModeOn()) {
 			echo '<p>Webmaster was informed. Please try later again.</p>' . "\r\n";
 		} else {
 			$i = 0;
