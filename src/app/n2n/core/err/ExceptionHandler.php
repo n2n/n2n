@@ -528,7 +528,7 @@ class ExceptionHandler {
 
 		$previousE = $e->getPrevious();
 		if ($previousE !== null) {
-			$message .= ' <<<< ' . $this->createSimpleLogMessage($e);
+			$message .= ' <<<< ' . $this->createSimpleLogMessage($previousE);
 		}
 
 		return $message;
