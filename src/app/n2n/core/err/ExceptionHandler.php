@@ -521,6 +521,12 @@ class ExceptionHandler {
 		if ($e instanceof \ErrorException || $e instanceof \Error) {
 			$message .= ' in ' . $e->getFile() . ' on line ' . $e->getLine();
 		}
+
+		$previousE = $e->getPrevious();
+		if ($previousE !== null) {
+			$message .= ' <<<< ' . $this->createSimpleLogMessage($e);
+		}
+		
 		return $message;
 	}
 	/**
