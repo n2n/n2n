@@ -428,7 +428,7 @@ class ExceptionHandler {
 			return;
 		}
 		
-		$simpleMessage = $this->createSimpleLogMessage($e);
+		$simpleMessage = $this->createSimpleLogMessage($e, true);
 		error_log($simpleMessage, 0);
 		
 		if (isset($this->logDetailDirPath) || (!$preventMail && isset($this->logMailRecipient))) {
@@ -516,11 +516,21 @@ class ExceptionHandler {
 	 * @param \Exception $e
 	 * @return string short description
 	 */
-	private function createSimpleLogMessage(\Throwable $e) {
+	private function createSimpleLogMessage(\Throwable $e, bool $previousIncluded = false) {
 		$message = get_class($e) . ': ' . $e->getMessage();
 		if ($e instanceof \ErrorException || $e instanceof \Error) {
 			$message .= ' in ' . $e->getFile() . ' on line ' . $e->getLine();
 		}
+
+		if (!$previousIncluded) {
+			return $message;
+		}
+
+		$previousE = $e->getPrevious();
+		if ($previousE !== null) {
+			$message .= ' <<<< ' . $this->createSimpleLogMessage($previousE);
+		}
+
 		return $message;
 	}
 	/**
@@ -680,7 +690,7 @@ class ExceptionHandler {
 				. '<body>' . "\r\n"
 				. '<h1>Fatal Error occurred</h1>' . "\r\n";
 		
-		if (N2N::isLiveStageOn()) {
+		if (!N2N::isDevelopmentModeOn()) {
 			echo '<p>Webmaster was informed. Please try later again.</p>' . "\r\n";
 		} else {
 			$i = 0;
