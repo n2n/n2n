@@ -107,4 +107,9 @@ interface N2nContext extends MagicContext {
 	 * @return void
 	 */
 	function clearLookupInjections(): void;
+
+	/**
+	 * @return void
+	 */
+	function finalize(): void;
 }
