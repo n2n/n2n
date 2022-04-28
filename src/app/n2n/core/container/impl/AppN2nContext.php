@@ -351,8 +351,12 @@ class AppN2nContext implements N2nContext, ShutdownListener {
 
 
     function finalize(): void {
-        if ($this->lookupManager !== null) {
-            $this->lookupManager->shutdown();
+		if ($this->lookupManager !== null) {
+			if ($this->lookupManager->contains(PdoPool::class)) {
+				$this->lookupManager->lookup(PdoPool::class)->clear();
+			}
+
+			$this->lookupManager->shutdown();
         }
     }
 

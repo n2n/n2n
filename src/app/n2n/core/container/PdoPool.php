@@ -35,6 +35,7 @@ use n2n\core\config\OrmConfig;
 use n2n\persistence\Pdo;
 use n2n\persistence\UnknownPersistenceUnitException;
 use n2n\persistence\PdoPoolListener;
+use n2n\persistence\orm\EntityManagerFactory;
 
 class PdoPool implements ThreadScoped {
 	const DEFAULT_DS_NAME = 'default';
@@ -62,7 +63,19 @@ class PdoPool implements ThreadScoped {
 		$this->transactionManager = $n2nContext->getTransactionManager();
 		$this->magicContext = $n2nContext;
 	}
-	
+
+	function clear() {
+		$entityManagerFactories = $this->entityManagerFactories;
+
+		$this->dbhs = [];
+		$this->dbhPoolListeners = [];
+		$this->entityManagerFactories = [];
+
+		foreach ($entityManagerFactories as $entityManagerFactory) {
+			$entityManagerFactory->clear();
+		}
+	}
+
 	/**
 	 * @return TransactionManager
 	 */
@@ -158,6 +171,7 @@ class PdoPool implements ThreadScoped {
 	
 		return $this->entityManagerFactories[$persistenceUnitName];
 	}
+
 	/**
 	 * @param Pdo $dbh
 	 * @return EntityManager
