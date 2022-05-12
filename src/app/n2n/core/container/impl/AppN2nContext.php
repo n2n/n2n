@@ -357,6 +357,7 @@ class AppN2nContext implements N2nContext, ShutdownListener {
 			}
 
 			$this->lookupManager->shutdown();
+			$this->lookupManager->clear();
         }
     }
 
