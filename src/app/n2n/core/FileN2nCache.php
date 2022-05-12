@@ -100,6 +100,8 @@ class FileAppCache implements AppCache {
 		$dirFsPath = $this->dirFsPath->ext(VarStore::namespaceToDirName($namespace));
 		if (!$dirFsPath->isDir()) {
 			$dirFsPath->mkdirs($this->dirPerm);
+			// chmod after mkdirs because of possible umask restrictions.
+			$dirFsPath->chmod($this->dirPerm);
 		}
 		
 		return new FileCacheStore($dirFsPath, $this->dirPerm, $this->filePerm);
