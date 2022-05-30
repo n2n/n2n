@@ -76,7 +76,7 @@ class GeneralConfig {
 				LoggerLevel::getLevelWarn()->__toString(), LoggerLevel::getLevelError()->__toString(),	
 				LoggerLevel::getLevelFatal()->__toString(), LoggerLevel::getLevelOff()->__toString());
 		// @todo how to determine default loglevel
-		return LoggerLevel::toLevel($this->applicationLogLevel, LoggerLevel::getLevelAll());
+		return LoggerLevel::toLevel($this->applicationLogLevel ?? LoggerLevel::ALL, LoggerLevel::getLevelAll());
 	}
 	/**
 	 * @return array
