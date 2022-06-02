@@ -30,7 +30,6 @@ use n2n\reflection\ReflectionUtils;
 use n2n\web\http\HttpContextNotAvailableException;
 use n2n\core\module\UnknownModuleException;
 use n2n\l10n\DynamicTextCollection;
-use n2n\reflection\magic\MagicUtils;
 use n2n\context\LookupFailedException;
 use n2n\core\config\AppConfig;
 use n2n\core\VarStore;
