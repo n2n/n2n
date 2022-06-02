@@ -19,376 +19,298 @@
  * Bert Hofmänner.......: Idea, Frontend UI, Community Leader, Marketing
  * Thomas Günther.......: Developer, Hangar
  */
-namespace n2n\core\container\impl;
+namespace n2n\test;
 
-use n2n\core\ShutdownListener;
-use n2n\web\http\Request;
-use n2n\web\http\Response;
-use n2n\l10n\N2nLocale;
-use n2n\context\LookupManager;
-use n2n\reflection\ReflectionUtils;
-use n2n\web\http\HttpContextNotAvailableException;
-use n2n\core\module\UnknownModuleException;
-use n2n\l10n\DynamicTextCollection;
-use n2n\reflection\magic\MagicUtils;
-use n2n\context\LookupFailedException;
-use n2n\core\config\AppConfig;
-use n2n\core\VarStore;
-use n2n\core\container\N2nContext;
-use n2n\core\container\TransactionManager;
-use n2n\core\module\ModuleManager;
 use n2n\web\http\HttpContext;
-use n2n\core\container\AppCache;
-use n2n\util\ex\IllegalStateException;
-use n2n\core\config\GeneralConfig;
+use n2n\core\HttpContextFactory;
+use n2n\web\http\SimpleRequest;
+use n2n\core\N2N;
+use n2n\util\uri\Query;
+use n2n\web\http\Method;
+use n2n\util\uri\Url;
+use n2n\web\http\controller\ControllerRegistry;
+use n2n\core\container\impl\AppN2nContext;
+use n2n\web\http\Response;
+use n2n\util\StringUtils;
+use n2n\core\container\N2nContext;
+use n2n\core\config\AppConfig;
 use n2n\core\config\WebConfig;
-use n2n\core\config\MailConfig;
-use n2n\core\config\IoConfig;
-use n2n\core\config\FilesConfig;
-use n2n\core\config\ErrorConfig;
-use n2n\core\config\DbConfig;
-use n2n\core\config\OrmConfig;
-use n2n\core\config\N2nLocaleConfig;
-use n2n\persistence\orm\EntityManagerFactory;
-use n2n\persistence\orm\EntityManager;
+use n2n\util\type\CastUtils;
+use n2n\web\http\SimpleSession;
 use n2n\core\container\PdoPool;
-use n2n\web\http\Session;
-use n2n\util\magic\MagicObjectUnavailableException;
+use n2n\web\http\UploadDefinition;
 use n2n\util\type\ArgUtils;
-use n2n\core\util\N2nUtil;
+use n2n\util\io\fs\FsPath;
+use n2n\io\managed\FileSource;
+use n2n\io\managed\impl\FsFileSource;
+use n2n\util\io\IoUtils;
+use n2n\reflection\magic\MagicMethodInvoker;
+use n2n\util\cache\impl\EphemeralCacheStore;
+use n2n\context\config\SimpleLookupSession;
 
-class AppN2nContext implements N2nContext, ShutdownListener {
-	private $transactionManager;
-	private $moduleManager;
-	private $appCache;
-	private $varStore;
-	private $appConfig;
-	private $moduleConfigs = array();
+class HttpTestEnv {
+
+	/**
+	 * @var N2nContext
+	 */
+	private $n2nContext;
+
+	/**
+	 * @param N2nContext $n2nContext
+	 */
+	function __construct(N2nContext $n2nContext) {
+		$this->n2nContext = $n2nContext;
+	}
+
+	/**
+	 * @param string $subsystem
+	 * @param Url $contextUrl
+	 * @return TestRequest
+	 */
+	function newRequest($subsystemName = null, Url $contextUrl = null) {
+		if ($contextUrl === null) {
+			$contextUrl = Url::create('https://www.test-url.ch/');
+		}
+
+		$request = new SimpleRequest($contextUrl);
+		$request->setN2nLocale($this->n2nContext->getN2nLocale());
+
+		$appN2nContext = AppN2nContext::createCopy($this->n2nContext, new SimpleLookupSession(), new EphemeralCacheStore());
+		$httpContext = HttpContextFactory::createFromAppConfig(N2N::getAppConfig(), $request, new SimpleSession(),$appN2nContext, null);
+
+
+		$appN2nContext->setHttpContext($httpContext);
+		if ($subsystemName !== null) {
+			$httpContext->setActiveSubsystemRule($httpContext->findBestSubsystemRuleBySubsystemAndN2nLocale($subsystemName));
+		}
+
+//		$pdoPool = $appN2nContext->lookup(PdoPool::class);
+//		foreach ($this->n2nContext->lookup(PdoPool::class)->getInitializedPdos() as $puName => $pdo) {
+//			$pdoPool->setPdo($puName, $pdo);
+//		}
+
+		return new TestRequest($httpContext, $request);
+	}
+
+	/**
+	 * @param FsPath $fsPath
+	 * @return UploadDefinition
+	 */
+	function newUploadDefinitionFromFsPath(FsPath $fsPath) {
+		$tmpFile = tempnam(sys_get_temp_dir(), 'n2n-test');
+		IoUtils::putContents($tmpFile, IoUtils::getContents((string) $fsPath));
+
+		return new UploadDefinition(UPLOAD_ERR_OK, $fsPath->getName(), $tmpFile,
+				mime_content_type((string) $fsPath), $fsPath->getSize());
+	}
+}
+
+class TestRequest {
+	/**
+	 * @var HttpContext
+	 */
 	private $httpContext;
-	private $n2nLocale;
-	private ?LookupManager $lookupManager;
-	private $injectedObjects = [];
-	
-	public function __construct(TransactionManager $transactionManager, ModuleManager $moduleManager, AppCache $appCache, 
-			VarStore $varStore, AppConfig $appConfig) {
-		$this->transactionManager = $transactionManager;
-		$this->moduleManager = $moduleManager;
-		$this->appCache = $appCache;
-		$this->varStore = $varStore;
-		$this->appConfig = $appConfig;
-		$this->n2nLocale = N2nLocale::getDefault();
-	}
+	/**
+	 * @var SimpleRequest
+	 */
+	private SimpleRequest $simpleRequest;
 
-	function util(): N2nUtil {
-		return new N2nUtil($this);
-	}
-
-	/**
-	 * @param LookupManager $lookupManager
-	 */
-	public function setLookupManager(LookupManager $lookupManager) {
-		$this->lookupManager = $lookupManager;
-	}
-	
-	/**
-	 * @throws IllegalStateException
-	 * @return \n2n\context\LookupManager
-	 */
-	public function getLookupManager(): LookupManager {
-		if ($this->lookupManager !== null) {
-			return $this->lookupManager;
-		}
-		
-		throw new IllegalStateException('No LookupManager defined.');
-	}
-
-	/**
-	 * {@inheritDoc}
-	 * @see \n2n\core\container\N2nContext::getTransactionManager()
-	 */
-	public function getTransactionManager(): TransactionManager {
-		return $this->transactionManager;
-	}
-	
-	/**
-	 * {@inheritDoc}
-	 * @see \n2n\core\container\N2nContext::getModuleManager()
-	 */
-	public function getModuleManager(): ModuleManager {
-		return $this->moduleManager;
-	}
-	
-	/**
-	 * {@inheritDoc}
-	 * @see \n2n\core\container\N2nContext::getModuleConfig($namespace)
-	 */
-	public function getModuleConfig(string $namespace) {
-		if (array_key_exists($namespace, $this->moduleConfigs)) {
-			return $this->moduleConfigs[$namespace];
-		}
-		
-		$module = $this->moduleManager->getModuleByNs($namespace);
-		if ($module->hasConfigDescriber()) {
-			return $this->moduleConfigs[$namespace] = $module->createConfigDescriber($this)->buildCustomConfig();
-		}
-		
-		return $this->moduleConfigs[$namespace] = null;
-	}
-	
-	/**
-	 * {@inheritDoc}
-	 * @see \n2n\core\container\N2nContext::isHttpContextAvailable()
-	 */
-	public function isHttpContextAvailable(): bool {
-		return $this->httpContext !== null;
-	}
-	
-	/**
-	 * {@inheritDoc}
-	 * @see \n2n\core\container\N2nContext::getHttpContext()
-	 */
-	public function getHttpContext(): HttpContext {
-		if ($this->httpContext !== null) {
-			return $this->httpContext;
-		}
-		
-		throw new HttpContextNotAvailableException();
-	}
-	
 	/**
 	 * @param HttpContext $httpContext
 	 */
-	public function setHttpContext(HttpContext $httpContext = null) {
+	function __construct(HttpContext $httpContext, SimpleRequest $simpleRequest) {
 		$this->httpContext = $httpContext;
-	}
-	
-	/**
-	 * {@inheritDoc}
-	 * @see \n2n\core\container\N2nContext::getVarStore()
-	 */
-	public function getVarStore(): VarStore {
-		return $this->varStore;
+		$this->simpleRequest = $simpleRequest;
 	}
 
 	/**
-	 * {@inheritDoc}
-	 * @see \n2n\core\container\N2nContext::getAppCache()
+	 * @param \Closure $closure
+	 * @return $this
+	 * @throws \ReflectionException
 	 */
-	public function getAppCache(): AppCache {
-		return $this->appCache;
-	}
-	
-	/**
-	 * @return N2nLocale
-	 */
-	public function getN2nLocale(): N2nLocale {
-		return $this->n2nLocale;
-	}
-	
-	/**
-	 * {@inheritDoc}
-	 * @see \n2n\core\container\N2nContext::setN2nLocale($n2nLocale)
-	 */
-	public function setN2nLocale(N2nLocale $n2nLocale) {
-		$this->n2nLocale = $n2nLocale;
+	function inject(\Closure $closure) {
+		$invoker = new MagicMethodInvoker($this->httpContext->getN2nContext());
+		$invoker->invoke(null, new \ReflectionFunction($closure));
+		return $this;
 	}
 
-	function putLookupInjection(string $id, object $obj): void {
-		ArgUtils::valType($obj, $id, false, 'obj');
-
-		$this->injectedObjects[$id] = $obj;
+	function putLookupInjection(string $className, object $obj) {
+		$this->httpContext->getN2nContext()->putLookupInjection($className, $obj);
+		return $this;
 	}
 
-	function removeLookupInjection(string $id): void {
-		unset($this->injectedObjects[$id]);
-	}
-
-	function clearLookupInjections(): void {
-		$this->injectedObjects = [];
+	function removeLookupInjection(string $className) {
+		$this->httpContext->getN2nContext()->removeLookupInjection($className);
+		return $this;
 	}
 
 	/**
-	 * {@inheritDoc}
-	 * @see \n2n\util\magic\MagicContext::lookup()
+	 * @param string $name
+	 * @return \n2n\test\TestRequest
 	 */
-	public function lookup($id, $required = true) {
-		if ($id instanceof \ReflectionClass) {
-			$id = $id->getName();
+	function subsystem(?string $name) {
+		if ($name === null) {
+			$this->httpContext->setActiveSubsystemRule(null);
+			return $this;
 		}
-		
-		if (isset($this->injectedObjects[$id])) {
-			return $this->injectedObjects[$id]; 
-		}
-		
-		// @todo check $required
-		switch ($id) {
-			case Request::class:
-				try {
-					return $this->getHttpContext()->getRequest();
-				} catch (HttpContextNotAvailableException $e) {
-					if (!$required) return null;
-					throw new MagicObjectUnavailableException('Request not available.', 0, $e); 
-				}
-				return $this->request;
-			case Response::class:
-				try {
-					return $this->getHttpContext()->getResponse();
-				} catch (HttpContextNotAvailableException $e) {
-					if (!$required) return null;
-					throw new MagicObjectUnavailableException('Response not available.', 0, $e); 
-				}
-			case Session::class:
-				try {
-					return $this->getHttpContext()->getSession();
-				} catch (HttpContextNotAvailableException $e) {
-					if (!$required) return null;
-					throw new MagicObjectUnavailableException('Session not available.', 0, $e);
-				}
-			case HttpContext::class:
-				try {
-					return $this->getHttpContext();
-				} catch (HttpContextNotAvailableException $e) {
-					if (!$required) return null;
-					throw new MagicObjectUnavailableException('HttpContext not available.', 0, $e);
-				}
-			case N2nContext::class:
-				return $this;
-			case N2nUtil::class:
-				return $this->util();
-			case LookupManager::class:
-				return $this->getLookupManager();
-			case N2nLocale::class:
-				return $this->getN2nLocale();
-			case EntityManager::class:
-				return $this->lookup(PdoPool::class)->getEntityManagerFactory()->getExtended();
-			case EntityManagerFactory::class:
-				return $this->lookup(PdoPool::class)->getEntityManagerFactory();
-			case TransactionManager::class:
-				return $this->transactionManager;
-			case VarStore::class:
-				return $this->varStore;
-			case AppCache::class:
-				return $this->appCache;
-			case AppConfig::class:
-				return $this->appConfig;
-			case GeneralConfig::class:
-				return $this->appConfig->general();
-			case WebConfig::class:
-				return $this->appConfig->web();
-			case MailConfig::class:
-				return $this->appConfig->mail();
-			case IoConfig::class:
-				return $this->appConfig->io();
-			case FilesConfig::class:
-				return $this->appConfig->files();
-			case ErrorConfig::class:
-				return $this->appConfig->error();
-			case DbConfig::class:
-				return $this->appConfig->db();
-			case OrmConfig::class:
-				return $this->appConfig->orm();
-			case N2nLocaleConfig::class:
-				return $this->appConfig->locale();
-			default:
-				try {
-					return $this->getLookupManager()->lookup($id);
-				} catch (LookupFailedException $e) {
-					throw new MagicObjectUnavailableException('Could not lookup object with name: ' . $id, 0, $e);
-				}
-		}
-	}
-	
-	private function determineNamespaceOfParameter(\ReflectionParameter $parameter) {
-		if (null !== ($class = $parameter->getDeclaringClass())) {
-			return $class->getNamespaceName();
-		}
-		
-		return $parameter->getDeclaringFunction()->getNamespaceName();
-	}
-	
-	public function lookupParameterValue(\ReflectionParameter $parameter) {
-		$parameterClass = ReflectionUtils::extractParameterClass($parameter);
-		
-		if ($parameterClass === null) {
-			throw new MagicObjectUnavailableException();
-		}
-		
-		switch ($parameterClass->getName()) {
-			case 'n2n\l10n\DynamicTextCollection':
-				$module = null;
-				try {
-					$module = $this->moduleManager->getModuleOfTypeName($this->determineNamespaceOfParameter($parameter),
-							!$parameter->allowsNull());
-				} catch (UnknownModuleException $e) {
-					throw new MagicObjectUnavailableException('Could not determine module for DynamicTextCollection.', 0, $e);
-				}
-		
-				if ($module === null) return null;
-		
-				return new DynamicTextCollection($module, $this->getN2nLocale());
-				
-			case 'n2n\core\module\Module':
-				try {
-					return $this->moduleManager->getModuleOfTypeName($this->determineNamespaceOfParameter($parameter),
-							!$parameter->allowsNull());
-				} catch (UnknownModuleException $e) {
-					throw new MagicObjectUnavailableException('Could not determine module.', 0, $e);
-				}
-				
-			default:
-				if ($parameter->isDefaultValueAvailable()) {
-					if (null !== ($value = $this->lookup($parameterClass->getName(), false))) {
-						return $value;
-					}
-					return $parameter->getDefaultValue();
-				} else if ($parameter->allowsNull()) {
-					return $this->lookup($parameterClass->getName(), false);
-				}
-				
-				return $this->lookup($parameterClass->getName(), true);
-		}
+
+		$this->httpContext->setActiveSubsystemRule($this->httpContext->findBestSubsystemRuleBySubsystemAndN2nLocale($name));
+		return $this;
 	}
 
+	/**
+	 * @return \n2n\test\TestRequest
+	 */
+	function get($cmdUrl) {
+		$this->simpleRequest->setMethod(Method::GET);
+		$this->simpleRequest->setCmdUrl(Url::create($cmdUrl));
+		return $this;
+	}
 
-    function finalize(): void {
-		if ($this->lookupManager !== null) {
-			if ($this->lookupManager->contains(PdoPool::class)) {
-				$this->lookupManager->lookup(PdoPool::class)->clear();
+	/**
+	 * @return \n2n\test\TestRequest
+	 */
+	function put($cmdUrl) {
+		$this->simpleRequest->setMethod(Method::PUT);
+		$this->simpleRequest->setCmdUrl(Url::create($cmdUrl));
+		return $this;
+	}
+
+	/**
+	 * @return \n2n\test\TestRequest
+	 */
+	function delete($cmdUrl) {
+		$this->simpleRequest->setMethod(Method::DELETE);
+		$this->simpleRequest->setCmdUrl(Url::create($cmdUrl));
+		return $this;
+	}
+
+	/**
+	 * @param mixed $cmdUrl will be passed to {@see Url::create()} for creation
+	 * @param mixed $postQuery will be passed to {@see Query::create()} for creation
+	 * @return \n2n\test\TestRequest
+	 */
+	function post($cmdUrl, $postQuery = null) {
+		$this->simpleRequest->setMethod(Method::POST);
+		$this->simpleRequest->setCmdUrl(Url::create($cmdUrl));
+
+		if ($postQuery !== null) {
+			$this->simpleRequest->setPostQuery(Query::create($postQuery));
+		}
+
+		return $this;
+	}
+
+	/**
+	 * @param string $name
+	 * @param string $value
+	 * @return \n2n\test\TestRequest
+	 */
+	function header(string $name, string $value) {
+		$this->simpleRequest->setHeader($name, $value);
+		return $this;
+	}
+
+	/**
+	 * @param string|null $body
+	 * @return \n2n\test\TestRequest
+	 */
+	function body(?string $body) {
+		$this->simpleRequest->setBody($body);
+		return $this;
+	}
+
+	/**
+	 * @param array $data
+	 * @return \n2n\test\TestRequest
+	 */
+	function bodyJson(array $data) {
+		return $this->body(StringUtils::jsonEncode($data));
+	}
+
+	/**
+	 * @param UploadDefinition[] $uploadDefinitions
+	 * @return \n2n\test\TestRequest
+	 */
+	function uploadDefinitions(array $uploadDefinitions) {
+		$this->simpleRequest->setUploadDefinitions($uploadDefinitions);
+		return $this;
+	}
+
+	/**
+	 * @return TestResponse
+	 */
+	function exec(bool $sendStatusView = false) {
+		/**
+		 * @var ControllerRegistry $controllerRegistry
+		 */
+		$controllerRegistry = $this->httpContext->getN2nContext()->lookup(ControllerRegistry::class);
+
+		$controllingPlan = $controllerRegistry
+				->createControllingPlan($this->simpleRequest->getCmdPath(), $this->httpContext->getActiveSubsystemRule());
+		$result = $controllingPlan->execute();
+
+		if (!$result->isSuccessful()) {
+			if (!$sendStatusView) {
+				$this->httpContext->getN2nContext()->finalize();
+				throw $result->getStatusException();
 			}
 
-			$this->lookupManager->shutdown();
-			$this->lookupManager->clear();
-        }
-    }
-
-    function onShutdown(): void {
-        $this->finalize();
-    }
-	
-// 	public function magicInit($object) {
-// 		MagicUtils::init($object, $this);
-// 	}
-	
-	/**
-	 * @param N2nContext $n2nContext
-	 * @return \n2n\core\container\impl\AppN2nContext
-	 */
-	static function createCopy(N2nContext $n2nContext) {
-		$appN2nContext = new AppN2nContext($n2nContext->getTransactionManager(), $n2nContext->getModuleManager(), 
-				$n2nContext->getAppCache(), $n2nContext->getVarStore(), $n2nContext->lookup(AppConfig::class));
-
-		$appN2nContext->setLookupManager(new LookupManager($n2nContext->getLookupManager()->getLookupSession(),
-				$n2nContext->getLookupManager()->getApplicationCacheStore(),
-				$appN2nContext));
-		
-		$appN2nContext->setN2nLocale($n2nContext->getN2nLocale());
-
-		$pdoPool = $appN2nContext->lookup(PdoPool::class);
-		foreach ($n2nContext->lookup(PdoPool::class)->getInitializedPdos() as $puName => $pdo) {
-			$pdoPool->setPdo($puName, $pdo);
+			$controllingPlan->sendStatusView($result->getStatusException());
 		}
 
-		return $appN2nContext;
+		$response = $this->httpContext->getResponse();
+		$response->closeBuffer();
+
+		$this->httpContext->getN2nContext()->finalize();
+
+		return new TestResponse($response);
 	}
 
+	function __destruct() {
+		$this->httpContext->getN2nContext()->finalize();
+	}
+}
+
+class TestResponse {
+	private $response;
+
+	function __construct(Response $response) {
+		$this->response = $response;
+	}
+
+	/**
+	 * @return array
+	 */
+	function parseJson() {
+		return StringUtils::jsonDecode($this->getContents(), true);
+	}
+
+	/**
+	 * @return string
+	 */
+	function getContents() {
+		return $this->response->getSentPayload()->getBufferedContents();
+	}
+
+	/**
+	 * @return bool
+	 */
+	function isBufferable(): bool {
+		return $this->response->getSentPayload()->isBufferable();
+	}
+
+	/**
+	 * @return Payload
+	 */
+	function getSentPayload(): Payload {
+		return $this->response->getSentPayload();
+	}
+
+	/**
+	 * @return int
+	 */
+	function getStatus() {
+		return $this->response->getStatus();
+	}
 }
