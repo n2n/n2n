@@ -51,7 +51,7 @@
 				<?php endwhile ?>
 			</div>
 			
-			<?php if (0 < mb_strlen($output = $throwableModel->getOutput())): ?>
+			<?php if (0 < mb_strlen($output = (string) $throwableModel->getOutput())): ?>
 				<div>
 					<h3>Output</h3>
 					<pre class="stack-trace"><?php $html->esc($output)?></pre>
