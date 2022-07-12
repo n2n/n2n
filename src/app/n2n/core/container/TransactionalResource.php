@@ -21,6 +21,8 @@
  */
 namespace n2n\core\container;
 
+use n2n\util\ex\IllegalStateException;
+
 /**
  * Each method gets called two times.
  *
@@ -29,7 +31,7 @@ interface TransactionalResource {
 	/**
 	 * @param Transaction $transaction
 	 */
-	public function beginTransaction(Transaction $transaction);
+	public function beginTransaction(Transaction $transaction): void;
 	
 	/**
 	 * @param Transaction $transaction
@@ -41,10 +43,18 @@ interface TransactionalResource {
 	 * @param Transaction $transaction
 	 * @throws CommitFailedException
 	 */	
-	public function commit(Transaction $transaction);
+	public function commit(Transaction $transaction): void;
 	
 	/**
 	 * @param Transaction $transaction
 	 */
-	public function rollBack(Transaction $transaction);
+	public function rollBack(Transaction $transaction): void;
+
+	/**
+	 * Notifies the TransactionalResource of a coming possible longer idle time. If the TransactionalResource uses a
+	 * database connection for example it can be closed and reopened when it will be next used.
+	 * @return void
+	 * @throws IllegalStateException if a transaction is open.
+	 */
+	function release(): void;
 }

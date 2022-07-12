@@ -73,6 +73,14 @@ class TransactionManager extends ObjectAdapter {
 		throw new TransactionStateException('No active transaction.');
 	}
 
+	private function ensureNoTransactionOpen(): void {
+		if ($this->rootTransaction === null) {
+			return;
+		}
+
+		throw new TransactionStateException('No active transaction.');
+	}
+
 	/**
 	 * @return \n2n\core\container\Transaction
 	 * @throws TransactionStateException if no transaction is open.
@@ -207,6 +215,14 @@ class TransactionManager extends ObjectAdapter {
 
 		foreach ($this->transactionalResources as $listener) {
 			$listener->rollBack($this->rootTransaction);
+		}
+	}
+
+	function releaseResources(): void {
+		$this->ensureNoTransactionOpen();
+
+		foreach ($this->transactionalResources as $resource) {
+			$resource->release();
 		}
 	}
 
