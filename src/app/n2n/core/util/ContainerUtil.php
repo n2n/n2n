@@ -39,7 +39,6 @@ class ContainerUtil {
 		return $this->getTransactionManager()->hasOpenTransaction();
 	}
 
-
 	/**
 	 * @param bool $readOnly
 	 * @return \n2n\core\container\Transaction
