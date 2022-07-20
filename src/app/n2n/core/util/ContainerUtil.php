@@ -39,6 +39,15 @@ class ContainerUtil {
 		return $this->getTransactionManager()->hasOpenTransaction();
 	}
 
+
+	/**
+	 * @param bool $readOnly
+	 * @return \n2n\core\container\Transaction
+	 */
+	function createTransaction(bool $readOnly = false) {
+		return $this->getTransactionManager()->createTransaction($readOnly);
+	}
+
 	/**
 	 * @param \Closure $closure
 	 * @return MagicMethodInvoker
