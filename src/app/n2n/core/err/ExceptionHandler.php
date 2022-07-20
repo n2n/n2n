@@ -205,8 +205,10 @@ class ExceptionHandler {
 			// @todo find out if dangerous
 			//$this->stable = false;
 		} else {
-			// @ --> error_reporting() == false
-			if (!$forceThrow && !error_reporting()) return false;
+			// @ --> error_reporting() returns reduced level
+			if (!$forceThrow && !($errno & error_reporting())) {
+				return false;
+			}
 		}
 
 		$e = TriggeredError::create($errno, $errstr, $errfile, $errline);
