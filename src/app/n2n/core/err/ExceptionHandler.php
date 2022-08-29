@@ -602,7 +602,7 @@ class ExceptionHandler {
 			$debugContent .= $this->createLogArrayStr('SERVER VARS', $_SERVER, [
 				'PHP_', 'SCRIPT_', 'REQUEST_', 'argv', 'argc', 'QUERY_', 'SERVER_',
 				'GATEWAY_', 'REDIRECT_', 'REMOVE_', 'CONTEXT_', 'DOCUMENT_', 'PATH',
-				'HTTP_', 'CONTENT_', 'N2N_'
+				'HTTP_', 'CONTENT_', 'N2N_', 'REMOTE_'
 			]);
 
 			if (!empty($_GET)) {
