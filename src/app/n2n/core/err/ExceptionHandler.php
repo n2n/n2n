@@ -214,7 +214,7 @@ class ExceptionHandler {
 		$e = TriggeredError::create($errno, $errstr, $errfile, $errline);
 		$e = $this->checkForTypeLoaderThrowable($e);
 
-		$this->log($e);
+		$this->performLog($e);
 
 		if ($forceThrow || $this->strictAttitude || !($errno & self::STRICT_ATTITUTE_PHP_SEVERITIES)) {
 			throw $e;
@@ -248,7 +248,7 @@ class ExceptionHandler {
 		$throwable = $this->checkForTypeLoaderThrowable($throwable);
 
 		if ($logException) {
-			$this->log($throwable);
+			$this->performLog($throwable);
 		}
 		if ($dispatchException) {
 			$this->dispatchException($throwable);
@@ -315,7 +315,7 @@ class ExceptionHandler {
 	 */
 	private function checkForPendingLogExceptions() {
 		foreach ($this->pendingLogException as $logException) {
-			$this->log($logException);
+			$this->performLog($logException);
 			$this->dispatchException($logException);
 		}
 		$this->pendingLogException = array();
@@ -416,6 +416,11 @@ class ExceptionHandler {
 	private function checkForError($errno, $errfile, $errline, $errstr) {
 		return in_array($this->buildErrorHash($errno, $errfile, $errline, $errstr), $this->errorHashes);
 	}
+
+	function log(\Throwable $e, bool $preventMail = false) {
+		$this->performLog($e, $preventMail, true);
+	}
+
 	/**
 	 * Logs the passed Exception. This includes a mail and error info file if it is enabled in
 	 * the app.ini. A log entry is also sent to log4php. If logging failed this method must not throw
@@ -424,9 +429,9 @@ class ExceptionHandler {
 	 *
 	 * @param \Throwable $e
 	 */
-	private function log(\Throwable $e, bool $preventMail = false) {
+	private function performLog(\Throwable $e, bool $preventMail = false, bool $logOnlyMarked = false) {
 		if ($e instanceof StatusException && (!$this->logStatusExceptionsEnabled
-						|| in_array($e->getStatus(), $this->logExcludedHttpStatus))) {
+				|| in_array($e->getStatus(), $this->logExcludedHttpStatus))) {
 			return;
 		}
 
@@ -434,14 +439,15 @@ class ExceptionHandler {
 		error_log($simpleMessage, 0);
 
 		if (isset($this->logDetailDirPath) || (!$preventMail && isset($this->logMailRecipient))) {
-			$detailMessage = $this->createDetailLogMessage($e);
+			$detailMessage = $this->createDetailLogMessage($e, $logOnlyMarked);
 
 			if (!$preventMail && isset($this->logMailRecipient)) {
-				$this->sendLogMail($e, $detailMessage);
+				$this->sendLogMail($e, $detailMessage, $logOnlyMarked);
 			}
 
 			if (isset($this->logDetailDirPath)) {
-				$defLogBasePath = $this->logDetailDirPath . DIRECTORY_SEPARATOR  . date('Y-m-d_His') . str_replace('\\', '_', get_class($e));
+				$defLogBasePath = $this->logDetailDirPath . DIRECTORY_SEPARATOR . date('Y-m-d_His')
+						. ($logOnlyMarked ? '_LOG_ONLY' : '') . '_' . str_replace('\\', '_', get_class($e));
 				$ext = '';
 				for ($i = 0; is_file($defLogBasePath . $ext . self::LOG_FILE_EXTENSION); $i++) {
 					$ext = '_' . $i;
@@ -471,7 +477,7 @@ class ExceptionHandler {
 		}
 	}
 
-	private function sendLogMail(\Throwable $e, string $detailMessage) {
+	private function sendLogMail(\Throwable $e, string $detailMessage, bool $logOnlyMarked = false) {
 		$times = 1;
 		if ($this->logMailBufferDirPath !== null) {
 			$logMailBuffer = new LogMailBuffer($this->logMailBufferDirPath);
@@ -480,7 +486,7 @@ class ExceptionHandler {
 			if ($times == 0) return;
 		}
 
-		$subject = get_class($e) . ' occurred';
+		$subject = ($logOnlyMarked ? '*** LOG ONLY *** ' : '') . get_class($e) . ' occurred';
 		if ($times > 1) {
 			$subject .= ' ' . $times . ' times';
 		}
@@ -518,8 +524,8 @@ class ExceptionHandler {
 	 * @param \Exception $e
 	 * @return string short description
 	 */
-	private function createSimpleLogMessage(\Throwable $e, bool $previousIncluded = false) {
-		$message = get_class($e) . ': ' . $e->getMessage();
+	private function createSimpleLogMessage(\Throwable $e, bool $previousIncluded = false, bool $logOnlyMarked = false) {
+		$message = ($logOnlyMarked ? '[LOG ONLY] ' : '') . get_class($e) . ': ' . $e->getMessage();
 		if ($e instanceof \ErrorException || $e instanceof \Error) {
 			$message .= ' in ' . $e->getFile() . ' on line ' . $e->getLine();
 		}
@@ -542,10 +548,10 @@ class ExceptionHandler {
 	 * @param \Exception $e
 	 * @return string detailed description
 	 */
-	private function createDetailLogMessage(\Throwable $e) {
+	private function createDetailLogMessage(\Throwable $e, bool $logOnlyMarked = false) {
 		// build title
 		$eName = get_class($e);
-		$title = 'An ' . $eName . ' occurred';
+		$title = ($logOnlyMarked ? '[LOG ONLY] ' : '') . 'An ' . $eName . ' occurred';
 		$debugContent =  $title . PHP_EOL .
 				str_repeat('+', mb_strlen($title)) . PHP_EOL . PHP_EOL;
 		$debugContent .= $e->getMessage() . PHP_EOL . PHP_EOL;
