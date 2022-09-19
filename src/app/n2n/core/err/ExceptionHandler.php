@@ -417,6 +417,13 @@ class ExceptionHandler {
 		return in_array($this->buildErrorHash($errno, $errfile, $errline, $errstr), $this->errorHashes);
 	}
 
+	/**
+	 * Only logs the passed Exception. This includes a mail and error info file if it is enabled in
+	 * the app.ini and not prevented by the passed parameter. A log entry is also sent to log4php.
+	 *
+	 * @param \Throwable $e
+	 * @param bool $preventMail
+	 */
 	function log(\Throwable $e, bool $preventMail = false) {
 		$this->performLog($e, $preventMail, true);
 	}
