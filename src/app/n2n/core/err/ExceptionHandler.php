@@ -558,7 +558,7 @@ class ExceptionHandler {
 	private function createDetailLogMessage(\Throwable $e, bool $logOnlyMarked = false) {
 		// build title
 		$eName = get_class($e);
-		$title = ($logOnlyMarked ? '[LOG ONLY] ' : '') . 'An ' . $eName . ' occurred';
+		$title = ($logOnlyMarked ? '+LOG ONLY+ ' : '') . 'An ' . $eName . ' occurred';
 		$debugContent =  $title . PHP_EOL .
 				str_repeat('+', mb_strlen($title)) . PHP_EOL . PHP_EOL;
 		$debugContent .= $e->getMessage() . PHP_EOL . PHP_EOL;
