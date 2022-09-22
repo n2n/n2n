@@ -291,6 +291,10 @@ class AppN2nContext implements N2nContext, ShutdownListener {
 			case N2nLocaleConfig::class:
 				return $this->appConfig->locale();
 			default:
+				if (!$required && !$this->getLookupManager()->has($id)) {
+					return null;
+				}
+
 				try {
 					return $this->getLookupManager()->lookup($id);
 				} catch (LookupFailedException $e) {
