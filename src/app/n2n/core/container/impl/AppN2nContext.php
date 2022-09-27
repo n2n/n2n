@@ -258,7 +258,7 @@ class AppN2nContext implements N2nContext, ShutdownListener {
 	 * {@inheritDoc}
 	 * @see \n2n\util\magic\MagicContext::lookup()
 	 */
-	public function lookup($id, $required = true) {
+	public function lookup(string|\ReflectionClass $id, bool $required = true): mixed {
 		if ($id instanceof \ReflectionClass) {
 			$id = $id->getName();
 		}
