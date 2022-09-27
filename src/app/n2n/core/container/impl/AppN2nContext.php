@@ -208,6 +208,50 @@ class AppN2nContext implements N2nContext, ShutdownListener {
 		$this->injectedObjects = [];
 	}
 
+	public function get(string $id) {
+		return $this->lookup($id, true);
+	}
+
+	public function has(string|\ReflectionClass $id): bool {
+		if ($id instanceof \ReflectionClass) {
+			$id = $id->getName();
+		}
+
+		if (isset($this->injectedObjects[$id])) {
+			return true;
+		}
+
+		switch ($id) {
+			case Request::class:
+			case Response::class:
+			case Session::class:
+			case HttpContext::class:
+				return $this->httpContext !== null;
+			case N2nContext::class:
+			case N2nUtil::class:
+			case LookupManager::class:
+			case N2nLocale::class:
+			case EntityManager::class:
+			case EntityManagerFactory::class:
+			case TransactionManager::class:
+			case VarStore::class:
+			case AppCache::class:
+			case AppConfig::class:
+			case GeneralConfig::class:
+			case WebConfig::class:
+			case MailConfig::class:
+			case IoConfig::class:
+			case FilesConfig::class:
+			case ErrorConfig::class:
+			case DbConfig::class:
+			case OrmConfig::class:
+			case N2nLocaleConfig::class:
+				return true;
+			default:
+				return $this->getLookupManager()->has($id);
+		}
+	}
+
 	/**
 	 * {@inheritDoc}
 	 * @see \n2n\util\magic\MagicContext::lookup()
@@ -221,7 +265,6 @@ class AppN2nContext implements N2nContext, ShutdownListener {
 			return $this->injectedObjects[$id];
 		}
 
-		// @todo check $required
 		switch ($id) {
 			case Request::class:
 				try {
