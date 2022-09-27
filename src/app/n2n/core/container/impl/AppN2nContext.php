@@ -358,7 +358,7 @@ class AppN2nContext implements N2nContext, ShutdownListener {
 		return $parameter->getDeclaringFunction()->getNamespaceName();
 	}
 
-	public function lookupParameterValue(\ReflectionParameter $parameter) {
+	public function lookupParameterValue(\ReflectionParameter $parameter): mixed {
 		$parameterClass = ReflectionUtils::extractParameterClass($parameter);
 
 		if ($parameterClass === null) {
