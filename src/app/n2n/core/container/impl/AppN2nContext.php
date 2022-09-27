@@ -57,6 +57,8 @@ use n2n\util\type\ArgUtils;
 use n2n\core\util\N2nUtil;
 use n2n\context\config\LookupSession;
 use n2n\util\cache\CacheStore;
+use n2n\context\LookupableNotFoundException;
+use n2n\util\magic\MagicLookupFailedException;
 
 class AppN2nContext implements N2nContext, ShutdownListener {
 	private $transactionManager;
@@ -340,8 +342,10 @@ class AppN2nContext implements N2nContext, ShutdownListener {
 
 				try {
 					return $this->getLookupManager()->lookup($id);
-				} catch (LookupFailedException $e) {
+				} catch (LookupableNotFoundException $e) {
 					throw new MagicObjectUnavailableException('Could not lookup object with name: ' . $id, 0, $e);
+				} catch (LookupFailedException $e) {
+					throw new MagicLookupFailedException('Could not lookup object with name: ' . $id, 0, $e);
 				}
 		}
 	}
