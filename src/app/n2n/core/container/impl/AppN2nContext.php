@@ -59,6 +59,7 @@ use n2n\context\config\LookupSession;
 use n2n\util\cache\CacheStore;
 use n2n\context\LookupableNotFoundException;
 use n2n\util\magic\MagicLookupFailedException;
+use n2n\util\magic\MagicContext;
 
 class AppN2nContext implements N2nContext, ShutdownListener {
 	private $transactionManager;
@@ -298,6 +299,7 @@ class AppN2nContext implements N2nContext, ShutdownListener {
 					throw new MagicObjectUnavailableException('HttpContext not available.', 0, $e);
 				}
 			case N2nContext::class:
+			case MagicContext::class:
 				return $this;
 			case N2nUtil::class:
 				return $this->util();
