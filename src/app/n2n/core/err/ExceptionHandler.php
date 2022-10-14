@@ -1004,7 +1004,7 @@ class LoggingFailedException extends \RuntimeException {
 abstract class TriggeredError extends \Error {
 	public function __construct(string $message, int $code = null, string $fileFsPath = null,
 			int $line = null, \Throwable $previous = null) {
-		parent::__construct($message, $code, $previous);
+		parent::__construct($message, $code ?? 0, $previous);
 
 
 		$this->file = $fileFsPath;
