@@ -149,7 +149,6 @@ class N2N {
 				return;
 			}
 		}
-		
 
 		$appConfigFactory = new AppConfigFactory($this->publicDirPath);
 		$this->appConfig = $appConfigFactory->create($this->combinedConfigSource, N2N::getStage());
