@@ -160,11 +160,11 @@ class N2N {
 
 	private function applyConfiguration(N2nCache $n2nCache) {
 		$errorConfig = $this->appConfig->error();
-		self::$exceptionHandler->setStrictAttitude($errorConfig->isStrictAttitudeEnabled());
-		self::$exceptionHandler->setDetectStartupErrorsEnabled($errorConfig->isDetectStartupErrorsEnabled());
+		self::$exceptionHandler?->setStrictAttitude($errorConfig->isStrictAttitudeEnabled());
+		self::$exceptionHandler?->setDetectStartupErrorsEnabled($errorConfig->isDetectStartupErrorsEnabled());
 
 		if ($errorConfig->isLogSendMailEnabled()) {
-			self::$exceptionHandler->setLogMailRecipient($errorConfig->getLogMailRecipient(), 
+			self::$exceptionHandler?->setLogMailRecipient($errorConfig->getLogMailRecipient(),
 					$this->appConfig->mail()->getDefaultAddresser());
 		}
 
@@ -317,6 +317,10 @@ class N2N {
 	 * @param \n2n\core\N2N $n2n
 	 */
 	private static function initLogging(N2N $n2n) {
+		if (self::$exceptionHandler === null) {
+			return;
+		}
+
 		$errorConfig = $n2n->appConfig->error();
 		
 		if ($errorConfig->isLogSaveDetailInfoEnabled()) {
