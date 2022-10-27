@@ -349,7 +349,7 @@ class N2N {
 			Logger::getRootLogger()->setLevel($logLevel);
 		}
 		
-		self::$exceptionHandler->setLogger(Logger::getLogger(get_class(self::$exceptionHandler)));
+//		self::$exceptionHandler->setLogger(Logger::getLogger(get_class(self::$exceptionHandler)));
 	}
 	/**
 	 * 
