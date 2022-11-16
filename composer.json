@@ -30,7 +30,6 @@
 		}
 	},
 	"require" : {
-		"php" : ">=8.0",
 		"n2n/n2n-composer-module-installer" : "^7.1.5",
         "n2n/n2n-config" : "~7.3",
         "n2n/n2n-context" : "~7.3",
