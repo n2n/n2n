@@ -32,13 +32,13 @@
 	"require" : {
 		"php" : ">=8.0",
 		"n2n/n2n-composer-module-installer" : "^7.1.5",
-        "n2n/n2n-config" : "^7.3",
-        "n2n/n2n-context" : "^7.3",
-		"n2n/n2n-l10n" : "^7.3",
-		"n2n/n2n-log4php" : "^7.3",
-		"n2n/n2n-mail" : "^7.3",
-		"n2n/n2n-reflection" : "^7.3",
-		"n2n/n2n-util" : "^7.3"
+        "n2n/n2n-config" : "~7.3",
+        "n2n/n2n-context" : "~7.3",
+		"n2n/n2n-l10n" : "~7.3",
+		"n2n/n2n-log4php" : "~7.3",
+		"n2n/n2n-mail" : "~7.3",
+		"n2n/n2n-reflection" : "~7.3",
+		"n2n/n2n-util" : "~7.3"
 	},
 	"autoload" : {
 		"psr-4" : {
