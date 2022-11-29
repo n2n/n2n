@@ -43,7 +43,7 @@ class GeneralConfig {
 			array $batchControllerClassNames) {
 		$this->pageName = $pageName;
 		$this->pageUrl = $pageUrl;
-		ArgUtils::assertTrue(1 === preg_match('#^\w+$#', $applicationName));
+		ArgUtils::assertTrue(1 === preg_match('#^\w+$#', $applicationName), 'Invalid application name.');
 		$this->applicationName = $applicationName;
 		$this->applicationLogLevel = $applicationLogLevel;
 		$this->batchControllerClassNames = $batchControllerClassNames;
