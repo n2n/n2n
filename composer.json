@@ -36,7 +36,7 @@
 		"n2n/n2n-l10n" : "~7.3",
 		"n2n/n2n-log4php" : "~7.3",
 		"n2n/n2n-mail" : "~7.3",
-		"n2n/n2n-reflection" : "~7.3",
+		"n2n/n2n-reflection" : "~7.3.3",
 		"n2n/n2n-util" : "~7.3"
 	},
 	"autoload" : {
