@@ -144,7 +144,7 @@ class LazyModule implements Module {
 		$describerClass = null;
 		try {
 			$describerClass = ReflectionUtils::createReflectionClass($configDescriberClassName);
-		} catch (TypeNotFoundException $e) {
+		} catch (\ReflectionException $e) {
 			throw $this->createInvalidConfigDescriberException($e);
 		}
 		
