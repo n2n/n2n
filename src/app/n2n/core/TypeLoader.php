@@ -90,7 +90,7 @@ class TypeLoader {
 		try {
 			self::requireScript(self::getFilePathOfTypeWihtoutCheck($typeName), $typeName);
 			return true;
-		} catch (\ReflectionException $e) {
+		} catch (TypeNotFoundException $e) {
 			$lutp = N2N::getLastUserTracePoint();
 			self::$latestException = new TypeLoaderErrorException($typeName, $e->getMessage(), 0, 
 					E_ERROR, $lutp['file'], $lutp['line']);
@@ -186,7 +186,7 @@ class TypeLoader {
 		try {
 			self::getFilePathOfType($typeName);
 			return true;
-		} catch (\ReflectionException $e) {
+		} catch (TypeNotFoundException $e) {
 			return false;
 		}
 	}
