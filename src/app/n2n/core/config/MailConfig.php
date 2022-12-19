@@ -21,8 +21,6 @@
  */
 namespace n2n\core\config;
 
-use n2n\mail\smtp\SmtpConfig;
-
 class MailConfig {
 	
 	private $sendingMailEnabled;
@@ -62,7 +60,7 @@ class MailConfig {
 		return $this->notificationRecipientAddresses;
 	}
 	/**
-	 * @return \n2n\mail\smtp\SmtpConfig
+	 * @return \n2n\core\config\SmtpConfig
 	 */
 	public function getDefaultSmtpConfig() {
 		return $this->defaultSmtpConfig;
