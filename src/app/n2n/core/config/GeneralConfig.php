@@ -30,6 +30,8 @@ class GeneralConfig {
 	private $applicationName;
 	private $applicationLogLevel;
 	private $batchControllerClassNames;
+	private $extensions = [];
+
 	/**
 	 * @param string $pageName
 	 * @param string $pageUrl
@@ -40,7 +42,7 @@ class GeneralConfig {
 	 * @param array $batchControllerClassNames
 	 */
 	public function __construct(string $pageName, string $pageUrl = null, string $applicationName, string $applicationLogLevel = null, 
-			array $batchControllerClassNames) {
+			array $batchControllerClassNames, private array $extensionClassNames) {
 		$this->pageName = $pageName;
 		$this->pageUrl = $pageUrl;
 		ArgUtils::assertTrue(1 === preg_match('#^\w+$#', $applicationName), 'Invalid application name.');
@@ -83,5 +85,9 @@ class GeneralConfig {
 	 */
 	public function getBatchJobLookupIds(): array {
 		return $this->batchControllerClassNames;
+	}
+
+	function getExtensionClassNames(): array {
+		return $this->extensionClassNames;
 	}
 }

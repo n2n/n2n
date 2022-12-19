@@ -62,7 +62,6 @@ use n2n\util\magic\MagicLookupFailedException;
 use n2n\util\magic\MagicContext;
 
 class AppN2nContext implements N2nContext, ShutdownListener {
-	private $transactionManager;
 	private $moduleManager;
 	private $appCache;
 	private $varStore;
@@ -71,9 +70,11 @@ class AppN2nContext implements N2nContext, ShutdownListener {
 	private $httpContext;
 	private $n2nLocale;
 	private ?LookupManager $lookupManager;
-	private $injectedObjects = [];
+	private array $injectedObjects = [];
 
-	public function __construct(TransactionManager $transactionManager, ModuleManager $moduleManager, AppCache $appCache,
+	private \SplObjectStorage $finalizeCallbacks;
+
+	public function __construct(private TransactionManager $transactionManager, ModuleManager $moduleManager, AppCache $appCache,
 			VarStore $varStore, AppConfig $appConfig) {
 		$this->transactionManager = $transactionManager;
 		$this->moduleManager = $moduleManager;
@@ -81,10 +82,16 @@ class AppN2nContext implements N2nContext, ShutdownListener {
 		$this->varStore = $varStore;
 		$this->appConfig = $appConfig;
 		$this->n2nLocale = N2nLocale::getDefault();
+
+		$this->finalizeCallbacks = new \SplObjectStorage();
 	}
 
 	function util(): N2nUtil {
 		return new N2nUtil($this);
+	}
+
+	function getTransactionManager(): TransactionManager {
+		return $this->transactionManager;
 	}
 
 	/**
@@ -104,14 +111,6 @@ class AppN2nContext implements N2nContext, ShutdownListener {
 		}
 
 		throw new IllegalStateException('No LookupManager defined.');
-	}
-
-	/**
-	 * {@inheritDoc}
-	 * @see \n2n\core\container\N2nContext::getTransactionManager()
-	 */
-	public function getTransactionManager(): TransactionManager {
-		return $this->transactionManager;
 	}
 
 	/**
@@ -404,7 +403,20 @@ class AppN2nContext implements N2nContext, ShutdownListener {
 	}
 
 
+	function onFinalize(\Closure $callback): void {
+		$this->finalizeCallbacks->attach($callback);
+	}
+
+	function offFinalize(\Closure $callback): void {
+		$this->finalizeCallbacks->detach($callback);
+	}
+
 	function finalize(): void {
+		$this->finalizeCallbacks->rewind();
+		while ($this->finalizeCallbacks->valid()) {
+			$this->finalizeCallbacks->key()($this);
+		}
+
 		if ($this->lookupManager !== null) {
 			if ($this->lookupManager->contains(PdoPool::class)) {
 				$this->lookupManager->lookup(PdoPool::class)->clear();

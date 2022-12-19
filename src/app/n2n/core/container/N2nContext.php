@@ -33,83 +33,33 @@ use n2n\core\util\N2nUtil;
 
 interface N2nContext extends MagicContext {
 
-	/**
-	 * @return N2nUtil
-	 */
 	function util(): N2nUtil;
 
-	/**
-	 * @return \n2n\core\container\TransactionManager
-	 */
 	public function getTransactionManager(): TransactionManager;
 
-	/**
-	 * @return \n2n\core\module\ModuleManager
-	 */
 	public function getModuleManager(): ModuleManager;
 
-	/**
-	 * @param string $namespace
-	 * @return mixed
-	 */
 	public function getModuleConfig(string $namespace);
-	
-	/**
-	 * @return \n2n\core\VarStore
-	 */
+
 	public function getVarStore(): VarStore;
-	
-	/**
-	 * @return bool
-	 */
+
 	public function isHttpContextAvailable(): bool;
-	 
-	/**
-	 * @return \n2n\web\http\HttpContext
-	 * @throws HttpContextNotAvailableException
-	 */
+
 	public function getHttpContext(): HttpContext;
-	
-	/**
-	 * @return \n2n\core\container\AppCache
-	 */
+
 	public function getAppCache(): AppCache;
-	
-	/**
-	 * @return \n2n\l10n\N2nLocale
-	 */
+
 	public function getN2nLocale(): N2nLocale;
-	
-	/**
-	 * @param N2nLocale $n2nLocale
-	 */
+
 	public function setN2nLocale(N2nLocale $n2nLocale);
-	
-	/**
-	 * @return LookupManager
-	 */
+
 	public function getLookupManager(): LookupManager;
 
-	/**
-	 * @param string $id
-	 * @param object $obj
-	 * @return void
-	 */
 	function putLookupInjection(string $id, object $obj): void;
 
-	/**
-	 * @param string $id
-	 * @return void
-	 */
 	function removeLookupInjection(string $id): void;
 
-	/**
-	 * @return void
-	 */
 	function clearLookupInjections(): void;
 
-	/**
-	 * @return void
-	 */
 	function finalize(): void;
 }
