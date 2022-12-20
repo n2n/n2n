@@ -60,18 +60,20 @@ use n2n\util\cache\CacheStore;
 use n2n\context\LookupableNotFoundException;
 use n2n\util\magic\MagicLookupFailedException;
 use n2n\util\magic\MagicContext;
-use n2n\core\N2nHttpEngine;
+use n2n\core\ext\N2nHttpEngine;
+use n2n\core\module\Module;
 
 class AppN2nContext implements N2nContext, ShutdownListener {
-	private $moduleManager;
-	private $appCache;
-	private $varStore;
-	private $appConfig;
-	private $moduleConfigs = array();
-	private $httpContext;
-	private $n2nLocale;
+	private ModuleManager $moduleManager;
+	private AppCache $appCache;
+	private VarStore $varStore;
+	private AppConfig $appConfig;
+	private array $moduleConfigs = array();
+	private N2nLocale $n2nLocale;
 	private ?LookupManager $lookupManager;
 	private array $injectedObjects = [];
+
+	private \SplObjectStorage $magicContexts;
 
 	private \SplObjectStorage $finalizeCallbacks;
 	private ?N2nHttpEngine $n2nHttpEngine;
@@ -85,6 +87,7 @@ class AppN2nContext implements N2nContext, ShutdownListener {
 		$this->appConfig = $appConfig;
 		$this->n2nLocale = N2nLocale::getDefault();
 
+		$this->magicContexts = new \SplObjectStorage();
 		$this->finalizeCallbacks = new \SplObjectStorage();
 	}
 
@@ -156,9 +159,6 @@ class AppN2nContext implements N2nContext, ShutdownListener {
 		return $this->n2nHttpEngine;
 	}
 
-	/**
-	 * @deprecated
-	 */
 	public function isHttpContextAvailable(): bool {
 		return $this->n2nHttpEngine !== null;
 	}
@@ -168,7 +168,7 @@ class AppN2nContext implements N2nContext, ShutdownListener {
 	 */
 	public function getHttpContext(): HttpContext {
 		if ($this->n2nHttpEngine !== null) {
-			return $this->n2nHttpEngine->unwrap(HttpContext::class);
+			return $this->lookup(HttpContext::class);
 		}
 
 		throw new HttpContextNotAvailableException();
@@ -206,6 +206,14 @@ class AppN2nContext implements N2nContext, ShutdownListener {
 		$this->n2nLocale = $n2nLocale;
 	}
 
+	function addMagicContext(MagicContext $magicContext) {
+		$this->magicContexts->attach($magicContext);
+	}
+
+	function removeMagicContext(MagicContext $magicContext) {
+		$this->magicContexts->detach($magicContext);
+	}
+
 	function putLookupInjection(string $id, object $obj): void {
 		ArgUtils::valType($obj, $id, false, 'obj');
 
@@ -233,12 +241,13 @@ class AppN2nContext implements N2nContext, ShutdownListener {
 			return true;
 		}
 
+		foreach ($this->magicContexts as $magicContext) {
+			if ($magicContext->has($id)) {
+				return true;
+			}
+		}
+
 		switch ($id) {
-			case Request::class:
-			case Response::class:
-			case Session::class:
-			case HttpContext::class:
-				return $this->httpContext !== null;
 			case N2nContext::class:
 			case N2nUtil::class:
 			case LookupManager::class:
@@ -268,7 +277,7 @@ class AppN2nContext implements N2nContext, ShutdownListener {
 	 * {@inheritDoc}
 	 * @see \n2n\util\magic\MagicContext::lookup()
 	 */
-	public function lookup(string|\ReflectionClass $id, bool $required = true): mixed {
+	public function lookup(string|\ReflectionClass $id, bool $required = true, string $contextNamespace = null): mixed {
 		if ($id instanceof \ReflectionClass) {
 			$id = $id->getName();
 		}
@@ -277,8 +286,13 @@ class AppN2nContext implements N2nContext, ShutdownListener {
 			return $this->injectedObjects[$id];
 		}
 
-		switch ($id) {
+		foreach ($this->magicContexts as $magicContext) {
+			if (null !== ($result = $magicContext->lookup($id, false, $contextNamespace))) {
+				return $result;
+			}
+		}
 
+		switch ($id) {
 			case N2nContext::class:
 			case MagicContext::class:
 				return $this;
@@ -333,27 +347,12 @@ class AppN2nContext implements N2nContext, ShutdownListener {
 		}
 	}
 
-	private function determineNamespaceOfParameter(\ReflectionParameter $parameter) {
-		if (null !== ($class = $parameter->getDeclaringClass())) {
-			return $class->getNamespaceName();
-		}
-
-		return $parameter->getDeclaringFunction()->getNamespaceName();
-	}
-
-	public function lookupParameterValue(\ReflectionParameter $parameter): mixed {
-		$parameterClass = ReflectionUtils::extractParameterClass($parameter);
-
-		if ($parameterClass === null) {
-			throw new MagicObjectUnavailableException();
-		}
-
-		switch ($parameterClass->getName()) {
-			case 'n2n\l10n\DynamicTextCollection':
+	public function lookupInContextNamespace(string $id, bool $required, string $contextNamespace): mixed {
+		switch ($id) {
+			case DynamicTextCollection::class:
 				$module = null;
 				try {
-					$module = $this->moduleManager->getModuleOfTypeName($this->determineNamespaceOfParameter($parameter),
-							!$parameter->allowsNull());
+					$module = $this->moduleManager->getModuleOfTypeName($contextNamespace, $required);
 				} catch (UnknownModuleException $e) {
 					throw new MagicObjectUnavailableException('Could not determine module for DynamicTextCollection.', 0, $e);
 				}
@@ -362,25 +361,16 @@ class AppN2nContext implements N2nContext, ShutdownListener {
 
 				return new DynamicTextCollection($module, $this->getN2nLocale());
 
-			case 'n2n\core\module\Module':
+			case Module::class:
 				try {
-					return $this->moduleManager->getModuleOfTypeName($this->determineNamespaceOfParameter($parameter),
-							!$parameter->allowsNull());
+					return $this->moduleManager->getModuleOfTypeName($contextNamespace, $required);
 				} catch (UnknownModuleException $e) {
 					throw new MagicObjectUnavailableException('Could not determine module.', 0, $e);
 				}
 
 			default:
-				if ($parameter->isDefaultValueAvailable()) {
-					if (null !== ($value = $this->lookup($parameterClass->getName(), false))) {
-						return $value;
-					}
-					return $parameter->getDefaultValue();
-				} else if ($parameter->allowsNull()) {
-					return $this->lookup($parameterClass->getName(), false);
-				}
+				return null;
 
-				return $this->lookup($parameterClass->getName(), true);
 		}
 	}
 
@@ -418,10 +408,10 @@ class AppN2nContext implements N2nContext, ShutdownListener {
 // 	}
 
 	/**
-	 * @param N2nContext $n2nContext
+	 * @param AppN2nContext $n2nContext
 	 * @return \n2n\core\container\impl\AppN2nContext
 	 */
-	static function createCopy(N2nContext $n2nContext, LookupSession $lookupSession = null,
+	static function createCopy(AppN2nContext $n2nContext, LookupSession $lookupSession = null,
 			CacheStore $applicationCacheStore = null, bool $keepTransactionContext = true) {
 		$transactionManager = null;
 		if ($keepTransactionContext) {
@@ -431,7 +421,8 @@ class AppN2nContext implements N2nContext, ShutdownListener {
 		}
 
 		$appN2nContext = new AppN2nContext($transactionManager, $n2nContext->getModuleManager(),
-				$n2nContext->getAppCache(), $n2nContext->getVarStore(), $n2nContext->lookup(AppConfig::class));
+				$n2nContext->getAppCache(), $n2nContext->getVarStore(), $n2nContext->lookup(AppConfig::class),
+				$n2nContext>getPhpVars());
 
 		$appN2nContext->setLookupManager(new LookupManager(
 				$lookupSession ?? $n2nContext->getLookupManager()->getLookupSession(),
