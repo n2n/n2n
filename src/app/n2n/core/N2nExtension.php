@@ -10,4 +10,5 @@ interface N2nExtension {
 
 	function setUp(AppN2nContext $appN2NContext): void;
 
+	function copyTo(AppN2nContext $appN2NContext): void;
 }
