@@ -1,6 +1,6 @@
 <?php
 
-namespace n2n\core;
+namespace n2n\core\ext;
 
 use n2n\core\container\impl\AppN2nContext;
 

@@ -60,6 +60,7 @@ use n2n\util\cache\CacheStore;
 use n2n\context\LookupableNotFoundException;
 use n2n\util\magic\MagicLookupFailedException;
 use n2n\util\magic\MagicContext;
+use n2n\core\N2nHttpEngine;
 
 class AppN2nContext implements N2nContext, ShutdownListener {
 	private $moduleManager;
@@ -73,9 +74,10 @@ class AppN2nContext implements N2nContext, ShutdownListener {
 	private array $injectedObjects = [];
 
 	private \SplObjectStorage $finalizeCallbacks;
+	private ?N2nHttpEngine $n2nHttpEngine;
 
 	public function __construct(private TransactionManager $transactionManager, ModuleManager $moduleManager, AppCache $appCache,
-			VarStore $varStore, AppConfig $appConfig) {
+			VarStore $varStore, AppConfig $appConfig, private readonly PhpVars $phpVars) {
 		$this->transactionManager = $transactionManager;
 		$this->moduleManager = $moduleManager;
 		$this->appCache = $appCache;
@@ -88,6 +90,14 @@ class AppN2nContext implements N2nContext, ShutdownListener {
 
 	function util(): N2nUtil {
 		return new N2nUtil($this);
+	}
+
+	function getAppConfig(): AppConfig {
+		return $this->appConfig;
+	}
+
+	function getPhpVars(): PhpVars {
+		return $this->phpVars;
 	}
 
 	function getTransactionManager(): TransactionManager {
@@ -138,32 +148,32 @@ class AppN2nContext implements N2nContext, ShutdownListener {
 		return $this->moduleConfigs[$namespace] = null;
 	}
 
-	/**
-	 * {@inheritDoc}
-	 * @see \n2n\core\container\N2nContext::isHttpContextAvailable()
-	 */
-	public function isHttpContextAvailable(): bool {
-		return $this->httpContext !== null;
+	function setN2nHttpEngine(?N2nHttpEngine $n2nHttpEngine): void {
+		$this->n2nHttpEngine = $n2nHttpEngine;
+	}
+
+	function getN2nHttpEngine(): ?N2nHttpEngine {
+		return $this->n2nHttpEngine;
 	}
 
 	/**
-	 * {@inheritDoc}
-	 * @see \n2n\core\container\N2nContext::getHttpContext()
+	 * @deprecated
+	 */
+	public function isHttpContextAvailable(): bool {
+		return $this->n2nHttpEngine !== null;
+	}
+
+	/**
+	 * @deprecated
 	 */
 	public function getHttpContext(): HttpContext {
-		if ($this->httpContext !== null) {
-			return $this->httpContext;
+		if ($this->n2nHttpEngine !== null) {
+			return $this->n2nHttpEngine->unwrap(HttpContext::class);
 		}
 
 		throw new HttpContextNotAvailableException();
 	}
 
-	/**
-	 * @param HttpContext $httpContext
-	 */
-	public function setHttpContext(HttpContext $httpContext = null) {
-		$this->httpContext = $httpContext;
-	}
 
 	/**
 	 * {@inheritDoc}
@@ -268,35 +278,7 @@ class AppN2nContext implements N2nContext, ShutdownListener {
 		}
 
 		switch ($id) {
-			case Request::class:
-				try {
-					return $this->getHttpContext()->getRequest();
-				} catch (HttpContextNotAvailableException $e) {
-					if (!$required) return null;
-					throw new MagicObjectUnavailableException('Request not available.', 0, $e);
-				}
-				return $this->request;
-			case Response::class:
-				try {
-					return $this->getHttpContext()->getResponse();
-				} catch (HttpContextNotAvailableException $e) {
-					if (!$required) return null;
-					throw new MagicObjectUnavailableException('Response not available.', 0, $e);
-				}
-			case Session::class:
-				try {
-					return $this->getHttpContext()->getSession();
-				} catch (HttpContextNotAvailableException $e) {
-					if (!$required) return null;
-					throw new MagicObjectUnavailableException('Session not available.', 0, $e);
-				}
-			case HttpContext::class:
-				try {
-					return $this->getHttpContext();
-				} catch (HttpContextNotAvailableException $e) {
-					if (!$required) return null;
-					throw new MagicObjectUnavailableException('HttpContext not available.', 0, $e);
-				}
+
 			case N2nContext::class:
 			case MagicContext::class:
 				return $this;
