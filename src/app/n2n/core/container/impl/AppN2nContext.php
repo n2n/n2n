@@ -73,7 +73,7 @@ class AppN2nContext implements N2nContext, ShutdownListener {
 	private ?LookupManager $lookupManager;
 	private array $injectedObjects = [];
 
-	private \SplObjectStorage $magicContexts;
+	private \SplObjectStorage $addOnContexts;
 
 	private \SplObjectStorage $finalizeCallbacks;
 	private ?N2nHttpEngine $n2nHttpEngine;
@@ -87,7 +87,7 @@ class AppN2nContext implements N2nContext, ShutdownListener {
 		$this->appConfig = $appConfig;
 		$this->n2nLocale = N2nLocale::getDefault();
 
-		$this->magicContexts = new \SplObjectStorage();
+		$this->addOnContexts = new \SplObjectStorage();
 		$this->finalizeCallbacks = new \SplObjectStorage();
 	}
 
@@ -206,12 +206,12 @@ class AppN2nContext implements N2nContext, ShutdownListener {
 		$this->n2nLocale = $n2nLocale;
 	}
 
-	function addMagicContext(MagicContext $magicContext) {
-		$this->magicContexts->attach($magicContext);
+	function addAddonContext(AddOnContext $addOnContext) {
+		$this->addOnContexts->attach($addOnContext);
 	}
 
-	function removeMagicContext(MagicContext $magicContext) {
-		$this->magicContexts->detach($magicContext);
+	function removeAddonContext(AddOnContext $addOnContext) {
+		$this->addOnContexts->detach($addOnContext);
 	}
 
 	function putLookupInjection(string $id, object $obj): void {
@@ -241,7 +241,7 @@ class AppN2nContext implements N2nContext, ShutdownListener {
 			return true;
 		}
 
-		foreach ($this->magicContexts as $magicContext) {
+		foreach ($this->addOnContexts as $magicContext) {
 			if ($magicContext->has($id)) {
 				return true;
 			}
@@ -286,7 +286,7 @@ class AppN2nContext implements N2nContext, ShutdownListener {
 			return $this->injectedObjects[$id];
 		}
 
-		foreach ($this->magicContexts as $magicContext) {
+		foreach ($this->addOnContexts as $magicContext) {
 			if (null !== ($result = $magicContext->lookup($id, false, $contextNamespace))) {
 				return $result;
 			}
@@ -389,6 +389,11 @@ class AppN2nContext implements N2nContext, ShutdownListener {
 			$this->finalizeCallbacks->key()($this);
 		}
 
+		$this->addOnContexts->rewind();
+		while ($this->addOnContexts->valid()) {
+			$this->addOnContexts->key()($this);
+		}
+
 		if ($this->lookupManager !== null) {
 			if ($this->lookupManager->contains(PdoPool::class)) {
 				$this->lookupManager->lookup(PdoPool::class)->clear();
@@ -406,6 +411,10 @@ class AppN2nContext implements N2nContext, ShutdownListener {
 // 	public function magicInit($object) {
 // 		MagicUtils::init($object, $this);
 // 	}
+
+	function copy(): AppN2nContext {
+
+	}
 
 	/**
 	 * @param AppN2nContext $n2nContext
