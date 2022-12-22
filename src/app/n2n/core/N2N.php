@@ -86,7 +86,7 @@ class N2N {
 	protected $combinedConfigSource;
 	protected ModuleManager $moduleManager;
 	protected AppConfig $appConfig;
-	protected N2nContext $n2nContext;
+	protected AppN2nContext $n2nContext;
 	
 	private static $initialized = false;
 	/**
@@ -593,7 +593,7 @@ class N2N {
  		throw new UnknownModuleException('Class does not belong to any module: ' . $className);
  	}
 	
-	public static function getN2nContext() {
+	public static function getN2nContext(): AppN2nContext {
 		return self::_i()->n2nContext;
 	}
 	/**

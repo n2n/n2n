@@ -60,7 +60,7 @@ use n2n\util\cache\CacheStore;
 use n2n\context\LookupableNotFoundException;
 use n2n\util\magic\MagicLookupFailedException;
 use n2n\util\magic\MagicContext;
-use n2n\core\ext\N2nHttpEngine;
+use n2n\core\ext\N2nHttp;
 use n2n\core\module\Module;
 
 class AppN2nContext implements N2nContext, ShutdownListener {
@@ -76,7 +76,7 @@ class AppN2nContext implements N2nContext, ShutdownListener {
 	private \SplObjectStorage $addOnContexts;
 
 	private \SplObjectStorage $finalizeCallbacks;
-	private ?N2nHttpEngine $n2nHttpEngine;
+	private ?N2nHttp $n2nHttpEngine;
 
 	public function __construct(private TransactionManager $transactionManager, ModuleManager $moduleManager, AppCache $appCache,
 			VarStore $varStore, AppConfig $appConfig, private readonly PhpVars $phpVars) {
@@ -151,11 +151,11 @@ class AppN2nContext implements N2nContext, ShutdownListener {
 		return $this->moduleConfigs[$namespace] = null;
 	}
 
-	function setN2nHttpEngine(?N2nHttpEngine $n2nHttpEngine): void {
+	function setN2nHttpEngine(?N2nHttp $n2nHttpEngine): void {
 		$this->n2nHttpEngine = $n2nHttpEngine;
 	}
 
-	function getN2nHttpEngine(): ?N2nHttpEngine {
+	function getN2nHttpEngine(): ?N2nHttp {
 		return $this->n2nHttpEngine;
 	}
 
@@ -412,16 +412,8 @@ class AppN2nContext implements N2nContext, ShutdownListener {
 // 		MagicUtils::init($object, $this);
 // 	}
 
-	function copy(): AppN2nContext {
-
-	}
-
-	/**
-	 * @param AppN2nContext $n2nContext
-	 * @return \n2n\core\container\impl\AppN2nContext
-	 */
-	static function createCopy(AppN2nContext $n2nContext, LookupSession $lookupSession = null,
-			CacheStore $applicationCacheStore = null, bool $keepTransactionContext = true) {
+	function copy(LookupSession $lookupSession = null,
+			CacheStore $applicationCacheStore = null, bool $keepTransactionContext = true): AppN2nContext {
 		$transactionManager = null;
 		if ($keepTransactionContext) {
 			$transactionManager = $n2nContext->getTransactionManager();
@@ -431,7 +423,8 @@ class AppN2nContext implements N2nContext, ShutdownListener {
 
 		$appN2nContext = new AppN2nContext($transactionManager, $n2nContext->getModuleManager(),
 				$n2nContext->getAppCache(), $n2nContext->getVarStore(), $n2nContext->lookup(AppConfig::class),
-				$n2nContext>getPhpVars());
+				$n2nContext->getPhpVars());
+
 
 		$appN2nContext->setLookupManager(new LookupManager(
 				$lookupSession ?? $n2nContext->getLookupManager()->getLookupSession(),
@@ -439,13 +432,16 @@ class AppN2nContext implements N2nContext, ShutdownListener {
 				$appN2nContext));
 
 		$appN2nContext->setN2nLocale($n2nContext->getN2nLocale());
+	}
 
-		if ($keepTransactionContext) {
-			$pdoPool = $appN2nContext->lookup(PdoPool::class);
-			foreach ($n2nContext->lookup(PdoPool::class)->getInitializedPdos() as $puName => $pdo) {
-				$pdoPool->setPdo($puName, $pdo);
-			}
-		}
+	/**
+	 * @param AppN2nContext $n2nContext
+	 * @return \n2n\core\container\impl\AppN2nContext
+	 */
+	static function createCopy(AppN2nContext $n2nContext) {
+
+
+
 
 		return $appN2nContext;
 	}
