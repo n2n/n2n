@@ -57,7 +57,7 @@ class PdoPool {
 	}
 
 	public function setMagicContext(MagicContext $magicContext = null) {
-		return $this->decorated->setMagicContext($magicContext);
+		$this->decorated->setMagicContext($magicContext);
 	}
 	/**
 	 * @return MagicContext

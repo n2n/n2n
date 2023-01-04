@@ -414,32 +414,22 @@ class AppN2nContext implements N2nContext, ShutdownListener {
 			CacheStore $applicationCacheStore = null, bool $keepTransactionContext = true): AppN2nContext {
 		$transactionManager = null;
 		if ($keepTransactionContext) {
-			$transactionManager = $n2nContext->getTransactionManager();
+			$transactionManager = $this->getTransactionManager();
 		} else {
 			$transactionManager = new TransactionManager();
 		}
 
-		$appN2nContext = new AppN2nContext($transactionManager, $n2nContext->getModuleManager(),
-				$n2nContext->getAppCache(), $n2nContext->getVarStore(), $n2nContext->lookup(AppConfig::class),
-				$n2nContext->getPhpVars());
+		$appN2nContext = new AppN2nContext($transactionManager, $this->getModuleManager(),
+				$this->getAppCache(), $this->getVarStore(), $this->lookup(AppConfig::class),
+				$this->getPhpVars());
 
 
 		$appN2nContext->setLookupManager(new LookupManager(
-				$lookupSession ?? $n2nContext->getLookupManager()->getLookupSession(),
-				$applicationCacheStore ?? $n2nContext->getLookupManager()->getApplicationCacheStore(),
+				$lookupSession ?? $this->getLookupManager()->getLookupSession(),
+				$applicationCacheStore ?? $this->getLookupManager()->getApplicationCacheStore(),
 				$appN2nContext));
 
-		$appN2nContext->setN2nLocale($n2nContext->getN2nLocale());
-	}
-
-	/**
-	 * @param AppN2nContext $n2nContext
-	 * @return \n2n\core\container\impl\AppN2nContext
-	 */
-	static function createCopy(AppN2nContext $n2nContext) {
-
-
-
+		$appN2nContext->setN2nLocale($this->getN2nLocale());
 
 		return $appN2nContext;
 	}

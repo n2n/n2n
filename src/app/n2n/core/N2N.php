@@ -644,25 +644,25 @@ class N2N {
 		self::_i()->n2nContext->getHttp()?->invokerControllers();
 	}
 	
-	public static function invokerControllers(string $subsystemName = null, Path $cmdPath = null) {
-		$n2nContext = self::_i()->n2nContext;
-		$httpContext = $n2nContext->getHttpContext();
-		$request = $httpContext->getRequest();
-
-        $subsystem = null;
-		if ($subsystemName !== null) {
-			$subsystem = $httpContext->getAvailableSubsystemByName($subsystemName);
-		}
-		$request->setSubsystem($subsystem);
-			
-		
-		$controllerRegistry = $n2nContext->lookup(ControllerRegistry::class);
-		
-		if ($cmdPath === null) {
-			$cmdPath = $request->getCmdPath();
-		}
-		$controllerRegistry->createControllingPlan($request->getCmdPath(), $request->getSubsystemName())->execute();
-	}
+//	public static function invokerControllers(string $subsystemName = null, Path $cmdPath = null) {
+//		$n2nContext = self::_i()->n2nContext;
+//		$httpContext = $n2nContext->getHttpContext();
+//		$request = $httpContext->getRequest();
+//
+//        $subsystem = null;
+//		if ($subsystemName !== null) {
+//			$subsystem = $httpContext->getAvailableSubsystemByName($subsystemName);
+//		}
+//		$request->setSubsystem($subsystem);
+//
+//
+//		$controllerRegistry = $n2nContext->lookup(ControllerRegistry::class);
+//
+//		if ($cmdPath === null) {
+//			$cmdPath = $request->getCmdPath();
+//		}
+//		$controllerRegistry->createControllingPlan($request->getCmdPath(), $request->getSubsystemName())->execute();
+//	}
 	/**
 	 * @return \n2n\context\LookupManager
 	 */
