@@ -24,7 +24,7 @@ namespace n2n\core;
 use n2n\context\config\SimpleLookupSession;
 use n2n\core\container\TransactionManager;
 use n2n\log4php\Logger;
-use n2n\core\container\PdoPool;
+use n2n\persistence\ext\PdoPool;
 use n2n\core\module\Module;
 use n2n\core\err\ExceptionHandler;
 use n2n\l10n\N2nLocale;
@@ -61,6 +61,8 @@ use n2n\util\StringUtils;
 use n2n\core\module\UnknownModuleException;
 use n2n\web\http\controller\ControllingPlan;
 use n2n\core\err\LogMailer;
+use n2n\core\container\impl\PhpVars;
+use n2n\core\ext\N2nExtension;
 
 define('N2N_CRLF', "\r\n");
 
@@ -186,46 +188,37 @@ class N2N {
 	
 	private function initN2nContext(N2nCache $n2nCache) {
 		$this->n2nContext = new AppN2nContext(new TransactionManager(), $this->moduleManager, $n2nCache->getAppCache(),
-				$this->varStore, $this->appConfig);
+				$this->varStore, $this->appConfig, PhpVars::fromEnv());
         self::registerShutdownListener($this->n2nContext);
 
-        $lookupSession = null;
-        $request = null;
-        $session = null;
-		if (!isset($_SERVER['REQUEST_URI'])) {
-            $lookupSession = new SimpleLookupSession();
-        } else {
-            $request = new VarsRequest($_SERVER, $_GET, $_POST, $_FILES);
-			$request->legacyN2nContext = $this->n2nContext;
-            $lookupSession = $session = new VarsSession($this->appConfig->general()->getApplicationName());
-        }
+		foreach ($this->appConfig->general()->getExtensionClassNames() as $extensionClassName) {
+			$this->setUpExtension($extensionClassName);
+		}
 
-		$lookupManager = new LookupManager($lookupSession, $n2nCache->getAppCache()->lookupCacheStore(LookupManager::class),
+
+
+
+		$lookupSession = $this->n2nContext->getHttp()?->getLookupSession() ?? new SimpleLookupSession();
+        $lookupManager = new LookupManager($lookupSession, $n2nCache->getAppCache()->lookupCacheStore(LookupManager::class),
                 $this->n2nContext);
 		$this->n2nContext->setLookupManager($lookupManager);
-
-        if ($request !== null) {
-            $httpContext = $this->createHttpContext($request, $session);
-            $httpContext->getResponse()->capturePrevBuffer();
-            $this->n2nContext->setHttpContext($httpContext);
-			$this->n2nContext->setN2nLocale($httpContext->determineBestN2nLocale());
-        }
 	}
 
-    /**
-     * @return HttpContext
-     */
-	private function createHttpContext(Request $request, Session $session) {
-		$generalConfig = $this->appConfig->general();
-		$webConfig = $this->appConfig->web();
-		$errorConfig = $this->appConfig->error();
-// 		$filesConfig = $this->appConfig->files();
+	private function setUpExtension(string $extensionClassName): void {
+		try {
+			$class = new \ReflectionClass($extensionClassName);
+		} catch (\ReflectionException $e) {
+			throw new N2nStartupException('Could not set up extension: ' . $extensionClassName, null, $e);
+		}
 
+		if (!$class->implementsInterface(N2nExtension::class)) {
+			throw new N2nStartupException('Extension class must implement \'' . N2nExtension::class
+					. '\': ' . $extensionClassName);
+		}
 
-		return HttpContextFactory::createFromAppConfig($this->appConfig, $request, $session, $this->n2nContext,
-                self::$exceptionHandler);
+		$extension = $class->newInstance();
+		$extension->setUp($this->n2nContext);
 	}
-	
 
 	
 // 	private function initRegistry() {
@@ -648,26 +641,7 @@ class N2N {
 	}
 	
 	public static function autoInvokeControllers() {
-		$n2nContext = self::_i()->n2nContext;
-
-		$httpContext = $n2nContext->getHttpContext();
-		$request = $n2nContext->getHttpContext()->getRequest();
-		$response = $n2nContext->getHttpContext()->getResponse();
-		
-		if ($request->getOrigMethodName() != Method::toString(Method::HEAD) 
-				&& ($request->getOrigMethodName() != Method::toString($request->getMethod()))) {
-			throw new MethodNotAllowedException(Method::HEAD|Method::GET|Method::POST|Method::PUT|Method::OPTIONS|Method::PATCH|Method::DELETE|Method::TRACE);
-		}
-		
-		/**
-		 * @var ControllerRegistry $controllerRegistry
-		 */
-		$controllerRegistry = $n2nContext->lookup(ControllerRegistry::class);
-		$controllingPlan = $controllerRegistry->createControllingPlan($request->getCmdPath(), $httpContext->getActiveSubsystemRule());
-		$result = $controllingPlan->execute();
-		if (!$result->isSuccessful()) {
-			$controllingPlan->sendStatusView($result->getStatusException());
-		}
+		self::_i()->n2nContext->getHttp()?->invokerControllers();
 	}
 	
 	public static function invokerControllers(string $subsystemName = null, Path $cmdPath = null) {
@@ -696,7 +670,7 @@ class N2N {
 		return self::_i()->n2nContext->getLookupManager();
 	}
 	/**
-	 * @return \n2n\core\container\PdoPool
+	 * @return \n2n\persistence\ext\PdoPool
 	 */
 	public static function getPdoPool() {
 		return self::_i()->n2nContext->lookup(PdoPool::class);

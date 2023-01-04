@@ -50,7 +50,7 @@ use n2n\core\config\OrmConfig;
 use n2n\core\config\N2nLocaleConfig;
 use n2n\persistence\orm\EntityManagerFactory;
 use n2n\persistence\orm\EntityManager;
-use n2n\core\container\PdoPool;
+use n2n\persistence\ext\PdoPool;
 use n2n\web\http\Session;
 use n2n\util\magic\MagicObjectUnavailableException;
 use n2n\util\type\ArgUtils;
@@ -76,7 +76,7 @@ class AppN2nContext implements N2nContext, ShutdownListener {
 	private \SplObjectStorage $addOnContexts;
 
 	private \SplObjectStorage $finalizeCallbacks;
-	private ?N2nHttp $n2nHttpEngine;
+	private ?N2nHttp $http;
 
 	public function __construct(private TransactionManager $transactionManager, ModuleManager $moduleManager, AppCache $appCache,
 			VarStore $varStore, AppConfig $appConfig, private readonly PhpVars $phpVars) {
@@ -151,23 +151,23 @@ class AppN2nContext implements N2nContext, ShutdownListener {
 		return $this->moduleConfigs[$namespace] = null;
 	}
 
-	function setN2nHttpEngine(?N2nHttp $n2nHttpEngine): void {
-		$this->n2nHttpEngine = $n2nHttpEngine;
+	function setHttp(?N2nHttp $http): void {
+		$this->http = $http;
 	}
 
-	function getN2nHttpEngine(): ?N2nHttp {
-		return $this->n2nHttpEngine;
+	function getHttp(): ?N2nHttp {
+		return $this->http;
 	}
 
 	public function isHttpContextAvailable(): bool {
-		return $this->n2nHttpEngine !== null;
+		return $this->http !== null;
 	}
 
 	/**
 	 * @deprecated
 	 */
 	public function getHttpContext(): HttpContext {
-		if ($this->n2nHttpEngine !== null) {
+		if ($this->http !== null) {
 			return $this->lookup(HttpContext::class);
 		}
 
@@ -302,10 +302,6 @@ class AppN2nContext implements N2nContext, ShutdownListener {
 				return $this->getLookupManager();
 			case N2nLocale::class:
 				return $this->getN2nLocale();
-			case EntityManager::class:
-				return $this->lookup(PdoPool::class)->getEntityManagerFactory()->getExtended();
-			case EntityManagerFactory::class:
-				return $this->lookup(PdoPool::class)->getEntityManagerFactory();
 			case TransactionManager::class:
 				return $this->transactionManager;
 			case VarStore::class:
@@ -386,12 +382,14 @@ class AppN2nContext implements N2nContext, ShutdownListener {
 	function finalize(): void {
 		$this->finalizeCallbacks->rewind();
 		while ($this->finalizeCallbacks->valid()) {
-			$this->finalizeCallbacks->key()($this);
+			$this->finalizeCallbacks->current()($this);
+			$this->finalizeCallbacks->next();
 		}
 
 		$this->addOnContexts->rewind();
 		while ($this->addOnContexts->valid()) {
-			$this->addOnContexts->key()($this);
+			$this->addOnContexts->current()->finalize($this);
+			$this->addOnContexts->next();
 		}
 
 		if ($this->lookupManager !== null) {

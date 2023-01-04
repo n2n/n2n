@@ -21,8 +21,6 @@
  */
 namespace n2n\core\config;
 
-use n2n\persistence\PersistenceUnitConfig;
-
 class DbConfig {
 	private $persistenceUnitConfigs;
 	

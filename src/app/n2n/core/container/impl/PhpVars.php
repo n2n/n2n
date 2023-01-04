@@ -4,12 +4,11 @@ namespace n2n\core\container\impl;
 
 class PhpVars {
 
-	function __construct(readonly array &$server, readonly array &$get, readonly array &$post,
-			readonly array &$files, readonly array &$session) {
+	function __construct(public array &$server, public array &$get, public array &$post, public array &$files) {
 	}
 
 	static function fromEnv(): PhpVars {
-		return new PhpVars($_SERVER, $_GET, $_POST, $_FILES, $_SESSION);
+		return new PhpVars($_SERVER, $_GET, $_POST, $_FILES);
 	}
 
 }

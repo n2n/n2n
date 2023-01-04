@@ -26,7 +26,7 @@ use n2n\web\http\controller\ControllerDef;
 use n2n\core\config\SmtpConfig;
 use n2n\l10n\DateTimeFormat;
 use n2n\l10n\N2nLocale;
-use n2n\persistence\PersistenceUnitConfig;
+use n2n\core\config\PersistenceUnitConfig;
 use n2n\util\crypt\EncryptionDescriptor;
 use n2n\util\io\fs\FsPath;
 use n2n\util\uri\Url;
