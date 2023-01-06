@@ -8,5 +8,5 @@ interface N2nExtension {
 
 	function __construct();
 
-	function setUp(AppN2nContext $appN2NContext): void;
+	function setUp(AppN2nContext $appN2nContext): void;
 }

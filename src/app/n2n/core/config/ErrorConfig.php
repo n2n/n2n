@@ -36,7 +36,7 @@ class ErrorConfig {
 
 	public function __construct(bool $strictAttitude, bool $startupDetectErrors, bool $startupDetectBadRequests, 
 			bool $logSaveDetailInfo, bool $logSendMail, string $logMailRecipient = null, bool $logHandleStatusExceptions, 
-			array $logExcludedHttpStatuses, array $errorViewNames) {
+			array $logExcludedHttpStatuses, array $errorViewNames, private readonly ?int $monitorSlowQueryTime) {
 		$this->strictAttitude = $strictAttitude;
 		$this->startupDetectErrors = $startupDetectErrors;
 		$this->startupDetectBadRequests = $startupDetectBadRequests;
@@ -125,5 +125,9 @@ class ErrorConfig {
 	
 	function getDefaultErrorViewName() {
 		return $this->errorViewNames[self::ERROR_VIEW_DEFAULT_KEY_SUFFIX] ?? null;
+	}
+
+	function getMonitorSlowQueryTime(): ?int {
+		return $this->monitorSlowQueryTime;
 	}
 }

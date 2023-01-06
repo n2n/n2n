@@ -62,6 +62,7 @@ use n2n\util\magic\MagicLookupFailedException;
 use n2n\util\magic\MagicContext;
 use n2n\core\ext\N2nHttp;
 use n2n\core\module\Module;
+use n2n\core\ext\N2nMonitor;
 
 class AppN2nContext implements N2nContext, ShutdownListener {
 	private ModuleManager $moduleManager;
@@ -76,7 +77,8 @@ class AppN2nContext implements N2nContext, ShutdownListener {
 	private \SplObjectStorage $addOnContexts;
 
 	private \SplObjectStorage $finalizeCallbacks;
-	private ?N2nHttp $http;
+	private ?N2nHttp $http = null;
+	private ?N2nMonitor $monitor = null;
 
 	public function __construct(private TransactionManager $transactionManager, ModuleManager $moduleManager, AppCache $appCache,
 			VarStore $varStore, AppConfig $appConfig, private readonly PhpVars $phpVars) {
@@ -161,6 +163,14 @@ class AppN2nContext implements N2nContext, ShutdownListener {
 
 	public function isHttpContextAvailable(): bool {
 		return $this->http !== null;
+	}
+
+	function getMonitor(): ?N2nMonitor {
+		return $this->monitor;
+	}
+
+	function setMonitor(?N2nMonitor $monitor) {
+		$this->monitor = $monitor;
 	}
 
 	/**

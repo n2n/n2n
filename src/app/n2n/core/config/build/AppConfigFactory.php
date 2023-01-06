@@ -329,6 +329,7 @@ class AppConfigFactory {
 	const LOG_HANDLE_HTTP_STATUS_EXCEPTIONS_KEY = 'log.handle_http_status_exceptions';
 	const LOG_HANDLE_HTTP_STATUS_EXCEPTIONS_DEFAULT = false;
 	const LOG_EXCLUDED_HTTP_STATUS_KEY = 'log.excluded_http_status_exceptions';
+	const MONITOR_SLOW_QUERY_TIME = 'monitor.slow_query_time';
 	const ERROR_VIEW_KEY_PREFIX = 'error_view.';
 	
 	
@@ -342,7 +343,8 @@ class AppConfigFactory {
 				$groupReader->getString(self::LOG_MAIL_RECIPIENT_KEY, false),
 				$groupReader->getString(self::LOG_HANDLE_HTTP_STATUS_EXCEPTIONS_KEY, false, self::LOG_HANDLE_HTTP_STATUS_EXCEPTIONS_DEFAULT),
 				$groupReader->getScalarArray(self::LOG_EXCLUDED_HTTP_STATUS_KEY, false, array()),
-				self::extractStringPropertyArray($groupReader, self::ERROR_VIEW_KEY_PREFIX));
+				self::extractStringPropertyArray($groupReader, self::ERROR_VIEW_KEY_PREFIX),
+				$groupReader->getInt(self::MONITOR_SLOW_QUERY_TIME, false));
 	}
 		
 	const KEY_EXT_DSN_URI = '.dsn_uri';

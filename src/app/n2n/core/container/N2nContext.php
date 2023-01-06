@@ -30,30 +30,32 @@ use n2n\web\http\HttpContextNotAvailableException;
 use n2n\context\LookupManager;
 use n2n\util\type\ArgUtils;
 use n2n\core\util\N2nUtil;
+use n2n\core\ext\N2nMonitor;
+use n2n\core\ext\N2nHttp;
 
 interface N2nContext extends MagicContext {
 
 	function util(): N2nUtil;
 
-	public function getTransactionManager(): TransactionManager;
+	function getTransactionManager(): TransactionManager;
 
-	public function getModuleManager(): ModuleManager;
+	function getModuleManager(): ModuleManager;
 
-	public function getModuleConfig(string $namespace);
+	function getModuleConfig(string $namespace);
 
-	public function getVarStore(): VarStore;
+	function getVarStore(): VarStore;
 
-	public function isHttpContextAvailable(): bool;
+	function isHttpContextAvailable(): bool;
 
-	public function getHttpContext(): HttpContext;
+	function getHttpContext(): HttpContext;
 
-	public function getAppCache(): AppCache;
+	function getAppCache(): AppCache;
 
-	public function getN2nLocale(): N2nLocale;
+	function getN2nLocale(): N2nLocale;
 
-	public function setN2nLocale(N2nLocale $n2nLocale);
+	function setN2nLocale(N2nLocale $n2nLocale);
 
-	public function getLookupManager(): LookupManager;
+	function getLookupManager(): LookupManager;
 
 	function putLookupInjection(string $id, object $obj): void;
 
@@ -62,4 +64,8 @@ interface N2nContext extends MagicContext {
 	function clearLookupInjections(): void;
 
 	function finalize(): void;
+
+	function getHttp(): ?N2nHttp;
+
+	function getMonitor(): ?N2nMonitor;
 }
