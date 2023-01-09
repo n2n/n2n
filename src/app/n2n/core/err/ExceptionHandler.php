@@ -27,7 +27,6 @@ use n2n\persistence\PdoPreparedExecutionException;
 use n2n\web\http\Response;
 use n2n\core\N2N;
 use n2n\util\io\IoUtils;
-use n2n\web\http\BadRequestException;
 use n2n\util\ex\QueryStumble;
 use n2n\core\TypeLoader;
 use n2n\web\http\controller\ControllerContext;
@@ -35,6 +34,8 @@ use n2n\web\ui\ViewFactory;
 use n2n\util\io\IoException;
 use n2n\util\type\TypeUtils;
 use n2n\util\StringUtils;
+use n2n\util\ex\LogInfo;
+use n2n\core\TypeLoaderErrorException;
 
 // define('N2N_EXCEPTION_HANDLING_PHP_SEVERITIES', E_ALL | E_STRICT);
 // define('N2N_EXCEPTION_HANDLING_PHP_STRICT_ATTITUTE_SEVERITIES', E_STRICT | E_WARNING | E_NOTICE | E_CORE_WARNING | E_USER_WARNING | E_USER_NOTICE | E_DEPRECATED);
@@ -74,7 +75,7 @@ class ExceptionHandler {
 	private $logger;
 
 	private $detectStartupErrorsEnabled = true;
-	private $prevError;
+	private ?TriggeredError $prevError = null;
 	/**
 	 *
 	 * @param bool $developmentMode
@@ -91,9 +92,6 @@ class ExceptionHandler {
 		$this->prevError = TriggeredError::last();
 	}
 
-	/**
-	 * @return \n2n\util\ex\err\TriggeredError|null
-	 */
 	function getPrevError() {
 		return $this->prevError;
 	}
@@ -424,7 +422,7 @@ class ExceptionHandler {
 	 * @param \Throwable $e
 	 * @param bool $preventMail
 	 */
-	function log(\Throwable $e, bool $preventMail = false) {
+	function log(\Throwable $e, bool $preventMail = false): void {
 		$this->performLog($e, $preventMail, true);
 	}
 
@@ -473,8 +471,8 @@ class ExceptionHandler {
 		// cannot log deprecated exception because class loader cant be called anymore if
 		// "Deprecated: Call-time pass-by-reference has been deprecated"-Warning occoures.
 		if (isset($this->logger) && $this->stable
-			/*&& !($e instanceof PHPDeprecatedException && $e->getSeverity() == E_DEPRECATED)
-			&& !($e instanceof PHPStrictException && $e->getSeverity() == E_STRICT)*/) {
+				/*&& !($e instanceof PHPDeprecatedException && $e->getSeverity() == E_DEPRECATED)
+				&& !($e instanceof PHPStrictException && $e->getSeverity() == E_STRICT)*/) {
 			try {
 				$this->logger->error($simpleMessage, $e);
 			} catch (\Throwable $e) {
@@ -518,12 +516,12 @@ class ExceptionHandler {
 		$this->logMailer = $logMailer;
 	}
 
-	function getLogMailer(): ?ExceptionMailer {
+	function getLogMailer(): ?LogMailer {
 		return $this->logMailer;
 	}
 
 	private function createLoggingFailedException(\Throwable $reasonE) {
-		throw new LoggingFailedException('Exception logging failed.', 0, $reasonE);
+		return new LoggingFailedException('Exception logging failed.', 0, $reasonE);
 	}
 	/**
 	 * Creates short description of an exception used for logging
@@ -582,6 +580,12 @@ class ExceptionHandler {
 				}
 				$debugContent .= 'Bound values: ' . $boundValuesStr . PHP_EOL;
 			}
+		}
+
+		if ($e instanceof LogInfo && null !== ($logMessage = $e->getLogMessage())) {
+			$debugContent .= 'LOG MESSAGE' . PHP_EOL
+					. '-----------' . PHP_EOL
+					. $logMessage;
 		}
 
 		// build stack trace
@@ -964,7 +968,11 @@ class LogMailBuffer {
 	 * @param \Throwable $t
 	 * @return string
 	 */
-	private function hashThrowable(\Throwable $t) {
+	private function hashThrowable(\Throwable $t): string {
+		if ($t instanceof LogInfo && null !== ($hashCode = $t->hashCode())) {
+			return $hashCode;
+		}
+
 		$str = '';
 
 		do {
