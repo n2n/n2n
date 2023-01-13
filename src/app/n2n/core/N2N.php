@@ -251,7 +251,7 @@ class N2N {
 	 * @var ExceptionHandler|null;
 	 */
 	private static $exceptionHandler;
-	private static N2N $n2n;
+	private static ?N2N $n2n = null;
 	private static $shutdownListeners = array();
 	
 	
