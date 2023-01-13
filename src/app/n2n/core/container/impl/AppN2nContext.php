@@ -441,6 +441,10 @@ class AppN2nContext implements N2nContext, ShutdownListener {
 
 		$appN2nContext->setN2nLocale($this->getN2nLocale());
 
+		foreach ($this->addOnContexts as $addOnContext) {
+			$addOnContext->copyTo($appN2nContext);
+		}
+
 		return $appN2nContext;
 	}
 
