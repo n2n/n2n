@@ -79,15 +79,17 @@ class AppN2nContext implements N2nContext, ShutdownListener {
 	private \SplObjectStorage $finalizeCallbacks;
 	private ?N2nHttp $http = null;
 	private ?N2nMonitor $monitor = null;
+	private readonly PhpVars $phpVars;
 
 	public function __construct(private TransactionManager $transactionManager, ModuleManager $moduleManager, AppCache $appCache,
-			VarStore $varStore, AppConfig $appConfig, private readonly PhpVars $phpVars) {
+			VarStore $varStore, AppConfig $appConfig, PhpVars $phpVars = null) {
 		$this->transactionManager = $transactionManager;
 		$this->moduleManager = $moduleManager;
 		$this->appCache = $appCache;
 		$this->varStore = $varStore;
 		$this->appConfig = $appConfig;
 		$this->n2nLocale = N2nLocale::getDefault();
+		$this->phpVars = $phpVars ?? PhpVars::fromEnv();
 
 		$this->addOnContexts = new \SplObjectStorage();
 		$this->finalizeCallbacks = new \SplObjectStorage();
