@@ -34,10 +34,12 @@ use n2n\core\config\PersistenceUnitConfig;
 use n2n\persistence\orm\LazyEntityManagerFactory;
 use n2n\persistence\orm\EntityManager;
 use n2n\persistence\PdoPoolListener;
+use n2n\context\attribute\ThreadScoped;
 
 /**
  * @deprecated use {@link \n2n\persistence\ext\PdoPool}
  */
+#[ThreadScoped]
 class PdoPool {
 
 	const DEFAULT_DS_NAME = \n2n\persistence\ext\PdoPool::DEFAULT_DS_NAME;
