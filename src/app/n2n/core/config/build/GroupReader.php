@@ -204,6 +204,18 @@ class GroupReader {
 		return $defaultValue;
 	}
 
+	public function getFloat(string $attributeName, bool $mandatory, float $defaultValue = null) {
+		if (null !== ($def = $this->findAttributesDef($attributeName, $mandatory))) {
+			try {
+				return $def->getAttributes()->reqNumeric($attributeName);
+			} catch (AttributesException $e) {
+				throw $this->createInvalidAttributeException($attributeName, $def, $e);
+			}
+		}
+
+		return $defaultValue;
+	}
+
 	public function getBool(string $attributeName, bool $mandatory, $defaultValue = null) {
 		if (null !== ($def = $this->findAttributesDef($attributeName, $mandatory))) {
 			try {
