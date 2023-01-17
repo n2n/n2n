@@ -585,7 +585,7 @@ class ExceptionHandler {
 		if ($e instanceof LogInfo && null !== ($logMessage = $e->getLogMessage())) {
 			$debugContent .= 'LOG MESSAGE' . PHP_EOL
 					. '-----------' . PHP_EOL
-					. $logMessage;
+					. $logMessage . PHP_EOL . PHP_EOL;
 		}
 
 		// build stack trace
