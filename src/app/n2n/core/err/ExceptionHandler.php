@@ -36,6 +36,12 @@ use n2n\util\type\TypeUtils;
 use n2n\util\StringUtils;
 use n2n\util\ex\LogInfo;
 use n2n\core\TypeLoaderErrorException;
+use n2n\util\uri\Path;
+use n2n\web\http\Request;
+use n2n\web\http\Method;
+use n2n\util\uri\Url;
+use n2n\util\uri\Authority;
+use n2n\util\uri\Query;
 
 // define('N2N_EXCEPTION_HANDLING_PHP_SEVERITIES', E_ALL | E_STRICT);
 // define('N2N_EXCEPTION_HANDLING_PHP_STRICT_ATTITUTE_SEVERITIES', E_STRICT | E_WARNING | E_NOTICE | E_CORE_WARNING | E_USER_WARNING | E_USER_NOTICE | E_DEPRECATED);
@@ -566,6 +572,10 @@ class ExceptionHandler {
 					'Line: ' . $e->getLine()  . PHP_EOL . PHP_EOL;
 		}
 
+		if (null !== ($url = $this->buildUrlStr())) {
+			$debugContent .= 'URL' . PHP_EOL . '---' . PHP_EOL . $url . PHP_EOL . PHP_EOL;
+		}
+
 		// build query info for PDOExceptions
 		if ($e instanceof QueryStumble) {
 			$debugContent .= 'STATEMENT' . PHP_EOL
@@ -636,6 +646,22 @@ class ExceptionHandler {
 		}
 
 		return $debugContent;
+	}
+
+	private function buildUrlStr(): ?string {
+		$requestUrl = $_SERVER['HTTP_X_REWRITE_URL'] ?? $_SERVER['REQUEST_URI'] ?? null;
+
+		$protocol = $_SERVER['HTTP_X_FORWARDED_PROTO'] ?? $_SERVER['REQUEST_SCHEME']
+				?? (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] != 'off'
+						&& $_SERVER['HTTPS'] ? 'https' : 'http');
+
+		$hostName = $this->serverVars['HTTP_X_FORWARDED_HOST'] ?? $_SERVER['HTTP_HOST'] ?? null;
+
+		if ($requestUrl === null || $hostName === null) {
+			return null;
+		}
+
+		return $protocol . '://' . $hostName . $requestUrl;
 	}
 
 	private function createLogArrayStr($title, array $arr, array $allowedPrefixes = null) {
