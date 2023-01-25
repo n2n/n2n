@@ -279,6 +279,7 @@ class AppN2nContext implements N2nContext, ShutdownListener {
 			case DbConfig::class:
 			case OrmConfig::class:
 			case N2nLocaleConfig::class:
+			case DynamicTextCollection::class:
 				return true;
 			default:
 				return $this->getLookupManager()->has($id);
@@ -340,6 +341,16 @@ class AppN2nContext implements N2nContext, ShutdownListener {
 				return $this->appConfig->orm();
 			case N2nLocaleConfig::class:
 				return $this->appConfig->locale();
+			case DynamicTextCollection::class:
+				if ($contextNamespace !== null) {
+					return $this->lookupDynamicTextCollection($id, $required, $contextNamespace);
+				}
+				throw new MagicLookupFailedException('Context namespace required to lookup: ' . $id);
+			case Module::class:
+				if ($contextNamespace !== null) {
+					return $this->lookupModule($id, $required, $contextNamespace);
+				}
+				throw new MagicLookupFailedException('Context namespace required to lookup: ' . $id);
 			default:
 				if (!$required && !$this->getLookupManager()->has($id)) {
 					return null;
@@ -355,30 +366,24 @@ class AppN2nContext implements N2nContext, ShutdownListener {
 		}
 	}
 
-	public function lookupInContextNamespace(string $id, bool $required, string $contextNamespace): mixed {
-		switch ($id) {
-			case DynamicTextCollection::class:
-				$module = null;
-				try {
-					$module = $this->moduleManager->getModuleOfTypeName($contextNamespace, $required);
-				} catch (UnknownModuleException $e) {
-					throw new MagicObjectUnavailableException('Could not determine module for DynamicTextCollection.', 0, $e);
-				}
+	private function lookupDynamicTextCollection(string $id, bool $required, string $contextNamespace): ?DynamicTextCollection {
+		$module = null;
+		try {
+			$module = $this->moduleManager->getModuleOfTypeName($contextNamespace, $required);
+		} catch (UnknownModuleException $e) {
+			throw new MagicLookupFailedException('Could not determine module for DynamicTextCollection.', 0, $e);
+		}
 
-				if ($module === null) return null;
+		if ($module === null) return null;
 
-				return new DynamicTextCollection($module, $this->getN2nLocale());
+		return new DynamicTextCollection($module, $this->getN2nLocale());
+	}
 
-			case Module::class:
-				try {
-					return $this->moduleManager->getModuleOfTypeName($contextNamespace, $required);
-				} catch (UnknownModuleException $e) {
-					throw new MagicObjectUnavailableException('Could not determine module.', 0, $e);
-				}
-
-			default:
-				return null;
-
+	private function lookupModule(string $id, bool $required, string $contextNamespace): ?Module {
+		try {
+			return $this->moduleManager->getModuleOfTypeName($contextNamespace, $required);
+		} catch (UnknownModuleException $e) {
+			throw new MagicLookupFailedException('Could not determine module.', 0, $e);
 		}
 	}
 
