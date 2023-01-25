@@ -565,7 +565,10 @@ class ExceptionHandler {
 		$title = ($logOnlyMarked ? '+ LOG ONLY + ' : '') . 'An ' . $eName . ' occurred';
 		$debugContent =  $title . PHP_EOL .
 				str_repeat('+', mb_strlen($title)) . PHP_EOL . PHP_EOL;
-		$debugContent .= $e->getMessage() . PHP_EOL . PHP_EOL;
+
+		if (strlen($message = $e->getMessage())) {
+			$debugContent .= $message . PHP_EOL . PHP_EOL;
+		}
 
 		if ($e instanceof \ErrorException || $e instanceof \Error) {
 			$debugContent .= 'File: ' . $e->getFile() . PHP_EOL.
