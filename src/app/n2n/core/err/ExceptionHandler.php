@@ -497,7 +497,9 @@ class ExceptionHandler {
 			if ($times == 0) return;
 		}
 
-		$subject = ($logOnlyMarked ? '*** LOG ONLY *** ' : '') . get_class($e) . ' occurred';
+		$subject = (N2N::isLiveStageOn() ? '' : '[' . N2N::getStage() . '] ')
+				. ($logOnlyMarked ? '*** LOG ONLY *** ' : '')
+				. get_class($e) . ' occurred';
 		if ($times > 1) {
 			$subject .= ' ' . $times . ' times';
 		}
