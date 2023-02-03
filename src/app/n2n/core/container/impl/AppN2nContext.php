@@ -254,7 +254,7 @@ class AppN2nContext implements N2nContext, ShutdownListener {
 		}
 
 		foreach ($this->addOnContexts as $magicContext) {
-			if ($magicContext->has($id)) {
+			if ($magicContext->hasMagicObject($id)) {
 				return true;
 			}
 		}
@@ -300,7 +300,7 @@ class AppN2nContext implements N2nContext, ShutdownListener {
 		}
 
 		foreach ($this->addOnContexts as $magicContext) {
-			if (null !== ($result = $magicContext->lookup($id, false, $contextNamespace))) {
+			if (null !== ($result = $magicContext->lookupMagicObject($id, $required, $contextNamespace))) {
 				return $result;
 			}
 		}
