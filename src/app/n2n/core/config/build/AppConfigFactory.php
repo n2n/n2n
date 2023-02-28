@@ -365,7 +365,7 @@ class AppConfigFactory {
 					$groupReader->getString($name . self::KEY_EXT_TRANSACTION_ISOLATION_LEVEL, false,
 							PersistenceUnitConfig::TIL_SERIALIZABLE),
 					$groupReader->getString($name . self::KEY_EXT_DIALECT_CLASS, true),
-					$groupReader->getBool($name . self::KEY_EXT_SSl_VERIFY, false),
+					$groupReader->getBool($name . self::KEY_EXT_SSl_VERIFY, false, true),
 					$groupReader->getString($name . self::KEY_EXT_CA_CERTIFICATE_PATH, false));
 		}
 				
