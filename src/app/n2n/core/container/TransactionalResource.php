@@ -35,9 +35,9 @@ interface TransactionalResource {
 	
 	/**
 	 * @param Transaction $transaction
-	 * @return boolean if ok true, false causes the transaction to roll back
+	 * @throws CommitPreparationFailedException causes the transaction to roll back
 	 */
-	public function prepareCommit(Transaction $transaction): bool;
+	public function prepareCommit(Transaction $transaction): void;
 	
 	/**
 	 * @param Transaction $transaction

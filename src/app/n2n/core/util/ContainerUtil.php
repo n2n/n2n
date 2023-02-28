@@ -43,7 +43,7 @@ class ContainerUtil {
 	 * @param bool $readOnly
 	 * @return \n2n\core\container\Transaction
 	 */
-	function createTransaction(bool $readOnly = false) {
+	function createTransaction(bool $readOnly = false): \n2n\core\container\Transaction {
 		return $this->getTransactionManager()->createTransaction($readOnly);
 	}
 
@@ -51,7 +51,7 @@ class ContainerUtil {
 	 * @param \Closure $closure
 	 * @return MagicMethodInvoker
 	 */
-	private function createMmiFromClosure(\Closure $closure) {
+	private function createMmiFromClosure(\Closure $closure): MagicMethodInvoker {
 		$mmi = new MagicMethodInvoker($this->n2nContext);
 		$mmi->setMethod(new \ReflectionFunction($closure));
 		return $mmi;
@@ -61,7 +61,7 @@ class ContainerUtil {
 	 * @param \Closure $callback
 	 * @return void
 	 */
-	function outsideTransaction(\Closure $callback, bool $invokeOnFaliedCommit = false) {
+	function outsideTransaction(\Closure $callback, bool $invokeOnFaliedCommit = false): void {
 		if (!$this->hasOpenTransaction()) {
 			$this->createMmiFromClosure($callback)->invoke();
 			return;
@@ -77,7 +77,7 @@ class ContainerUtil {
 	/**
 	 * @return ClosureCommitListener
 	 */
-	private function createClosureCommitListener() {
+	private function createClosureCommitListener(): ClosureCommitListener {
 		$tm = $this->getTransactionManager();
 		$tm->ensureTransactionOpen();
 
@@ -91,7 +91,7 @@ class ContainerUtil {
 		return $commitListener;
 	}
 
-	function preCommit(\Closure $callback) {
+	function preCommit(\Closure $callback): void {
 		$mmi = $this->createMmiFromClosure($callback);
 		$commitListener = $this->createClosureCommitListener();
 		$commitListener->setPreCommitCallback(function () use ($commitListener, $mmi) {
@@ -100,7 +100,7 @@ class ContainerUtil {
 		});
 	}
 
-	function postCommit(\Closure $callback) {
+	function postCommit(\Closure $callback): void {
 		$mmi = $this->createMmiFromClosure($callback);
 		$commitListener = $this->createClosureCommitListener();
 		$commitListener->setPostCommitCallback(function () use ($commitListener, $mmi) {
@@ -109,12 +109,20 @@ class ContainerUtil {
 		});
 	}
 
-	function failedCommit(\Closure $callback) {
+	function failedCommit(\Closure $callback): void {
 		$mmi = $this->createMmiFromClosure($callback);
 		$commitListener = $this->createClosureCommitListener();
 		$commitListener->setCommitFailedCallback(function () use ($commitListener, $mmi) {
 			$this->getTransactionManager()->unregisterCommitListener($commitListener);
 			$mmi->invoke();
 		});
+	}
+
+
+	function extendTransaction(bool $ifRequiredOnly = true): void {
+		$tm = $this->getTransactionManager();
+		if (!$ifRequiredOnly || !$tm->hasOpenTransaction() || $tm->getPhase()->isCompleting()) {
+			$tm->extendCommitPreparation();
+		}
 	}
 }

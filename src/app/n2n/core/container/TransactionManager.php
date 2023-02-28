@@ -22,21 +22,36 @@
 namespace n2n\core\container;
 	  
 use n2n\reflection\ObjectAdapter;
+use n2n\util\ex\IllegalStateException;
+use n2n\util\EnumUtils;
 
 class TransactionManager extends ObjectAdapter {
+	/**
+	 * @var TransactionalResource[]
+	 */
 	private $transactionalResources = array();
 	private $commitListeners = array();
 	private $tRef = 1;
 	
-	private $rootTransaction = null;
-	private $currentLevel = 0;
-	private $readOnly = null;
-	private $rollingBack = false;
-	private $transactions = array();
+	private ?Transaction $rootTransaction = null;
+	private int $currentLevel = 0;
+	private ?bool $readOnly = null;
+	private bool $rollingBack = false;
+	private array $transactions = array();
 
-	public function createTransaction($readOnly = false) {
+	private $phase = TransactionPhase::CLOSED;
+
+	private bool $commitPreparationExtended = false;
+	private int $commitPreparationsNum = 0;
+
+	public function createTransaction($readOnly = false): Transaction {
 		$this->currentLevel++;
-		
+
+		if (!in_array($this->phase, [TransactionPhase::CLOSED, TransactionPhase::OPEN])) {
+			throw new TransactionStateException('Can not create transaction in '
+					. EnumUtils::unitToBacked($this->phase) . ' phase.');
+		}
+
 		$transaction = new Transaction($this, $this->currentLevel, $this->tRef, $readOnly);
 		if ($this->currentLevel == 1) {
 			$this->readOnly = $readOnly;
@@ -48,20 +63,27 @@ class TransactionManager extends ObjectAdapter {
 		
 		return $this->transactions[$this->currentLevel] = $transaction;
 	}
+
 	
 	/**
 	 * Returns true if there is an open transaction 
 	 * @return bool
 	 */
-	public function hasOpenTransaction() {
+	public function hasOpenTransaction(): bool {
 		return $this->rootTransaction !== null;
 	}
-	
+
+	function getPhase(): TransactionPhase {
+		return $this->phase;
+	}
+
+
+
 	/**
 	 * Returns true if there is an open read only transaction.
 	 * @return bool true or false if a transaction is open, otherwise null.
 	 */
-	public function isReadyOnly() {
+	public function isReadyOnly(): ?bool {
 		return $this->readOnly;
 	}
 
@@ -116,7 +138,7 @@ class TransactionManager extends ObjectAdapter {
 			$this->rollingBack = true;
 		} else if ($this->rollingBack === true) {
 			throw new TransactionStateException(
-					'Transaction cannot be commited because sub transaction was rolled back');
+					'Transaction cannot be committed because sub transaction was rolled back');
 		}
 
 		foreach (array_keys($this->transactions) as $tlevel) {
@@ -129,15 +151,19 @@ class TransactionManager extends ObjectAdapter {
 		if (!empty($this->transactions)) return;
 			
 		try {
-			if (!$this->rollingBack) { 
-				$this->rollingBack = !$this->prepareCommit();
-			}
-			
 			if ($this->rollingBack) {
 				$this->rollBack();
-			} else {
-				$this->commit();
+				return;
 			}
+
+			$this->prepareCommit();
+			$this->commit();
+		} catch (CommitPreparationFailedException $e) {
+			$this->rollBack();
+			throw new UnexpectedRollbackException(
+					'Failure in transaction commit phase caused an unexpected rollback.', 0, $e);
+		} catch (CommitFailedException $e) {
+			throw new IllegalStateException('Transaction commit failed. State could be corrupted!', 0, $e);
 		} finally {
 			$this->reset();
 		}
@@ -147,30 +173,62 @@ class TransactionManager extends ObjectAdapter {
 		$this->rootTransaction = null;
 		$this->rollingBack = false;
 		$this->readOnly = null;
+		$this->phase = TransactionPhase::CLOSED;
+		$this->commitPreparationExtended = false;
+		$this->commitPreparationsNum = 0;
 	}
 	
 	private function begin(Transaction $transaction) {
 		$this->rootTransaction = $transaction;
+		$this->phase = TransactionPhase::OPEN;
 
 		foreach ($this->transactionalResources as $resource) {
 			$resource->beginTransaction($transaction);
 		}
 	}
-	
-	private function prepareCommit() {
-		$this->tRef++;
-		
-		foreach ($this->transactionalResources as $resource) {
-			if ($resource->prepareCommit($this->rootTransaction)) continue;
 
-			return false;
+	/**
+	 * Starts the commit preparation phase for all transactional resources all over again.
+	 *
+	 * @return void
+	 */
+	function extendCommitPreparation(): void {
+		if ($this->phase === TransactionPhase::PREPARE_COMMIT) {
+			$this->commitPreparationExtended = true;
+			return;
 		}
-		
-		return true;
+
+		throw new TransactionStateException('Can not extend commit preparation in phase '
+				. EnumUtils::unitToBacked($this->phase));
+	}
+
+	function getCommitPreparationsNum(): int {
+		return $this->commitPreparationsNum;
+	}
+
+	/**
+	 * @throws CommitPreparationFailedException
+	 */
+	private function prepareCommit(): void {
+		$this->tRef++;
+		$this->phase = TransactionPhase::PREPARE_COMMIT;
+
+		do {
+			$this->commitPreparationExtended = false;
+			$this->commitPreparationsNum++;
+
+			foreach ($this->transactionalResources as $resource) {
+				$resource->prepareCommit($this->rootTransaction);
+				if ($this->commitPreparationExtended) {
+					break;
+				}
+			}
+		} while ($this->commitPreparationExtended);
 	}
 
 	private function commit() {
 		$this->tRef++;
+		$this->phase = TransactionPhase::COMMIT;
 
 		$transaction = $this->rootTransaction;
 		
@@ -212,6 +270,7 @@ class TransactionManager extends ObjectAdapter {
 
 	private function rollBack() {
 		$this->tRef++;
+		$this->phase = TransactionPhase::ROLLBACK;
 
 		foreach ($this->transactionalResources as $listener) {
 			$listener->rollBack($this->rootTransaction);
@@ -227,6 +286,11 @@ class TransactionManager extends ObjectAdapter {
 	}
 
 	public function registerResource(TransactionalResource $resource) {
+		if (!in_array($this->phase, [TransactionPhase::CLOSED, TransactionPhase::OPEN])) {
+			throw new TransactionStateException('Can not register a new TransactionalResource in '
+					. EnumUtils::unitToBacked($this->phase) . ' phase.');
+		}
+
 		$this->transactionalResources[spl_object_hash($resource)] = $resource;
 		
 		if ($this->hasOpenTransaction()) {
@@ -245,5 +309,5 @@ class TransactionManager extends ObjectAdapter {
 	public function unregisterCommitListener(CommitListener $commitListener) {
 		unset($this->commitListeners[spl_object_hash($commitListener)]);
 	}
-
 }
+
