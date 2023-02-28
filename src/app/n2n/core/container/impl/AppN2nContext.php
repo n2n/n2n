@@ -222,8 +222,23 @@ class AppN2nContext implements N2nContext, ShutdownListener {
 		$this->addOnContexts->attach($addOnContext);
 	}
 
+	function getAddonContexts(): array {
+		return iterator_to_array($this->addOnContexts);
+	}
+
 	function removeAddonContext(AddOnContext $addOnContext) {
 		$this->addOnContexts->detach($addOnContext);
+	}
+
+	function removeAddonContextByType(string $className): bool {
+		foreach ($this->addOnContexts as $addOnContext) {
+			if ($addOnContext instanceof $className)  {
+				$this->removeAddonContext($addOnContext);
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	function putLookupInjection(string $id, object $obj): void {
@@ -254,7 +269,7 @@ class AppN2nContext implements N2nContext, ShutdownListener {
 		}
 
 		foreach ($this->addOnContexts as $magicContext) {
-			if ($magicContext->has($id)) {
+			if ($magicContext->hasMagicObject($id)) {
 				return true;
 			}
 		}
@@ -300,7 +315,7 @@ class AppN2nContext implements N2nContext, ShutdownListener {
 		}
 
 		foreach ($this->addOnContexts as $magicContext) {
-			if (null !== ($result = $magicContext->lookup($id, false, $contextNamespace))) {
+			if (null !== ($result = $magicContext->lookupMagicObject($id, $required, $contextNamespace))) {
 				return $result;
 			}
 		}
