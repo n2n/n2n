@@ -43,6 +43,7 @@ class TransactionManager extends ObjectAdapter {
 
 	private bool $commitPreparationExtended = false;
 	private int $commitPreparationsNum = 0;
+	private ?array $pendingCommitPreparations = null;
 
 	public function createTransaction($readOnly = false): Transaction {
 		$this->currentLevel++;
@@ -176,6 +177,7 @@ class TransactionManager extends ObjectAdapter {
 		$this->phase = TransactionPhase::CLOSED;
 		$this->commitPreparationExtended = false;
 		$this->commitPreparationsNum = 0;
+		$this->pendingCommitPreparations = null;
 	}
 	
 	private function begin(Transaction $transaction) {
@@ -214,10 +216,11 @@ class TransactionManager extends ObjectAdapter {
 		$this->phase = TransactionPhase::PREPARE_COMMIT;
 
 		do {
+			$this->pendingCommitPreparations = $this->transactionalResources;
 			$this->commitPreparationExtended = false;
 			$this->commitPreparationsNum++;
 
-			foreach ($this->transactionalResources as $resource) {
+			while (null !== ($resource = array_shift($this->pendingCommitPreparations))) {
 				$resource->prepareCommit($this->rootTransaction);
 				if ($this->commitPreparationExtended) {
 					break;
@@ -286,7 +289,7 @@ class TransactionManager extends ObjectAdapter {
 	}
 
 	public function registerResource(TransactionalResource $resource) {
-		if (!in_array($this->phase, [TransactionPhase::CLOSED, TransactionPhase::OPEN])) {
+		if (!in_array($this->phase, [TransactionPhase::CLOSED, TransactionPhase::OPEN, TransactionPhase::PREPARE_COMMIT])) {
 			throw new TransactionStateException('Can not register a new TransactionalResource in '
 					. EnumUtils::unitToBacked($this->phase) . ' phase.');
 		}
@@ -295,6 +298,10 @@ class TransactionManager extends ObjectAdapter {
 		
 		if ($this->hasOpenTransaction()) {
 			$resource->beginTransaction($this->rootTransaction);
+		}
+
+		if ($this->phase === TransactionPhase::PREPARE_COMMIT) {
+			$this->pendingCommitPreparations[] = $resource;
 		}
 	}
 
