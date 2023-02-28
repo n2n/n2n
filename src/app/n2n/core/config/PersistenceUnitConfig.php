@@ -72,7 +72,7 @@ class PersistenceUnitConfig {
 		return $this->sslVerify;
 	}
 
-	function getCaCertificatePath(): ?string {
+	function getSslCaCertificatePath(): ?string {
 		return $this->sslCaCertificatePath;
 	}
 
