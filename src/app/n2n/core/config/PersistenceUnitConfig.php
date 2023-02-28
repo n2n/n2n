@@ -34,7 +34,8 @@ class PersistenceUnitConfig {
 	private $transactionIsolationLevel;
 	private $dialectClassName;
 	
-	public function __construct($name, $dsnUri, $user, $password, $transactionIsolationLevel, $dialectClassName) {
+	public function __construct($name, $dsnUri, $user, $password, $transactionIsolationLevel, $dialectClassName,
+			private bool $sslVerify, private ?string $sslCaCertificatePath) {
 		$this->name = $name;
 		$this->dsnUri = $dsnUri;
 		$this->user = $user;
@@ -66,7 +67,15 @@ class PersistenceUnitConfig {
 	public function getDialectClassName() {
 		return $this->dialectClassName;
 	}
-	
+
+	function isSslVerify(): bool {
+		return $this->sslVerify;
+	}
+
+	function getCaCertificatePath(): ?string {
+		return $this->sslCaCertificatePath;
+	}
+
 	public static function getTransactionIsolationLevels() {
 		return array(self::TIL_READ_UNCOMMITTED, self::TIL_READ_COMMITTED, 
 				self::TIL_REPEATABLE_READ, self::TIL_SERIALIZABLE);

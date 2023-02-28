@@ -352,7 +352,9 @@ class AppConfigFactory {
 	const KEY_EXT_PASSWORD = '.password';
 	const KEY_EXT_TRANSACTION_ISOLATION_LEVEL = '.transaction_isolation_level';
 	const KEY_EXT_DIALECT_CLASS = '.dialect';
-	
+	const KEY_EXT_SSl_VERIFY = '.ssl.verify';
+	const KEY_EXT_CA_CERTIFICATE_PATH = '.ssl.ca_certificate_path';
+
 	private function createDatabaseConfig(GroupReader $groupReader) {
 		$persistenceUnitConfigs = array();
 		foreach (self::extractPathParts($groupReader) as $name) {
@@ -362,7 +364,9 @@ class AppConfigFactory {
 					$groupReader->getString($name . self::KEY_EXT_PASSWORD, false),
 					$groupReader->getString($name . self::KEY_EXT_TRANSACTION_ISOLATION_LEVEL, false,
 							PersistenceUnitConfig::TIL_SERIALIZABLE),
-					$groupReader->getString($name . self::KEY_EXT_DIALECT_CLASS, true)); 
+					$groupReader->getString($name . self::KEY_EXT_DIALECT_CLASS, true),
+					$groupReader->getBool($name . self::KEY_EXT_SSl_VERIFY, false),
+					$groupReader->getString($name . self::KEY_EXT_CA_CERTIFICATE_PATH, false));
 		}
 				
 // 		$persistenceUnitConfigs[] = new PersistenceUnitConfig('default', 
