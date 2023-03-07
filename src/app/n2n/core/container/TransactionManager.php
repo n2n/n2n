@@ -101,7 +101,7 @@ class TransactionManager extends ObjectAdapter {
 			return;
 		}
 
-		throw new TransactionStateException('No active transaction.');
+		throw new TransactionStateException('Transaction open.');
 	}
 
 	/**
