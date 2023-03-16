@@ -417,6 +417,7 @@ class AppN2nContext implements N2nContext, ShutdownListener {
 			$this->finalizeCallbacks->current()($this);
 			$this->finalizeCallbacks->next();
 		}
+		$this->finalizeCallbacks->removeAll($this->finalizeCallbacks);
 
 		$this->addOnContexts->rewind();
 		while ($this->addOnContexts->valid()) {

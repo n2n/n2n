@@ -45,7 +45,7 @@ interface N2nCache {
 	/**
 	 * @param N2nContext $n2nContext
 	 */
-	public function n2nContextInitialized(N2nContext $n2nContext);
+//	public function n2nContextInitialized(N2nContext $n2nContext);
 	
 	/**
 	 * @return \n2n\core\container\AppCache

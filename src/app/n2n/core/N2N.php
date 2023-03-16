@@ -63,6 +63,7 @@ use n2n\web\http\controller\ControllingPlan;
 use n2n\core\err\LogMailer;
 use n2n\core\container\impl\PhpVars;
 use n2n\core\ext\N2nExtension;
+use n2n\config\InvalidConfigurationException;
 
 define('N2N_CRLF', "\r\n");
 
@@ -88,7 +89,13 @@ class N2N {
 	protected $combinedConfigSource;
 	protected ModuleManager $moduleManager;
 	protected AppConfig $appConfig;
+	protected N2nCache $n2nCache;
 	protected AppN2nContext $n2nContext;
+
+	/**
+	 * @var N2nExtension[] $n2nExtensions
+	 */
+	protected array $n2nExtensions = [];
 	
 	private static $initialized = false;
 	/**
@@ -124,7 +131,7 @@ class N2N {
 
 	protected function init(N2nCache $n2nCache) {
 		$this->initN2nContext($n2nCache);
-		$n2nCache->n2nContextInitialized($this->n2nContext);
+//		$n2nCache->n2nContextInitialized($this->n2nContext);
 	}
 	/**
 	 * 
@@ -132,6 +139,7 @@ class N2N {
 	 * @throws \n2n\config\InvalidConfigurationException
 	 */
 	private function initConfiguration(N2nCache $n2nCache) {
+		$this->n2nCache = $n2nCache;
 		$cacheStore = $n2nCache->getStartupCacheStore();
 		$hashCode = null;
 		if ($cacheStore === null || null === ($hashCode = $this->combinedConfigSource->hashCode())) {
@@ -184,19 +192,20 @@ class N2N {
 		L10n::setPseudoL10nConfig($this->appConfig->pseudoL10n());
 		
 		$n2nCache->appConfigInitilaized($this->appConfig);
-	}
-	
-	private function initN2nContext(N2nCache $n2nCache) {
-		$this->n2nContext = new AppN2nContext(new TransactionManager(), $this->moduleManager, $n2nCache->getAppCache(),
-				$this->varStore, $this->appConfig, PhpVars::fromEnv());
-        self::registerShutdownListener($this->n2nContext);
 
 		foreach ($this->appConfig->general()->getExtensionClassNames() as $extensionClassName) {
 			$this->setUpExtension($extensionClassName);
 		}
+	}
+	
+	private function initN2nContext(N2nCache $n2nCache): void {
+		$this->n2nContext = new AppN2nContext(new TransactionManager(), $this->moduleManager, $n2nCache->getAppCache(),
+				$this->varStore, $this->appConfig, PhpVars::fromEnv());
+        self::registerShutdownListener($this->n2nContext);
 
-
-
+		foreach ($this->n2nExtensions as $n2nExtension) {
+			$n2nExtension->setUp($this->n2nContext);
+		}
 
 		$lookupSession = $this->n2nContext->getHttp()?->getLookupSession() ?? new SimpleLookupSession();
         $lookupManager = new LookupManager($lookupSession, $n2nCache->getAppCache()->lookupCacheStore(LookupManager::class),
@@ -216,8 +225,12 @@ class N2N {
 					. '\': ' . $extensionClassName);
 		}
 
-		$extension = $class->newInstance();
-		$extension->setUp($this->n2nContext);
+		try {
+			$this->n2nExtensions[$extensionClassName] = $class->newInstance($this->appConfig, $this->n2nCache->getAppCache());
+		} catch (\ReflectionException $e) {
+			throw new InvalidConfigurationException('Invalid extension class: ' . $extensionClassName, 0,
+					$e);
+		}
 	}
 
 	
@@ -383,8 +396,8 @@ class N2N {
 		}
 	}
 	/**
-	 * 
 	 * @param \n2n\core\ShutdownListener $shutdownListener
+	 * @deprecated unsafe can cause memory leaks
 	 */
 	public static function registerShutdownListener(ShutdownListener $shutdownListener) {
 		self::$shutdownListeners[spl_object_hash($shutdownListener)] = $shutdownListener;
@@ -392,6 +405,7 @@ class N2N {
 	/**
 	 * 
 	 * @param \n2n\core\ShutdownListener $shutdownListener
+	 * @deprecated unsafe can cause memory leaks
 	 */
 	public static function unregisterShutdownListener(ShutdownListener $shutdownListener) {
 		unset(self::$shutdownListeners[spl_object_hash($shutdownListener)]);

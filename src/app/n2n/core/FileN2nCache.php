@@ -64,8 +64,8 @@ class FileN2nCache implements N2nCache {
 		$this->startupCacheStore->setFilePerm($this->filePerm);
 	}
 	
-	public function n2nContextInitialized(N2nContext $n2nContext) {
-	}
+//	public function n2nContextInitialized(N2nContext $n2nContext) {
+//	}
 	
 	public function requestCacheStore($module, $componentName) {
 		if (!strlen($componentName) || !IoUtils::hasStrictSpecialChars($componentName)) {
