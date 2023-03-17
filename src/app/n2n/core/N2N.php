@@ -203,10 +203,10 @@ class N2N {
 			$n2nExtension->setUp($n2nContext);
 		}
 
-		$lookupSession = $this->n2nContext->getHttp()?->getLookupSession() ?? new SimpleLookupSession();
+		$lookupSession = $n2nContext->getHttp()?->getLookupSession() ?? new SimpleLookupSession();
 		$lookupManager = new LookupManager($lookupSession, $this->n2nCache->getAppCache()->lookupCacheStore(LookupManager::class),
-				$this->n2nContext);
-		$this->n2nContext->setLookupManager($lookupManager);
+				$n2nContext);
+		$n2nContext->setLookupManager($lookupManager);
 
 		return $n2nContext;
 	}
