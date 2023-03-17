@@ -196,7 +196,7 @@ class N2N {
 	}
 
 	function createN2nContext(TransactionManager $transactionManager = null): AppN2nContext {
-		$n2nContext = new AppN2nContext(new TransactionManager(), $this->moduleManager, $this->n2nCache->getAppCache(),
+		$n2nContext = new AppN2nContext($transactionManager ?? new TransactionManager(), $this->moduleManager, $this->n2nCache->getAppCache(),
 				$this->varStore, $this->appConfig, PhpVars::fromEnv());
 
 		foreach ($this->n2nExtensions as $n2nExtension) {
