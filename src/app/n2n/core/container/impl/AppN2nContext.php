@@ -511,8 +511,8 @@ class AppN2nContext implements N2nContext, ShutdownListener {
 	}
 
 	function __destruct() {
-		if ($this->isFinalized()) {
-			$this->ensureNotFinalized();
+		if (!$this->isFinalized()) {
+			$this->finalize();
 		}
 	}
 
