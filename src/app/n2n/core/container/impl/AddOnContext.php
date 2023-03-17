@@ -7,7 +7,7 @@ use ReflectionClass;
 
 interface AddOnContext {
 
-	function copyTo(AppN2nContext $appN2NContext): void;
+//	function copyTo(AppN2nContext $appN2NContext): void;
 
 	function finalize(): void;
 
