@@ -145,6 +145,17 @@ class ClosureCommitListener implements CommitListener {
 	/**
 	 * @inheritDoc
 	 */
+	public function commitFailed(Transaction $transaction, CommitFailedException $e): void {
+		if ($this->commitFailedCallback !== null) {
+			($this->commitFailedCallback)($transaction);
+		}
+
+		$this->callFinally($transaction);
+	}
+
+	/**
+	 * @inheritDoc
+	 */
 	public function preRollback(Transaction $transaction): void {
 		if ($this->preRollbackCallback !== null) {
 			($this->preRollbackCallback)($transaction);
@@ -157,17 +168,6 @@ class ClosureCommitListener implements CommitListener {
 	public function postRollback(Transaction $transaction): void {
 		if ($this->postRollbackCallback !== null) {
 			($this->postRollbackCallback)($transaction);
-		}
-
-		$this->callFinally($transaction);
-	}
-
-	/**
-	 * @inheritDoc
-	 */
-	public function commitFailed(Transaction $transaction, CommitFailedException $e): void {
-		if ($this->commitFailedCallback !== null) {
-			($this->commitFailedCallback)($transaction);
 		}
 
 		$this->callFinally($transaction);
