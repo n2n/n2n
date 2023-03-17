@@ -63,6 +63,7 @@ use n2n\config\InvalidConfigurationException;
 use n2n\core\cache\N2nCache;
 use n2n\core\container\N2nContext;
 use n2n\util\ex\IllegalStateException;
+use n2n\core\cache\impl\N2nCaches;
 
 define('N2N_CRLF', "\r\n");
 
@@ -278,7 +279,7 @@ class N2N {
 		self::$n2n = new N2N(new FsPath(IoUtils::realpath($publicDirPath)),
 				new FsPath(IoUtils::realpath($varDirPath)));
 		self::$n2n->initModules($moduleFactory ?? new EtcModuleFactory());
-		self::$n2n->initConfiguration($n2nCache ?? new \n2n\core\cache\impl\FileN2nCache());
+		self::$n2n->initConfiguration($n2nCache ?? (N2N::isTestStageOn() ? N2nCaches::null() : N2nCaches::file()));
 		
 		Sync::init(self::$n2n->varStore->requestDirFsPath(VarStore::CATEGORY_TMP, self::NS, self::SYNC_DIR));
 
@@ -295,7 +296,7 @@ class N2N {
 	}
 
 	public static function initialize(string $publicDirPath, string $varDirPath, 
-			N2nCache $n2nCache, ModuleFactory $moduleFactory = null, bool $enableExceptionHandler = true,
+			N2nCache $n2nCache = null, ModuleFactory $moduleFactory = null, bool $enableExceptionHandler = true,
 			LogMailer $logMailer = null): void {
 		self::setup($publicDirPath, $varDirPath, $n2nCache, $moduleFactory, $enableExceptionHandler, $logMailer);
 		
@@ -432,6 +433,10 @@ class N2N {
 	 */
 	public static function isLiveStageOn() {
 		return !defined('N2N_STAGE') || N2N_STAGE == self::STAGE_LIVE;
+	}
+
+	static function isTestSTageOn(): bool {
+		return defined('N2N_STAGE') && N2N_STAGE == self::STAGE_TEST;
 	}
 	
 	public static function getStage() {
