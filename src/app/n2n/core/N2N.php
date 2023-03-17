@@ -269,6 +269,13 @@ class N2N {
 	public static function setup(string $publicDirPath, string $varDirPath,
 			N2nCache $n2nCache = null, ModuleFactory $moduleFactory = null, bool $enableExceptionHandler = true,
 			LogMailer $logMailer = null): N2N {
+
+		// ignore if deprecated FileN2nCache from old projects
+		if ($n2nCache instanceof FileN2nCache) {
+			$n2nCache = null;
+		}
+
+
 		mb_internal_encoding(self::CHARSET);
 		// 		ini_set('default_charset', self::CHARSET);
 		
