@@ -473,7 +473,7 @@ class AppN2nContext implements N2nContext, ShutdownListener {
 	}
 
 	function ensureNotFinalized(): void {
-		if ($this->isFinalized()) {
+		if (!$this->isFinalized()) {
 			return;
 		}
 

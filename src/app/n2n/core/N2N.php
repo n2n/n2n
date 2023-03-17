@@ -200,7 +200,7 @@ class N2N {
 				$this->varStore, $this->appConfig, PhpVars::fromEnv());
 
 		foreach ($this->n2nExtensions as $n2nExtension) {
-			$n2nExtension->setUp($this->n2nContext);
+			$n2nExtension->setUp($n2nContext);
 		}
 
 		$lookupSession = $this->n2nContext->getHttp()?->getLookupSession() ?? new SimpleLookupSession();
