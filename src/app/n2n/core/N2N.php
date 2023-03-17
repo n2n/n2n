@@ -363,7 +363,7 @@ class N2N {
 // 		self::shutdown();
 	}
 
-	static function createN2nContext(bool $keepTransactionContext = false): AppN2nContext {
+	static function forkN2nContext(bool $keepTransactionContext = false): AppN2nContext {
 		$transactionManager = null;
 		if ($keepTransactionContext && self::$n2nContext !== null) {
 			$transactionManager = self::$n2nContext->getTransactionManager();
