@@ -38,7 +38,6 @@ class EphemeralN2nCache implements N2nCache {
 	private ?AppCache $appCache = null;
 
 	public function varStoreInitialized(VarStore $varStore): void {
-
 	}
 
 	public function getStartupCacheStore(): ?CacheStore {
