@@ -62,6 +62,8 @@ interface N2nContext extends MagicContext {
 
 	function clearLookupInjections(): void;
 
+	function isFinalized(): bool;
+
 	function finalize(): void;
 
 	function getHttp(): ?N2nHttp;
