@@ -30,6 +30,7 @@ use n2n\util\cache\CacheStore;
 use n2n\util\cache\impl\FileCacheStore;
 use n2n\core\cache\N2nCache;
 use n2n\core\VarStore;
+use n2n\core\N2N;
 
 class FileN2nCache implements N2nCache {
 	const STARTUP_CACHE_DIR = 'startupcache';
