@@ -24,6 +24,6 @@ namespace n2n\core\container;
 /**
  * @deprecated
  */
-interface AppCache extends \n2n\core\cache\AppCache {
+interface AppCache {
 
 }

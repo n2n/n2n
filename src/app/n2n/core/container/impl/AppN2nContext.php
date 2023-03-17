@@ -337,6 +337,7 @@ class AppN2nContext implements N2nContext, ShutdownListener {
 			case TransactionManager::class:
 			case VarStore::class:
 			case AppCache::class:
+			case \n2n\core\container\AppCache::class:
 			case AppConfig::class:
 			case GeneralConfig::class:
 			case WebConfig::class:
@@ -390,6 +391,7 @@ class AppN2nContext implements N2nContext, ShutdownListener {
 			case VarStore::class:
 				return $this->varStore;
 			case AppCache::class:
+			case \n2n\core\container\AppCache::class:
 				return $this->appCache;
 			case AppConfig::class:
 				return $this->appConfig;

@@ -23,7 +23,7 @@ namespace n2n\core\cache;
 
 use n2n\util\cache\CacheStore;
 
-interface AppCache {
+interface AppCache extends \n2n\core\container\AppCache {
 	/**
 	 * @param string $namespace or type name of a related package or type
 	 * @return CacheStore
