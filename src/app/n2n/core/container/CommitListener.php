@@ -23,15 +23,13 @@ namespace n2n\core\container;
 
 interface CommitListener {
 	
-	/**
-	 * @param Transaction $transaction
-	 */
-	public function preCommit(Transaction $transaction);
+	public function preCommit(Transaction $transaction): void;
+
+	public function postCommit(Transaction $transaction): void;
 	
-	/**
-	 * @param Transaction $transaction
-	 */
-	public function postCommit(Transaction $transaction);
-	
-	public function commitFailed(Transaction $transaction, CommitFailedException $e);
+	public function commitFailed(Transaction $transaction, CommitFailedException $e): void;
+
+	public function preRollback(Transaction $transaction): void;
+
+	public function postRollback(Transaction $transaction): void;
 }

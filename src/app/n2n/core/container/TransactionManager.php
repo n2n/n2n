@@ -275,8 +275,18 @@ class TransactionManager extends ObjectAdapter {
 		$this->tRef++;
 		$this->phase = TransactionPhase::ROLLBACK;
 
+		$transaction = $this->rootTransaction;
+
+		foreach ($this->commitListeners as $commitListener) {
+			$commitListener->preRollback($transaction);
+		}
+
 		foreach ($this->transactionalResources as $listener) {
 			$listener->rollBack($this->rootTransaction);
+		}
+
+		foreach ($this->commitListeners as $commitListener) {
+			$commitListener->postRollback($transaction);
 		}
 	}
 

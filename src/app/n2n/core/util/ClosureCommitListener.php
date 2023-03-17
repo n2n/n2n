@@ -29,6 +29,7 @@ class ClosureCommitListener implements CommitListener {
 
 	function __construct(private ?\Closure $preCommitCallback = null,
 			private ?\Closure $postCommitCallback = null, private ?\Closure $commitFailedCallback = null,
+			private ?\Closure $preRollbackCallback = null, private ?\Closure $postRollbackCallback = null,
 			private ?\Closure $finallyCallback = null) {
 
 	}
@@ -59,6 +60,35 @@ class ClosureCommitListener implements CommitListener {
 	 */
 	public function setPostCommitCallback(?\Closure $postCommitCallback): void {
 		$this->postCommitCallback = $postCommitCallback;
+	}
+
+
+	/**
+	 * @return \Closure|null
+	 */
+	public function getPreRollbackCallback(): ?\Closure {
+		return $this->preRollbackCallback;
+	}
+
+	/**
+	 * @param \Closure|null $preRollbackCallback
+	 */
+	public function setPreRollbackCallback(?\Closure $preRollbackCallback): void {
+		$this->preRollbackCallback = $preRollbackCallback;
+	}
+
+	/**
+	 * @return \Closure|null
+	 */
+	public function getPostRollbackCallback(): ?\Closure {
+		return $this->postRollbackCallback;
+	}
+
+	/**
+	 * @param \Closure|null $postRollbackCallback
+	 */
+	public function setPostRollbackCallback(?\Closure $postRollbackCallback): void {
+		$this->postRollbackCallback = $postRollbackCallback;
 	}
 
 	/**
@@ -95,7 +125,7 @@ class ClosureCommitListener implements CommitListener {
 	/**
 	 * @inheritDoc
 	 */
-	public function preCommit(Transaction $transaction) {
+	public function preCommit(Transaction $transaction): void {
 		if ($this->preCommitCallback !== null) {
 			($this->preCommitCallback)($transaction);
 		}
@@ -104,7 +134,7 @@ class ClosureCommitListener implements CommitListener {
 	/**
 	 * @inheritDoc
 	 */
-	public function postCommit(Transaction $transaction) {
+	public function postCommit(Transaction $transaction): void {
 		if ($this->postCommitCallback !== null) {
 			($this->postCommitCallback)($transaction);
 		}
@@ -115,7 +145,27 @@ class ClosureCommitListener implements CommitListener {
 	/**
 	 * @inheritDoc
 	 */
-	public function commitFailed(Transaction $transaction, CommitFailedException $e) {
+	public function preRollback(Transaction $transaction): void {
+		if ($this->preRollbackCallback !== null) {
+			($this->preRollbackCallback)($transaction);
+		}
+	}
+
+	/**
+	 * @inheritDoc
+	 */
+	public function postRollback(Transaction $transaction): void {
+		if ($this->postRollbackCallback !== null) {
+			($this->postRollbackCallback)($transaction);
+		}
+
+		$this->callFinally($transaction);
+	}
+
+	/**
+	 * @inheritDoc
+	 */
+	public function commitFailed(Transaction $transaction, CommitFailedException $e): void {
 		if ($this->commitFailedCallback !== null) {
 			($this->commitFailedCallback)($transaction);
 		}
