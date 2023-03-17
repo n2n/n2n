@@ -308,7 +308,7 @@ class N2N {
 		self::setup($publicDirPath, $varDirPath, $n2nCache, $moduleFactory, $enableExceptionHandler, $logMailer);
 		
 		self::$n2nContext = self::$n2n->createN2nContext();
-		self::registerShutdownListener(self::$n2nContext);
+//		self::registerShutdownListener(self::$n2nContext);
 
 
 		self::$initialized = true;
@@ -403,6 +403,8 @@ class N2N {
 		    
 			self::$exceptionHandler->handleThrowable($t);
 		}
+
+		self::$n2nContext?->finalize();
 	}
 	/**
 	 * @param \n2n\core\ShutdownListener $shutdownListener
