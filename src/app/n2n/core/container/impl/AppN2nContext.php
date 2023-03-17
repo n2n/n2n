@@ -37,7 +37,7 @@ use n2n\core\container\N2nContext;
 use n2n\core\container\TransactionManager;
 use n2n\core\module\ModuleManager;
 use n2n\web\http\HttpContext;
-use n2n\core\container\AppCache;
+use n2n\core\cache\AppCache;
 use n2n\util\ex\IllegalStateException;
 use n2n\core\config\GeneralConfig;
 use n2n\core\config\WebConfig;
@@ -81,6 +81,8 @@ class AppN2nContext implements N2nContext, ShutdownListener {
 	private ?N2nMonitor $monitor = null;
 	private readonly PhpVars $phpVars;
 
+	private bool $finalized = false;
+
 	public function __construct(private TransactionManager $transactionManager, ModuleManager $moduleManager, AppCache $appCache,
 			VarStore $varStore, AppConfig $appConfig, PhpVars $phpVars = null) {
 		$this->transactionManager = $transactionManager;
@@ -96,18 +98,26 @@ class AppN2nContext implements N2nContext, ShutdownListener {
 	}
 
 	function util(): N2nUtil {
+		$this->ensureNotFinalized();
+
 		return new N2nUtil($this);
 	}
 
 	function getAppConfig(): AppConfig {
+		$this->ensureNotFinalized();
+
 		return $this->appConfig;
 	}
 
 	function getPhpVars(): PhpVars {
+		$this->ensureNotFinalized();
+
 		return $this->phpVars;
 	}
 
 	function getTransactionManager(): TransactionManager {
+		$this->ensureNotFinalized();
+
 		return $this->transactionManager;
 	}
 
@@ -115,6 +125,8 @@ class AppN2nContext implements N2nContext, ShutdownListener {
 	 * @param LookupManager $lookupManager
 	 */
 	public function setLookupManager(LookupManager $lookupManager) {
+		$this->ensureNotFinalized();
+
 		$this->lookupManager = $lookupManager;
 	}
 
@@ -123,6 +135,8 @@ class AppN2nContext implements N2nContext, ShutdownListener {
 	 * @return \n2n\context\LookupManager
 	 */
 	public function getLookupManager(): LookupManager {
+		$this->ensureNotFinalized();
+
 		if ($this->lookupManager !== null) {
 			return $this->lookupManager;
 		}
@@ -135,6 +149,8 @@ class AppN2nContext implements N2nContext, ShutdownListener {
 	 * @see \n2n\core\container\N2nContext::getModuleManager()
 	 */
 	public function getModuleManager(): ModuleManager {
+		$this->ensureNotFinalized();
+
 		return $this->moduleManager;
 	}
 
@@ -143,6 +159,8 @@ class AppN2nContext implements N2nContext, ShutdownListener {
 	 * @see \n2n\core\container\N2nContext::getModuleConfig($namespace)
 	 */
 	public function getModuleConfig(string $namespace) {
+		$this->ensureNotFinalized();
+
 		if (array_key_exists($namespace, $this->moduleConfigs)) {
 			return $this->moduleConfigs[$namespace];
 		}
@@ -156,22 +174,32 @@ class AppN2nContext implements N2nContext, ShutdownListener {
 	}
 
 	function setHttp(?N2nHttp $http): void {
+		$this->ensureNotFinalized();
+
 		$this->http = $http;
 	}
 
 	function getHttp(): ?N2nHttp {
+		$this->ensureNotFinalized();
+
 		return $this->http;
 	}
 
 	public function isHttpContextAvailable(): bool {
+		$this->ensureNotFinalized();
+
 		return $this->http !== null;
 	}
 
 	function getMonitor(): ?N2nMonitor {
+		$this->ensureNotFinalized();
+
 		return $this->monitor;
 	}
 
 	function setMonitor(?N2nMonitor $monitor) {
+		$this->ensureNotFinalized();
+
 		$this->monitor = $monitor;
 	}
 
@@ -179,6 +207,8 @@ class AppN2nContext implements N2nContext, ShutdownListener {
 	 * @deprecated
 	 */
 	public function getHttpContext(): HttpContext {
+		$this->ensureNotFinalized();
+
 		if ($this->http !== null) {
 			return $this->lookup(HttpContext::class);
 		}
@@ -192,6 +222,8 @@ class AppN2nContext implements N2nContext, ShutdownListener {
 	 * @see \n2n\core\container\N2nContext::getVarStore()
 	 */
 	public function getVarStore(): VarStore {
+		$this->ensureNotFinalized();
+
 		return $this->varStore;
 	}
 
@@ -200,6 +232,8 @@ class AppN2nContext implements N2nContext, ShutdownListener {
 	 * @see \n2n\core\container\N2nContext::getAppCache()
 	 */
 	public function getAppCache(): AppCache {
+		$this->ensureNotFinalized();
+
 		return $this->appCache;
 	}
 
@@ -207,6 +241,8 @@ class AppN2nContext implements N2nContext, ShutdownListener {
 	 * @return N2nLocale
 	 */
 	public function getN2nLocale(): N2nLocale {
+		$this->ensureNotFinalized();
+
 		return $this->n2nLocale;
 	}
 
@@ -215,22 +251,32 @@ class AppN2nContext implements N2nContext, ShutdownListener {
 	 * @see \n2n\core\container\N2nContext::setN2nLocale($n2nLocale)
 	 */
 	public function setN2nLocale(N2nLocale $n2nLocale) {
+		$this->ensureNotFinalized();
+
 		$this->n2nLocale = $n2nLocale;
 	}
 
 	function addAddonContext(AddOnContext $addOnContext) {
+		$this->ensureNotFinalized();
+
 		$this->addOnContexts->attach($addOnContext);
 	}
 
 	function getAddonContexts(): array {
+		$this->ensureNotFinalized();
+
 		return iterator_to_array($this->addOnContexts);
 	}
 
 	function removeAddonContext(AddOnContext $addOnContext) {
+		$this->ensureNotFinalized();
+
 		$this->addOnContexts->detach($addOnContext);
 	}
 
 	function removeAddonContextByType(string $className): bool {
+		$this->ensureNotFinalized();
+
 		foreach ($this->addOnContexts as $addOnContext) {
 			if ($addOnContext instanceof $className)  {
 				$this->removeAddonContext($addOnContext);
@@ -243,23 +289,32 @@ class AppN2nContext implements N2nContext, ShutdownListener {
 
 	function putLookupInjection(string $id, object $obj): void {
 		ArgUtils::valType($obj, $id, false, 'obj');
+		$this->ensureNotFinalized();
 
 		$this->injectedObjects[$id] = $obj;
 	}
 
 	function removeLookupInjection(string $id): void {
+		$this->ensureNotFinalized();
+
 		unset($this->injectedObjects[$id]);
 	}
 
 	function clearLookupInjections(): void {
+		$this->ensureNotFinalized();
+
 		$this->injectedObjects = [];
 	}
 
 	public function get(string $id) {
+		$this->ensureNotFinalized();
+
 		return $this->lookup($id, true);
 	}
 
 	public function has(string|\ReflectionClass $id): bool {
+		$this->ensureNotFinalized();
+
 		if ($id instanceof \ReflectionClass) {
 			$id = $id->getName();
 		}
@@ -279,8 +334,6 @@ class AppN2nContext implements N2nContext, ShutdownListener {
 			case N2nUtil::class:
 			case LookupManager::class:
 			case N2nLocale::class:
-			case EntityManager::class:
-			case EntityManagerFactory::class:
 			case TransactionManager::class:
 			case VarStore::class:
 			case AppCache::class:
@@ -306,6 +359,8 @@ class AppN2nContext implements N2nContext, ShutdownListener {
 	 * @see \n2n\util\magic\MagicContext::lookup()
 	 */
 	public function lookup(string|\ReflectionClass $id, bool $required = true, string $contextNamespace = null): mixed {
+		$this->ensureNotFinalized();
+
 		if ($id instanceof \ReflectionClass) {
 			$id = $id->getName();
 		}
@@ -404,34 +459,50 @@ class AppN2nContext implements N2nContext, ShutdownListener {
 
 
 	function onFinalize(\Closure $callback): void {
+		$this->ensureNotFinalized();
 		$this->finalizeCallbacks->attach($callback);
 	}
 
 	function offFinalize(\Closure $callback): void {
+		$this->ensureNotFinalized();
 		$this->finalizeCallbacks->detach($callback);
 	}
 
+	function isFinalized(): bool {
+		return $this->finalized;
+	}
+
+	function ensureNotFinalized(): void {
+		if ($this->isFinalized()) {
+			return;
+		}
+
+		throw new IllegalStateException('N2nContext already finalized.');
+	}
+
 	function finalize(): void {
+		$this->ensureNotFinalized();
+
+		$this->finalized = true;
+
 		$this->finalizeCallbacks->rewind();
 		while ($this->finalizeCallbacks->valid()) {
 			$this->finalizeCallbacks->current()($this);
 			$this->finalizeCallbacks->next();
 		}
-		$this->finalizeCallbacks->removeAll($this->finalizeCallbacks);
+		unset($this->finalizeCallbacks);
 
 		$this->addOnContexts->rewind();
 		while ($this->addOnContexts->valid()) {
 			$this->addOnContexts->current()->finalize($this);
 			$this->addOnContexts->next();
 		}
+		unset($this->addOnContexts);
 
 		if ($this->lookupManager !== null) {
-			if ($this->lookupManager->contains(PdoPool::class)) {
-				$this->lookupManager->lookup(PdoPool::class)->clear();
-			}
-
 			$this->lookupManager->shutdown();
 			$this->lookupManager->clear();
+			$this->lookupManager = null;
 		}
 	}
 
@@ -439,36 +510,42 @@ class AppN2nContext implements N2nContext, ShutdownListener {
 		$this->finalize();
 	}
 
+	function __destruct() {
+		if ($this->isFinalized()) {
+			$this->ensureNotFinalized();
+		}
+	}
+
 // 	public function magicInit($object) {
 // 		MagicUtils::init($object, $this);
 // 	}
 
-	function copy(LookupSession $lookupSession = null,
-			CacheStore $applicationCacheStore = null, bool $keepTransactionContext = true): AppN2nContext {
-		$transactionManager = null;
-		if ($keepTransactionContext) {
-			$transactionManager = $this->getTransactionManager();
-		} else {
-			$transactionManager = new TransactionManager();
-		}
-
-		$appN2nContext = new AppN2nContext($transactionManager, $this->getModuleManager(),
-				$this->getAppCache(), $this->getVarStore(), $this->lookup(AppConfig::class),
-				$this->getPhpVars());
-
-
-		$appN2nContext->setLookupManager(new LookupManager(
-				$lookupSession ?? $this->getLookupManager()->getLookupSession(),
-				$applicationCacheStore ?? $this->getLookupManager()->getApplicationCacheStore(),
-				$appN2nContext));
-
-		$appN2nContext->setN2nLocale($this->getN2nLocale());
-
-		foreach ($this->addOnContexts as $addOnContext) {
-			$addOnContext->copyTo($appN2nContext);
-		}
-
-		return $appN2nContext;
-	}
+//	function copy(LookupSession $lookupSession = null,
+//			CacheStore $applicationCacheStore = null, bool $keepTransactionContext = true): AppN2nContext {
+//		$transactionManager = null;
+//		if ($keepTransactionContext) {
+//			$transactionManager = $this->getTransactionManager();
+//		} else {
+//			$transactionManager = new TransactionManager();
+//		}
+//
+//		$appN2nContext = new AppN2nContext($transactionManager, $this->getModuleManager(),
+//				$this->getAppCache(), $this->getVarStore(), $this->lookup(AppConfig::class),
+//				$this->getPhpVars());
+//
+//
+//		$appN2nContext->setLookupManager(new LookupManager(
+//				$lookupSession ?? $this->getLookupManager()->getLookupSession(),
+//				$applicationCacheStore ?? $this->getLookupManager()->getApplicationCacheStore(),
+//				$appN2nContext));
+//
+//		$appN2nContext->setN2nLocale($this->getN2nLocale());
+//
+//		foreach ($this->addOnContexts as $addOnContext) {
+//			$addOnContext->copyTo($appN2nContext);
+//		}
+//
+//		return $appN2nContext;
+//	}
 
 }

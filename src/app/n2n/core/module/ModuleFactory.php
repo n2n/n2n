@@ -30,7 +30,7 @@ interface ModuleFactory {
 	public function init(VarStore $varStore);
 
 	/**
-	 * @return \n2n\config\source\ConfigSource
+	 * @return ConfigSource
 	 * * @throws IllegalStateException if {@link self::init()} has not been called yet.
 	 */
 	public function getMainAppConfigSource(): ConfigSource;

@@ -28,6 +28,8 @@ use n2n\util\ex\IllegalStateException;
 use n2n\util\io\IoException;
 use n2n\util\type\ArgUtils;
 use n2n\util\type\TypeUtils;
+use InvalidArgumentException;
+use n2n\util\io\fs\FileOperationException;
 
 class VarStore {
 	const CATEGORY_ETC = 'etc';
@@ -83,22 +85,23 @@ class VarStore {
 	private function validatePathPart($pathPart) {
 		if (!IoUtils::hasSpecialChars($pathPart)) return;
 		
-		throw new \InvalidArgumentException('Path part contains invalid chars: ' . $pathPart);
+		throw new InvalidArgumentException('Path part contains invalid chars: ' . $pathPart);
 	}
+
 	/**
-	 * 
+	 *
 	 * @param string $category
-	 * @param string $directoryName
+	 * @param string|null $moduleNamespace
+	 * @param string|null $directoryName
 	 * @param bool $create
 	 * @param bool $required
-	 * @throws \InvalidArgumentException
-	 * @throws IoException
-	 * @throws IllegalStateException
-	 * @return \n2n\util\io\fs\FsPath
+	 * @return FsPath
+	 * @throws FileOperationException
 	 */
-	public function requestDirFsPath(string $category, string $moduleNamespace = null, string $directoryName = null, bool $create = true, bool $required = true) {
+	public function requestDirFsPath(string $category, string $moduleNamespace = null, string $directoryName = null,
+			bool $create = true, bool $required = true): FsPath {
 		if (!in_array($category, self::getCategories())) {
-			throw new \InvalidArgumentException('Invalid var category \'' . $category . '\'. Available categories: '
+			throw new InvalidArgumentException('Invalid var category \'' . $category . '\'. Available categories: '
 					. implode(', ', self::getCategories()));
 		}
 		
@@ -173,7 +176,7 @@ class VarStore {
 		$namespace = TypeUtils::decodeNamespace($dirName);
 		
 		if (TypeUtils::hasSpecialChars($namespace, false)) {
-			throw new \InvalidArgumentException('Invalid namespace: ' . $namespace);
+			throw new InvalidArgumentException('Invalid namespace: ' . $namespace);
 		}
 		
 		return $namespace;

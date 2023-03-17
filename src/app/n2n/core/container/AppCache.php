@@ -21,17 +21,9 @@
  */
 namespace n2n\core\container;
 
-use n2n\util\cache\CacheStore;
+/**
+ * @deprecated
+ */
+interface AppCache extends \n2n\core\cache\AppCache {
 
-interface AppCache {
-	/**
-	 * @param string namespace or type name of a related package or type
-	 * @return CacheStore
-	 */
-	public function lookupCacheStore(string $namespace): CacheStore;
-
-	/**
-	 * Clear the cache of every cachestore belonging to this {@see AppCache} instance.
-	 */
-	public function clear();
 }

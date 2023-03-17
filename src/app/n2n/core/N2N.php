@@ -29,8 +29,6 @@ use n2n\core\module\Module;
 use n2n\core\err\ExceptionHandler;
 use n2n\l10n\N2nLocale;
 use n2n\util\io\IoUtils;
-use n2n\l10n\Language;
-use n2n\l10n\Region;
 use n2n\batch\BatchJobRegistry;
 use n2n\context\LookupManager;
 use n2n\web\http\controller\ControllerRegistry;
@@ -38,7 +36,6 @@ use n2n\core\config\AppConfig;
 use n2n\web\http\Request;
 use n2n\web\http\Session;
 use n2n\web\http\VarsRequest;
-use n2n\util\uri\Path;
 use n2n\core\module\ModuleFactory;
 use n2n\core\module\impl\LazyModule;
 use n2n\util\io\fs\FsPath;
@@ -55,7 +52,6 @@ use n2n\web\http\MethodNotAllowedException;
 use n2n\l10n\MessageContainer;
 use n2n\web\dispatch\DispatchContext;
 use n2n\web\http\VarsSession;
-use n2n\core\container\N2nContext;
 use n2n\web\http\BadRequestException;
 use n2n\util\StringUtils;
 use n2n\core\module\UnknownModuleException;
@@ -64,6 +60,9 @@ use n2n\core\err\LogMailer;
 use n2n\core\container\impl\PhpVars;
 use n2n\core\ext\N2nExtension;
 use n2n\config\InvalidConfigurationException;
+use n2n\core\cache\N2nCache;
+use n2n\core\container\N2nContext;
+use n2n\util\ex\IllegalStateException;
 
 define('N2N_CRLF', "\r\n");
 
@@ -90,7 +89,6 @@ class N2N {
 	protected ModuleManager $moduleManager;
 	protected AppConfig $appConfig;
 	protected N2nCache $n2nCache;
-	protected AppN2nContext $n2nContext;
 
 	/**
 	 * @var N2nExtension[] $n2nExtensions
@@ -111,7 +109,7 @@ class N2N {
 		$this->combinedConfigSource = new CombinedConfigSource();
 	}
 	
-	protected function initModules(ModuleFactory $moduleFactory) {
+	protected function initModules(ModuleFactory $moduleFactory): void {
 		$moduleFactory->init($this->varStore);
 		
 		$this->combinedConfigSource->setMain($moduleFactory->getMainAppConfigSource());
@@ -129,16 +127,14 @@ class N2N {
 		}
 	}
 
-	protected function init(N2nCache $n2nCache) {
-		$this->initN2nContext($n2nCache);
-//		$n2nCache->n2nContextInitialized($this->n2nContext);
-	}
 	/**
 	 * 
 	 * @param \n2n\core\config\AppConfig
-	 * @throws \n2n\config\InvalidConfigurationException
+	 * @throws InvalidConfigurationException
 	 */
-	private function initConfiguration(N2nCache $n2nCache) {
+	private function initConfiguration(N2nCache $n2nCache): void {
+		$n2nCache->varStoreInitialized($this->varStore);
+
 		$this->n2nCache = $n2nCache;
 		$cacheStore = $n2nCache->getStartupCacheStore();
 		$hashCode = null;
@@ -167,7 +163,7 @@ class N2N {
 		$cacheStore->store(self::CONFIG_CACHE_NAME, $characteristics, $this->appConfig);
 	}
 
-	private function applyConfiguration(N2nCache $n2nCache) {
+	private function applyConfiguration(N2nCache $n2nCache): void {
 		$errorConfig = $this->appConfig->error();
 		self::$exceptionHandler?->setStrictAttitude($errorConfig->isStrictAttitudeEnabled());
 		self::$exceptionHandler?->setDetectStartupErrorsEnabled($errorConfig->isDetectStartupErrorsEnabled());
@@ -191,26 +187,27 @@ class N2N {
 		L10n::setL10nConfig($this->appConfig->l10n());
 		L10n::setPseudoL10nConfig($this->appConfig->pseudoL10n());
 		
-		$n2nCache->appConfigInitilaized($this->appConfig);
+		$n2nCache->appConfigInitialized($this->appConfig);
 
 		foreach ($this->appConfig->general()->getExtensionClassNames() as $extensionClassName) {
 			$this->setUpExtension($extensionClassName);
 		}
 	}
-	
-	private function initN2nContext(N2nCache $n2nCache): void {
-		$this->n2nContext = new AppN2nContext(new TransactionManager(), $this->moduleManager, $n2nCache->getAppCache(),
+
+	function createN2nContext(TransactionManager $transactionManager = null): AppN2nContext {
+		$n2nContext = new AppN2nContext(new TransactionManager(), $this->moduleManager, $this->n2nCache->getAppCache(),
 				$this->varStore, $this->appConfig, PhpVars::fromEnv());
-        self::registerShutdownListener($this->n2nContext);
 
 		foreach ($this->n2nExtensions as $n2nExtension) {
 			$n2nExtension->setUp($this->n2nContext);
 		}
 
 		$lookupSession = $this->n2nContext->getHttp()?->getLookupSession() ?? new SimpleLookupSession();
-        $lookupManager = new LookupManager($lookupSession, $n2nCache->getAppCache()->lookupCacheStore(LookupManager::class),
-                $this->n2nContext);
+		$lookupManager = new LookupManager($lookupSession, $this->n2nCache->getAppCache()->lookupCacheStore(LookupManager::class),
+				$this->n2nContext);
 		$this->n2nContext->setLookupManager($lookupManager);
+
+		return $n2nContext;
 	}
 
 	private function setUpExtension(string $extensionClassName): void {
@@ -260,68 +257,61 @@ class N2N {
 	/*
 	 * STATIC
 	 */
-	/**
-	 * @var ExceptionHandler|null;
-	 */
-	private static $exceptionHandler;
+
+	private static ?ExceptionHandler $exceptionHandler;
 	private static ?N2N $n2n = null;
-	private static $shutdownListeners = array();
-	
-	
+	private static array $shutdownListeners = array();
+
+	private static ?AppN2nContext $n2nContext = null;
+
 	
 	public static function setup(string $publicDirPath, string $varDirPath,
-			N2nCache $n2nCache, ModuleFactory $moduleFactory = null, bool $enableExceptionHandler = true,
-			LogMailer $logMailer = null) {
+			N2nCache $n2nCache = null, ModuleFactory $moduleFactory = null, bool $enableExceptionHandler = true,
+			LogMailer $logMailer = null): N2N {
 		mb_internal_encoding(self::CHARSET);
 		// 		ini_set('default_charset', self::CHARSET);
 		
 		if ($enableExceptionHandler) {
-    		self::$exceptionHandler = new ExceptionHandler(N2N::isDevelopmentModeOn());
-    		register_shutdown_function(array('n2n\core\N2N', 'shutdown'));
-
-			if ($logMailer !== null) {
-				self::$exceptionHandler->setLogMailer($logMailer);
-			}
+			self::setUpExceptionHandler($logMailer);
 		}
 		
 		self::$n2n = new N2N(new FsPath(IoUtils::realpath($publicDirPath)),
 				new FsPath(IoUtils::realpath($varDirPath)));
-		
-		if ($moduleFactory === null) {
-			$moduleFactory = new EtcModuleFactory();
-		}
-		self::$n2n->initModules($moduleFactory);
-		
-		$n2nCache->varStoreInitilaized(self::$n2n->varStore);
-		self::$n2n->initConfiguration($n2nCache);
+		self::$n2n->initModules($moduleFactory ?? new EtcModuleFactory());
+		self::$n2n->initConfiguration($n2nCache ?? new \n2n\core\cache\impl\FileN2nCache());
 		
 		Sync::init(self::$n2n->varStore->requestDirFsPath(VarStore::CATEGORY_TMP, self::NS, self::SYNC_DIR));
+
+		return self::$n2n;
 	}
-	
-	/**
-	 * @param string $publicDirPath
-	 * @param string $varDirPath
-	 * @param array $moduleDirPaths
-	 */
+
+	private static function setUpExceptionHandler(?LogMailer $logMailer): void {
+		self::$exceptionHandler = new ExceptionHandler(N2N::isDevelopmentModeOn());
+		register_shutdown_function(array('n2n\core\N2N', 'shutdown'));
+
+		if ($logMailer !== null) {
+			self::$exceptionHandler->setLogMailer($logMailer);
+		}
+	}
+
 	public static function initialize(string $publicDirPath, string $varDirPath, 
 			N2nCache $n2nCache, ModuleFactory $moduleFactory = null, bool $enableExceptionHandler = true,
-			LogMailer $logMailer = null) {
+			LogMailer $logMailer = null): void {
 		self::setup($publicDirPath, $varDirPath, $n2nCache, $moduleFactory, $enableExceptionHandler, $logMailer);
 		
-		self::$n2n->init($n2nCache);
+		self::$n2nContext = self::$n2n->createN2nContext();
+		self::registerShutdownListener(self::$n2nContext);
+
+
 		self::$initialized = true;
 		
 		// @todo move up so exception will be grouped earlier.
 		self::initLogging(self::$n2n);
-		
-		if (self::$exceptionHandler) {
-			self::$exceptionHandler->checkForStartupErrors();
-		}
+
+		self::$exceptionHandler?->checkForStartupErrors();
 	}
-	/**
-	 * @param \n2n\core\N2N $n2n
-	 */
-	private static function initLogging(N2N $n2n) {
+
+	private static function initLogging(N2N $n2n): void {
 		if (self::$exceptionHandler === null) {
 			return;
 		}
@@ -372,10 +362,21 @@ class N2N {
 		
 // 		self::shutdown();
 	}
+
+	static function createN2nContext(bool $keepTransactionContext = false): AppN2nContext {
+		$transactionManager = null;
+		if ($keepTransactionContext && self::$n2nContext !== null) {
+			$transactionManager = self::$n2nContext->getTransactionManager();
+			IllegalStateException::assertTrue(!$transactionManager->hasOpenTransaction(),
+					'Current TransactionManager can not be kept because it has open transactions.');
+		}
+
+		return self::_i()->createN2nContext($transactionManager);
+	}
 	/**
 	 * 
 	 */
-	public static function shutdown() {
+	public static function shutdown(): void {
 	    if (self::$exceptionHandler !== null) {
     		self::$exceptionHandler->checkForFatalErrors();
     		if (!self::$exceptionHandler->isStable()) return;
@@ -411,8 +412,8 @@ class N2N {
 		unset(self::$shutdownListeners[spl_object_hash($shutdownListener)]);
 	}
 	/**
-	 * @return \n2n\core\N2N
-	 * @throws \n2n\core\N2nHasNotYetBeenInitializedException
+	 * @return N2N
+	 * @throws N2nHasNotYetBeenInitializedException
 	 */
 	protected static function _i() {
 		if(self::$n2n === null) {
@@ -601,18 +602,18 @@ class N2N {
  	}
 	
 	public static function getN2nContext(): AppN2nContext {
-		return self::_i()->n2nContext;
+		return self::$n2nContext;
 	}
 	/**
 	 * 
 	 * @return boolean
 	 */
-	public static function isHttpContextAvailable() {
-		return self::_i()->n2nContext->isHttpContextAvailable();
+	public static function isHttpContextAvailable(): bool {
+		return self::$n2nContext->isHttpContextAvailable();
 	}
 	
 	public static function getHttpContext(): HttpContext {
-		return self::_i()->n2nContext->getHttpContext();
+		return self::$n2nContext->getHttpContext();
 	}
 	/**
 	 * 
@@ -632,7 +633,7 @@ class N2N {
 	}
 	
 	public static function createControllingPlan($subsystemName = null) {
-		$request = self::_i()->n2nContext->getHttpContext()->getRequest();
+		$request = self::$n2nContext->getHttpContext()->getRequest();
 		if ($subsystemName === null) {
 			$subsystemName = $request->getSubsystemName();
 		}
@@ -640,14 +641,14 @@ class N2N {
 		/**
 		 * @var ControllerRegistry
 		 */
-		$controllerRegistry = self::_i()->n2nContext->lookup(ControllerRegistry::class);
+		$controllerRegistry = self::$n2nContext->lookup(ControllerRegistry::class);
 
 		return $controllerRegistry->createControllingPlan(
-				self::_i()->n2nContext, $request->getCmdPath(), $subsystemName);
+				self::$n2nContext, $request->getCmdPath(), $subsystemName);
 	}
 	
 	public static function autoInvokeBatchJobs() {
-		$n2nContext = self::_i()->n2nContext;
+		$n2nContext = self::$n2nContext;
 		$batchJobRegistry = $n2nContext->lookup(BatchJobRegistry::class);
 		CastUtils::assertTrue($batchJobRegistry instanceof BatchJobRegistry);
 		$batchJobRegistry->trigger();
@@ -655,11 +656,11 @@ class N2N {
 	}
 	
 	public static function autoInvokeControllers() {
-		self::_i()->n2nContext->getHttp()?->invokerControllers();
+		self::$n2nContext->getHttp()?->invokerControllers();
 	}
 	
 //	public static function invokerControllers(string $subsystemName = null, Path $cmdPath = null) {
-//		$n2nContext = self::_i()->n2nContext;
+//		$n2nContext = self::$n2nContext;
 //		$httpContext = $n2nContext->getHttpContext();
 //		$request = $httpContext->getRequest();
 //
@@ -681,34 +682,34 @@ class N2N {
 	 * @return \n2n\context\LookupManager
 	 */
 	public static function getLookupManager() {
-		return self::_i()->n2nContext->getLookupManager();
+		return self::$n2nContext->getLookupManager();
 	}
 	/**
 	 * @return \n2n\persistence\ext\PdoPool
 	 */
 	public static function getPdoPool() {
-		return self::_i()->n2nContext->lookup(PdoPool::class);
+		return self::$n2nContext->lookup(PdoPool::class);
 	}
 	/**
 	 * 
 	 * @return \n2n\l10n\MessageContainer
 	 */
 	public static function getMessageContainer() {
-		return self::_i()->n2nContext->lookup(MessageContainer::class);
+		return self::$n2nContext->lookup(MessageContainer::class);
 	}
 	/**
 	 *
 	 * @return \n2n\web\dispatch\DispatchContext
 	 */
 	public static function getDispatchContext() {
-		return self::_i()->n2nContext->lookup(DispatchContext::class);
+		return self::$n2nContext->lookup(DispatchContext::class);
 	}
 	/**
 	 * 
 	 * @return \n2n\core\container\TransactionManager
 	 */
 	public static function getTransactionManager() {
-		return self::_i()->n2nContext->getTransactionManager();
+		return self::$n2nContext->getTransactionManager();
 	}
 	
 // 	public static function setTransactionContext(TransactionManager $transactionManager) {

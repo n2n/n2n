@@ -28,7 +28,6 @@ use n2n\core\module\ModuleManager;
 use n2n\web\http\HttpContext;
 use n2n\web\http\HttpContextNotAvailableException;
 use n2n\context\LookupManager;
-use n2n\util\type\ArgUtils;
 use n2n\core\util\N2nUtil;
 use n2n\core\ext\N2nMonitor;
 use n2n\core\ext\N2nHttp;
@@ -49,7 +48,7 @@ interface N2nContext extends MagicContext {
 
 	function getHttpContext(): HttpContext;
 
-	function getAppCache(): AppCache;
+	function getAppCache(): \n2n\core\cache\AppCache;
 
 	function getN2nLocale(): N2nLocale;
 
