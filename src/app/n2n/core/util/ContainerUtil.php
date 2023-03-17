@@ -118,6 +118,24 @@ class ContainerUtil {
 		});
 	}
 
+	function preRollback(\Closure $callback): void {
+		$mmi = $this->createMmiFromClosure($callback);
+		$rollbackListener = $this->createClosureCommitListener();
+		$rollbackListener->setPreRollbackCallback(function () use ($rollbackListener, $mmi) {
+			$this->getTransactionManager()->unregisterCommitListener($rollbackListener);
+			$mmi->invoke();
+		});
+	}
+
+	function postRollback(\Closure $callback): void {
+		$mmi = $this->createMmiFromClosure($callback);
+		$rollbackListener = $this->createClosureCommitListener();
+		$rollbackListener->setPostRollbackCallback(function () use ($rollbackListener, $mmi) {
+			$this->getTransactionManager()->unregisterCommitListener($rollbackListener);
+			$mmi->invoke();
+		});
+	}
+
 
 	function extendTransaction(bool $ifRequiredOnly = true): void {
 		$tm = $this->getTransactionManager();
