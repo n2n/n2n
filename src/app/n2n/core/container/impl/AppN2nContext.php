@@ -502,7 +502,7 @@ class AppN2nContext implements N2nContext, ShutdownListener {
 		unset($this->addOnContexts);
 
 		if ($this->lookupManager !== null) {
-			$this->lookupManager->shutdown();
+			$this->lookupManager->flush();
 			$this->lookupManager->clear();
 			$this->lookupManager = null;
 		}
