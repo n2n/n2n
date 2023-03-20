@@ -71,7 +71,7 @@ class AppN2nContext implements N2nContext, ShutdownListener {
 	private AppConfig $appConfig;
 	private array $moduleConfigs = array();
 	private N2nLocale $n2nLocale;
-	private ?LookupManager $lookupManager;
+	private ?LookupManager $lookupManager = null;
 	private array $injectedObjects = [];
 
 	private \SplObjectStorage $addOnContexts;
@@ -85,7 +85,6 @@ class AppN2nContext implements N2nContext, ShutdownListener {
 
 	public function __construct(private TransactionManager $transactionManager, ModuleManager $moduleManager, AppCache $appCache,
 			VarStore $varStore, AppConfig $appConfig, PhpVars $phpVars = null) {
-		$this->transactionManager = $transactionManager;
 		$this->moduleManager = $moduleManager;
 		$this->appCache = $appCache;
 		$this->varStore = $varStore;

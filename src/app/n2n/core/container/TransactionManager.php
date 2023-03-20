@@ -298,6 +298,13 @@ class TransactionManager extends ObjectAdapter {
 		}
 	}
 
+	/**
+	 * @return TransactionalResource[]
+	 */
+	function getResources(): array {
+		return $this->transactionalResources;
+	}
+
 	public function registerResource(TransactionalResource $resource) {
 		if (!in_array($this->phase, [TransactionPhase::CLOSED, TransactionPhase::OPEN, TransactionPhase::PREPARE_COMMIT])) {
 			throw new TransactionStateException('Can not register a new TransactionalResource in '
