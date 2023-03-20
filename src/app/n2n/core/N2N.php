@@ -24,7 +24,6 @@ namespace n2n\core;
 use n2n\context\config\SimpleLookupSession;
 use n2n\core\container\TransactionManager;
 use n2n\log4php\Logger;
-use n2n\persistence\ext\PdoPool;
 use n2n\core\module\Module;
 use n2n\core\err\ExceptionHandler;
 use n2n\l10n\N2nLocale;
@@ -699,10 +698,10 @@ class N2N {
 		return self::$n2nContext->getLookupManager();
 	}
 	/**
-	 * @return \n2n\persistence\ext\PdoPool
+	 * @return \n2n\core\container\PdoPool
 	 */
-	public static function getPdoPool() {
-		return self::$n2nContext->lookup(PdoPool::class);
+	public static function getPdoPool(): container\PdoPool {
+		return self::$n2nContext->lookup(\n2n\core\container\PdoPool::class);
 	}
 	/**
 	 * 

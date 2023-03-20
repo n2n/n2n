@@ -44,48 +44,51 @@ class PdoPool {
 
 	const DEFAULT_DS_NAME = \n2n\persistence\ext\PdoPool::DEFAULT_DS_NAME;
 
-	private \n2n\persistence\ext\PdoPool $decorated;
+	private \n2n\persistence\ext\PdoPool $decoratedPdoPool;
+	private \n2n\persistence\ext\EmPool $decoratedEmPool;
 
-	private function _init(\n2n\persistence\ext\PdoPool $decorated) {
-		$this->decorated = $decorated;
+	private function _init(\n2n\persistence\ext\PdoPool $decoratedPdoPool,
+			\n2n\persistence\ext\EmPool $decoratedEmPool) {
+		$this->decoratedPdoPool = $decoratedPdoPool;
+		$this->decoratedEmPool = $decoratedEmPool;
 	}
 
 	function clear() {
-		$this->decorated->clear();
+		$this->decoratedEmPool->clear();
 	}
 
 	public function getTransactionManager() {
-		return $this->decorated->getTransactionManager();
+		return $this->decoratedPdoPool->getTransactionManager();
 	}
 
 	public function setMagicContext(MagicContext $magicContext = null) {
-		$this->decorated->setMagicContext($magicContext);
+		$this->decoratedEmPool->setMagicContext($magicContext);
 	}
 	/**
 	 * @return MagicContext
 	 */
 	public function getMagicContext() {
-		return $this->decorated->getMagicContext();
+		return $this->decoratedEmPool->getMagicContext();
 	}
 	/**
 	 * @return string
 	 */
 	public function getPersistenceUnitNames() {
-		return $this->decorated->getPersistenceUnitNames();
+		return $this->decoratedPdoPool->getPersistenceUnitNames();
 	}
 	/**
 	 * @param string $persistenceUnitName
 	 * @return \n2n\persistence\Pdo
 	 */
 	public function getPdo(string $persistenceUnitName = null) {
-		return $this->decorated->getPdo($persistenceUnitName);
+		return $this->decoratedPdoPool->getPdo($persistenceUnitName);
 	}
 
 	/**
 	 * @return Pdo[]
 	 */
 	function getInitializedPdos() {
-		return $this->decorated->getInitializedPdos();
+		return $this->decoratedPdoPool->getInitializedPdos();
 	}
 
 	/**
@@ -94,7 +97,7 @@ class PdoPool {
 	 * @throws \InvalidArgumentException
 	 */
 	function setPdo(string $persistenceUnitName, Pdo $pdo) {
-		$this->decorated->setPdo($persistenceUnitName, $pdo);
+		$this->decoratedPdoPool->setPdo($persistenceUnitName, $pdo);
 	}
 
 
@@ -103,7 +106,7 @@ class PdoPool {
 	 * @return Pdo
 	 */
 	public function createPdo(PersistenceUnitConfig $persistenceUnitConfig) {
-		return $this->decorated->createPdo($persistenceUnitConfig);
+		return $this->decoratedPdoPool->createPdo($persistenceUnitConfig);
 	}
 
 	/**
@@ -112,27 +115,27 @@ class PdoPool {
 	 * @return \n2n\persistence\orm\EntityManagerFactory
 	 */
 	public function getEntityManagerFactory($persistenceUnitName = null) {
-		return $this->decorated->getEntityManagerFactory($persistenceUnitName);
+		return $this->decoratedEmPool->getEntityManagerFactory($persistenceUnitName);
 	}
 
 	/**
 	 * @return EntityModelManager
 	 */
 	public function getEntityModelManager() {
-		return $this->decorated->getEntityModelManager();
+		return $this->decoratedEmPool->getEntityModelManager();
 	}
 	/**
 	 * @return EntityProxyManager
 	 */
 	public function getEntityProxyManager() {
-		return $this->decorated->getEntityProxyManager();
+		return $this->decoratedEmPool->getEntityProxyManager();
 	}
 
 	public function registerListener(PdoPoolListener $dbhPoolListener) {
-		$this->decorated->registerListener($dbhPoolListener);
+		$this->decoratedPdoPool->registerListener($dbhPoolListener);
 	}
 
 	public function unregisterListener(PdoPoolListener $dbhPoolListener) {
-		$this->decorated->unregisterListener($dbhPoolListener);
+		$this->decoratedPdoPool->unregisterListener($dbhPoolListener);
 	}
 }
