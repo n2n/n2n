@@ -306,7 +306,7 @@ class TransactionManager extends ObjectAdapter {
 	}
 
 	public function registerResource(TransactionalResource $resource) {
-		if (!in_array($this->phase, [TransactionPhase::CLOSED, TransactionPhase::OPEN, TransactionPhase::PREPARE_COMMIT])) {
+		if (!in_array($this->phase, [TransactionPhase::CLOSED, TransactionPhase::OPEN])) {
 			throw new TransactionStateException('Can not register a new TransactionalResource in '
 					. EnumUtils::unitToBacked($this->phase) . ' phase.');
 		}
