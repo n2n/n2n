@@ -51,6 +51,8 @@ class WebConfig {
 	private $aliasN2nLocales;
 	private $responseDefaultHeaders;
 
+	private $responseContentSecurityPolicyEnabled;
+
 	/**
 	 * @param bool $responseCachingEnabled
 	 * @param bool $responseBrowserCachingEnabled
@@ -68,13 +70,15 @@ class WebConfig {
 	 * @param string[] $dispatchPropertyProviderClassNames
 	 * @param string $dispatchTargetCryptAlgorithm
 	 * @param N2nLocale[] $aliasN2nLocales
+	 * @param bool $responseContentSecurityPolicyEnabled
 	 */
 	public function __construct(bool $responseCachingEnabled, bool $responseBrowserCachingEnabled, 
 			bool $responseSendEtagAllowed, bool $responseServerPushAllowed, bool $responseSendLastModifiedAllowed,
 			array $responseDefaultHeaders,
 			bool $viewCachingEnabled, array $viewClassNames, array $mainControllerDefs, array $filterControllerDefs, 
 			array $precacheControllerDefs, Supersystem $supersystem, array $subsystems,
-			array $dispatchPropertyProviderClassNames, string $dispatchTargetCryptAlgorithm, array $aliasN2nLocales) {
+			array $dispatchPropertyProviderClassNames, string $dispatchTargetCryptAlgorithm, array $aliasN2nLocales,
+			bool $responseContentSecurityPolicyEnabled) {
 		ArgUtils::valArray($subsystems, Subsystem::class);
 				
 		$this->responseCachingEnabled = $responseCachingEnabled;
@@ -93,6 +97,7 @@ class WebConfig {
 		$this->dispatchPropertyProviderClassNames = $dispatchPropertyProviderClassNames;
 		$this->dispatchTargetCryptAlgorithm = $dispatchTargetCryptAlgorithm;
 		$this->aliasN2nLocales = $aliasN2nLocales;
+		$this->responseContentSecurityPolicyEnabled = $responseContentSecurityPolicyEnabled;
 	}
 	
 	/**
@@ -224,4 +229,21 @@ class WebConfig {
 	public function getAliasN2nLocales() {
 		return $this->aliasN2nLocales;
 	}
+
+	/**
+	 * @return bool
+	 */
+	public function isResponseContentSecurityPolicyEnabled(): bool {
+		return $this->responseContentSecurityPolicyEnabled;
+	}
+
+	/**
+	 * @param bool $responseContentSecurityPolicyEnabled
+	 * @return WebConfig
+	 */
+	public function setResponseContentSecurityPolicyEnabled(bool $responseContentSecurityPolicyEnabled): WebConfig {
+		$this->responseContentSecurityPolicyEnabled = $responseContentSecurityPolicyEnabled;
+		return $this;
+	}
+
 }

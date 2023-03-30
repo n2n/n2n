@@ -128,6 +128,8 @@ class AppConfigFactory {
 	const RESPONSE_SERVER_PUSH_ALLOWED_KEY = 'response.server_push';
 	const RESPONSE_SERVER_PUSH_ALLOWED_DEFAULT = true;
 	const RESPONSE_DEFAULT_HEADERS_KEY = 'response.default_headers';
+	const RESPONSE_CONTENT_SECURITY_POLICY_ENABLED_KEY = 'response.content_security_policy_enabled';
+	const RESPONSE_CONTENT_SECURITY_POLICY_ENABLED_DEFAULT = false;
 	
 	const VIEW_CACHING_ENABLED_KEY = 'view.caching_enabled';
 	const VIEW_CACHING_ENABLED_DEFAULT = true;
@@ -183,7 +185,9 @@ class AppConfigFactory {
 				array_unique($groupReader->getScalarArray(self::DISPATCH_PROPERTY_FACTORIES_NAMES_KEY, false, array())),
 				($groupReader->getBool(self::DISPATCH_TARGET_CRYPT_ENABLED_KEY, false, self::DISPATCH_TARGET_CRYPT_ENABLED_DEFAULT) 
 						? $groupReader->getString(self::DISPATCH_TARGET_CRYPT_ALGORITHM_KEY, false, self::DISPATCH_TARGET_CRYPT_ALGORITHM_DEFAULT) : null),
-				$groupReader->getN2nLocaleKeyArray(self::LOCALE_ALIASES_KEY));
+				$groupReader->getN2nLocaleKeyArray(self::LOCALE_ALIASES_KEY),
+				$groupReader->getBool(self::RESPONSE_CONTENT_SECURITY_POLICY_ENABLED_KEY, false,
+						self::RESPONSE_CONTENT_SECURITY_POLICY_ENABLED_DEFAULT));
 	}
 	
 	const CONTR_SEPARATOR = '>';
