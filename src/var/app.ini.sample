@@ -8,7 +8,7 @@
 ; application.name = "newAwesomeProject"
 ; application.log_level = null
 
-; application.batch_listeners[] = "example\controller\ExampleBatchListener"
+; application.batch_jobs[] = "example\controller\ExampleBatchListener"
 
 extensions[] = "example\ExampleN2nExtension";
 
