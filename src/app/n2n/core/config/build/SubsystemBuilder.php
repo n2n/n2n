@@ -14,7 +14,8 @@ class SubsystemBuilder {
 	function __construct() {
 	}
 
-	function addSchema(string $matcherName, ?string $subsystemName, ?string $hostName, ?string $contextPath, array $n2nLocales) {
+	function addSchema(string $matcherName, ?string $subsystemName, ?string $hostName, ?string $contextPath, 
+			array $n2nLocales, array $responseHeaders) {
 		$key = $subsystemName ?? $matcherName;
 
 		if (!isset($this->subsystems[$key])) {
@@ -22,7 +23,7 @@ class SubsystemBuilder {
 		}
 
 		$subsystem = $this->subsystems[$key];
-		$subsystem->createRule($matcherName, $hostName, $contextPath, $n2nLocales);
+		$subsystem->createRule($matcherName, $hostName, $contextPath, $n2nLocales, $responseHeaders);
 	}
 
 	/**

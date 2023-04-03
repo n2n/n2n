@@ -154,6 +154,8 @@ class AppConfigFactory {
 	const DISPATCH_TARGET_CRYPT_ALGORITHM_DEFAULT = EncryptionDescriptor::ALGORITHM_AES_256_CTR;
 	
 	const LOCALE_ALIASES_KEY = 'locale_aliases';
+	
+	const RESPONSE_HEADERS_KEY = 'response_headers';
 
 
 	/**
@@ -225,7 +227,8 @@ class AppConfigFactory {
 	}
 	
 	private function createSupersystem(GroupReader $groupReader) {
-		return new Supersystem($groupReader->getN2nLocaleArray(self::LOCALES_KEY));
+		return new Supersystem($groupReader->getN2nLocaleArray(self::LOCALES_KEY), 
+				$groupReader->getScalarArray(self::RESPONSE_HEADERS_KEY));
 	}
 	
 	private function createSubsystemConfigs(array $subsystemGroupReaders): array {
@@ -235,7 +238,8 @@ class AppConfigFactory {
 					$subsystemGroupReader->getString(self::GROUP_KEY, false),
 					$subsystemGroupReader->getString(self::HOST_KEY, false), 
 					$subsystemGroupReader->getString(self::CONTEXT_PATH_KEY, false),
-					$subsystemGroupReader->getN2nLocaleArray(self::LOCALES_KEY));
+					$subsystemGroupReader->getN2nLocaleArray(self::LOCALES_KEY),
+					$subsystemGroupReader->getScalarArray(self::RESPONSE_HEADERS_KEY));
 		}
 		return $subsystemBuilder->getSubsystems();
 	}

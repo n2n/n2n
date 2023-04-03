@@ -137,6 +137,7 @@ class WebConfig {
 
 	/**
 	 * @return string[]
+	 * @deprecated
 	 */
 	function getResponseDefaultHeaders() {
 		return $this->responseDefaultHeaders;
