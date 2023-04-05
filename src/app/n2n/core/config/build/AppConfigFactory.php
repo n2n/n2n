@@ -22,7 +22,6 @@
 namespace n2n\core\config\build;
 
 use n2n\util\StringUtils;
-use n2n\web\http\controller\ControllerDef;
 use n2n\core\config\SmtpConfig;
 use n2n\l10n\DateTimeFormat;
 use n2n\l10n\N2nLocale;
@@ -44,7 +43,9 @@ use n2n\l10n\L10nStyle;
 use n2n\l10n\L10nConfig;
 use n2n\l10n\PseudoL10nConfig;
 use n2n\l10n\L10nFormat;
-use n2n\web\http\Supersystem;
+use n2n\core\config\RoutingConfig;
+use n2n\core\config\routing\RoutingRule;
+use n2n\core\config\routing\ControllerDef;
 
 class AppConfigFactory {
 	const GROUP_GENERAL = 'general';
@@ -83,7 +84,8 @@ class AppConfigFactory {
 
 		return new AppConfig(
 				$this->createGeneralConfig($reader->getGroupReaderByGroupName(self::GROUP_GENERAL)),
-				$this->createWebConfig($reader->getGroupReaderByGroupName(self::GROUP_WEB),
+				$this->createWebConfig($reader->getGroupReaderByGroupName(self::GROUP_WEB)),
+				$this->createRoutingConfig(
 						$reader->getGroupReaderByGroupName(self::GROUP_ROUTING),
 						$reader->getExtendedGroupReadersByGroupName(self::GROUP_ROUTING)),
 				$this->createMailConfig($reader->getGroupReaderByGroupName(self::GROUP_MAIL)),
@@ -136,17 +138,6 @@ class AppConfigFactory {
 	
 	const VIEW_TYPE_KEY_PREFIX = 'view.type.';
 	
-	const CONTROLLERS_KEY = 'controllers';
-	
-	const FILTERS_KEY = 'filters';
-	
-	const PRECACHE_FILTERS_KEY = 'precache_filters';
-
-	const GROUP_KEY = 'subsystem';
-	const HOST_KEY = 'host';
-	const CONTEXT_PATH_KEY = 'context_path';
-	const LOCALES_KEY = 'locales';
-	
 	const DISPATCH_PROPERTY_FACTORIES_NAMES_KEY = 'dispatch.property_providers';
 	const DISPATCH_TARGET_CRYPT_ENABLED_KEY = 'dispatch.target_crypt_enabled';
 	const DISPATCH_TARGET_CRYPT_ENABLED_DEFAULT = true;
@@ -160,11 +151,9 @@ class AppConfigFactory {
 
 	/**
 	 * @param GroupReader $groupReader
-	 * @param GroupReader $supersystemGroupReader
-	 * @param array $subsystemGroupReaders
 	 * @return WebConfig
 	 */
-	private function createWebConfig(GroupReader $groupReader, GroupReader $supersystemGroupReader, array $subsystemGroupReaders) {
+	private function createWebConfig(GroupReader $groupReader): WebConfig {
 		return new WebConfig(
 				$groupReader->getBool(self::RESPONSE_CACHING_ENABLED_KEY, false, 
 						self::RESPONSE_CACHING_ENABLED_DEFAULT),
@@ -179,11 +168,6 @@ class AppConfigFactory {
 				$groupReader->getScalarArray(self::RESPONSE_DEFAULT_HEADERS_KEY),
 				$groupReader->getBool(self::VIEW_CACHING_ENABLED_KEY, false, self::VIEW_CACHING_ENABLED_DEFAULT),
 				self::extractStringPropertyArray($groupReader, self::VIEW_TYPE_KEY_PREFIX),
-				$this->createControllerDefs($supersystemGroupReader, $subsystemGroupReaders, self::CONTROLLERS_KEY),
-				$this->createControllerDefs($supersystemGroupReader, $subsystemGroupReaders, self::FILTERS_KEY),
-				$this->createControllerDefs($supersystemGroupReader, $subsystemGroupReaders, self::PRECACHE_FILTERS_KEY),
-				$this->createSupersystem($supersystemGroupReader),
-				$this->createSubsystemConfigs($subsystemGroupReaders),
 				array_unique($groupReader->getScalarArray(self::DISPATCH_PROPERTY_FACTORIES_NAMES_KEY, false, array())),
 				($groupReader->getBool(self::DISPATCH_TARGET_CRYPT_ENABLED_KEY, false, self::DISPATCH_TARGET_CRYPT_ENABLED_DEFAULT) 
 						? $groupReader->getString(self::DISPATCH_TARGET_CRYPT_ALGORITHM_KEY, false, self::DISPATCH_TARGET_CRYPT_ALGORITHM_DEFAULT) : null),
@@ -191,7 +175,28 @@ class AppConfigFactory {
 				$groupReader->getBool(self::RESPONSE_CONTENT_SECURITY_POLICY_ENABLED_KEY, false,
 						self::RESPONSE_CONTENT_SECURITY_POLICY_ENABLED_DEFAULT));
 	}
-	
+
+	const CONTROLLERS_KEY = 'controllers';
+
+	const FILTERS_KEY = 'filters';
+
+	const PRECACHE_FILTERS_KEY = 'precache_filters';
+
+	const GROUP_KEY = 'subsystem';
+	const HOST_KEY = 'host';
+	const CONTEXT_PATH_KEY = 'context_path';
+	const LOCALES_KEY = 'locales';
+
+	private function createRoutingConfig(GroupReader $groupReader, array $routingRuleGroupReaders): RoutingConfig {
+		return new RoutingConfig(
+				$this->createControllerDefs($groupReader, $routingRuleGroupReaders, self::CONTROLLERS_KEY),
+				$this->createControllerDefs($groupReader, $routingRuleGroupReaders, self::FILTERS_KEY),
+				$this->createControllerDefs($groupReader, $routingRuleGroupReaders, self::PRECACHE_FILTERS_KEY),
+				$groupReader->getN2nLocaleArray(self::LOCALES_KEY),
+				$groupReader->getScalarArray(self::RESPONSE_HEADERS_KEY),
+				$this->createRoutingRules($routingRuleGroupReaders));
+	}
+
 	const CONTR_SEPARATOR = '>';
 	
 	private function createControllerDefs(GroupReader $groupReader, array $subsystemGroupReaders, string $attributeName) {
@@ -217,7 +222,7 @@ class AppConfigFactory {
 		return $controllerDefs;
 	}
 	
-	private function createControllerDef(string $controllerClassName, ?string $subsystemName, ?string $subsystemRuleName, string $contextPath) {
+	private function createControllerDef(string $controllerClassName, ?string $subsystemName, ?string $subsystemRuleName, string $contextPath): ControllerDef {
 		$parts = explode(self::CONTR_SEPARATOR, $controllerClassName, 2);
 		if (count($parts) > 1) {
 			$contextPath = trim($parts[0]);
@@ -225,23 +230,18 @@ class AppConfigFactory {
 		}
 		return new ControllerDef($controllerClassName, $subsystemName, $subsystemRuleName, $contextPath);
 	}
-	
-	private function createSupersystem(GroupReader $groupReader) {
-		return new Supersystem($groupReader->getN2nLocaleArray(self::LOCALES_KEY), 
-				$groupReader->getScalarArray(self::RESPONSE_HEADERS_KEY));
-	}
-	
-	private function createSubsystemConfigs(array $subsystemGroupReaders): array {
-		$subsystemBuilder = new SubsystemBuilder();
-		foreach ($subsystemGroupReaders as $subsystemRuleName => $subsystemGroupReader) {
-			$subsystemBuilder->addSchema($subsystemRuleName,
-					$subsystemGroupReader->getString(self::GROUP_KEY, false),
-					$subsystemGroupReader->getString(self::HOST_KEY, false), 
-					$subsystemGroupReader->getString(self::CONTEXT_PATH_KEY, false),
-					$subsystemGroupReader->getN2nLocaleArray(self::LOCALES_KEY),
-					$subsystemGroupReader->getScalarArray(self::RESPONSE_HEADERS_KEY));
+
+	private function createRoutingRules(array $routingRuleGroupReaders): array {
+		$routingRules = [];
+		foreach ($routingRuleGroupReaders as $routingRuleName => $routingRuleGroupReader) {
+			$routingRules[] = new RoutingRule($routingRuleName,
+					$routingRuleGroupReader->getString(self::GROUP_KEY, false),
+					$routingRuleGroupReader->getString(self::HOST_KEY, false),
+					$routingRuleGroupReader->getString(self::CONTEXT_PATH_KEY, false),
+					$routingRuleGroupReader->getN2nLocaleArray(self::LOCALES_KEY),
+					$routingRuleGroupReader->getScalarArray(self::RESPONSE_HEADERS_KEY));
 		}
-		return $subsystemBuilder->getSubsystems();
+		return $routingRules;
 	}
 
 	const MAIL_SENDING_ENABLED_KEY = 'mail_sending_enabled';

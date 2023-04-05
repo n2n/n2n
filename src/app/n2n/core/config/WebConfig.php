@@ -21,10 +21,7 @@
  */
 namespace n2n\core\config;
 
-use n2n\web\http\Supersystem;
 use n2n\util\type\ArgUtils;
-use n2n\web\http\Subsystem;
-use n2n\web\http\controller\ControllerDef;
 use n2n\l10n\N2nLocale;
 
 class WebConfig {
@@ -34,24 +31,14 @@ class WebConfig {
 	private $responseSendLastModifiedAllowed; 
 	private $responseServerPushAllowed;
 	private $viewCachingEnabled; 
-	private $viewClassNames; 
-	private $mainControllerDefs;
-	private $filterControllerDefs;
-	private $precacheControllerDefs;
-	/**
-	 * @var Supersystem[]
-	 */
-	private $supersystem;
-	/**
-	 * @var Subsystem[]
-	 */
-	private $subsystems;
+	private $viewClassNames;
 	private $dispatchPropertyProviderClassNames;
 	private $dispatchTargetCryptAlgorithm;
 	private $aliasN2nLocales;
 	private $responseDefaultHeaders;
 
 	private $responseContentSecurityPolicyEnabled;
+
 
 	/**
 	 * @param bool $responseCachingEnabled
@@ -62,11 +49,6 @@ class WebConfig {
 	 * @param array $responseDefaultHeaders
 	 * @param bool $viewCachingEnabled
 	 * @param string[] $viewClassNames
-	 * @param ControllerDef[] $mainControllerDefs
-	 * @param ControllerDef[] $filterControllerDefs
-	 * @param array $precacheControllerDefs
-	 * @param Supersystem $supersystem
-	 * @param Subsystem[] $subsystems
 	 * @param string[] $dispatchPropertyProviderClassNames
 	 * @param string $dispatchTargetCryptAlgorithm
 	 * @param N2nLocale[] $aliasN2nLocales
@@ -75,12 +57,10 @@ class WebConfig {
 	public function __construct(bool $responseCachingEnabled, bool $responseBrowserCachingEnabled, 
 			bool $responseSendEtagAllowed, bool $responseServerPushAllowed, bool $responseSendLastModifiedAllowed,
 			array $responseDefaultHeaders,
-			bool $viewCachingEnabled, array $viewClassNames, array $mainControllerDefs, array $filterControllerDefs, 
-			array $precacheControllerDefs, Supersystem $supersystem, array $subsystems,
+			bool $viewCachingEnabled, array $viewClassNames,
 			array $dispatchPropertyProviderClassNames, string $dispatchTargetCryptAlgorithm, array $aliasN2nLocales,
 			bool $responseContentSecurityPolicyEnabled) {
-		ArgUtils::valArray($subsystems, Subsystem::class);
-				
+
 		$this->responseCachingEnabled = $responseCachingEnabled;
 		$this->responseBrowserCachingEnabled = $responseBrowserCachingEnabled;
 		$this->responseSendEtagAllowed = $responseSendEtagAllowed;
@@ -89,11 +69,6 @@ class WebConfig {
 		$this->responseDefaultHeaders = $responseDefaultHeaders;
 		$this->viewCachingEnabled = $viewCachingEnabled;
 		$this->viewClassNames = $viewClassNames;
-		$this->mainControllerDefs = $mainControllerDefs;
-		$this->filterControllerDefs = $filterControllerDefs;
-		$this->precacheControllerDefs = $precacheControllerDefs;
-		$this->supersystem = $supersystem;
-		$this->subsystems = $subsystems;
 		$this->dispatchPropertyProviderClassNames = $dispatchPropertyProviderClassNames;
 		$this->dispatchTargetCryptAlgorithm = $dispatchTargetCryptAlgorithm;
 		$this->aliasN2nLocales = $aliasN2nLocales;
@@ -157,58 +132,7 @@ class WebConfig {
 		return $this->viewClassNames;
 	}
 	
-	/**
-	 * @return ControllerDef[]
-	 */
-	public function getMainControllerDefs() {
-		return $this->mainControllerDefs;
-	}
-	
-	/**
-	 * @return ControllerDef[]
-	 */
-	public function getFilterControllerDefs() {
-		return $this->filterControllerDefs;
-	}
-	
-	/**
-	 * @return ControllerDef[]
-	 */
-	public function getPrecacheControllerDefs() {
-		return $this->precacheControllerDefs;
-	}
-	
-	/**
-	 * @return \n2n\l10n\N2nLocale[]
-	 */
-	public function getAllN2nLocales() {
-		$n2nLocales = $this->supersystem->getN2nLocales();
-		foreach ($this->subsystems as $supersystem) {
-			$n2nLocales = array_merge($n2nLocales, $supersystem->getN2nLocales());
-		}
-		return $n2nLocales;
-	}
-	
-	/**
-	 * @return Supersystem
-	 */
-	public function getSupersystem() {
-		return $this->supersystem;
-	}
-	
-	/**
-	 * @return string[]
-	 */
-	public function getSubsystemNames() {
-		return array_keys($this->subsystems);
-	}
-	
-	/**
-	 * @return Subsystem[]
-	 */
-	public function getSubsystems() {
-		return $this->subsystems;
-	}
+
 	
 	/**
 	 * @return string[] 

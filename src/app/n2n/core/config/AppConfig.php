@@ -37,8 +37,8 @@ class AppConfig {
 	private $l10nConfig;
 	private $pseudoL10nConfig;
 	
-	public function __construct(GeneralConfig $generalConfig, WebConfig $webConfig, MailConfig $mailConfig,
-			IoConfig $ioConfig, FilesConfig $filesConfig, ErrorConfig $errorConfig, DbConfig $dbConfig, 
+	public function __construct(GeneralConfig $generalConfig, WebConfig $webConfig, private readonly RoutingConfig $routingConfig,
+			MailConfig $mailConfig, IoConfig $ioConfig, FilesConfig $filesConfig, ErrorConfig $errorConfig, DbConfig $dbConfig,
 			OrmConfig $ormConfig, N2nLocaleConfig $localeConfig, L10nConfig $l10nConfig, PseudoL10nConfig $pseudoL10nConfig) {
 		$this->generalConfig = $generalConfig;
 		$this->webConfig = $webConfig;
@@ -64,6 +64,11 @@ class AppConfig {
 	public function web() {
 		return $this->webConfig;	
 	}
+
+	function routing(): RoutingConfig {
+		return $this->routingConfig;
+	}
+
 	/**
 	 * @return \n2n\core\config\MailConfig
 	 */
