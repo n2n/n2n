@@ -47,6 +47,11 @@ class AppConfigFactoryTest extends TestCase {
 		return (new FsPath(__DIR__))->getParent()->ext(['mock', 'ini', $iniFileName]);
 	}
 
+	function testGeneral() {
+		$appConfig = $this->createFromFsPath('general.app.ini');
+		$this->assertTrue($appConfig->general()->isApplicationReplicatable());
+	}
+
 	function testRouting() {
 		$appConfig = $this->createFromFsPath('routing.app.ini');
 

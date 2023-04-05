@@ -107,7 +107,10 @@ class AppConfigFactory {
 	const APPLICATION_NAME_DEFAULT = 'newAwesomeProject';
 	const APPLICATION_LOG_LEVEL_KEY = 'application.log_level';
 	const APPLICATION_BATCH_CONTROLLER_NAMES_KEY = 'application.batch_jobs';
-	CONST EXTENSION_CLASS_NAMES_KEY = 'extensions';
+	const APPLICATION_REPLICATABLE_KEY = 'application.replicatable';
+	const APPLICATION_REPLICATABLE_DEFAULT = false;
+
+	const EXTENSION_CLASS_NAMES_KEY = 'extensions';
 	
 	private function createGeneralConfig(GroupReader $groupReader) {
 		return new GeneralConfig(
@@ -115,6 +118,7 @@ class AppConfigFactory {
 				$groupReader->getString(self::PAGE_URL_KEY, false, null),
 				$groupReader->getNoIoStrictSpecialCharsString(self::APPLICATION_NAME_KEY, false, self::APPLICATION_NAME_DEFAULT),
 				$groupReader->getString(self::APPLICATION_LOG_LEVEL_KEY, false),
+				$groupReader->getBool(self::APPLICATION_REPLICATABLE_KEY, false, self::APPLICATION_REPLICATABLE_DEFAULT),
 				array_filter($groupReader->getScalarArray(self::APPLICATION_BATCH_CONTROLLER_NAMES_KEY, false, array())),
 				array_filter($groupReader->getScalarArray(self::EXTENSION_CLASS_NAMES_KEY, false, array())));
 	}

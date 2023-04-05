@@ -41,8 +41,8 @@ class GeneralConfig {
 	 * @param string $applicationLogLevel
 	 * @param array $batchControllerClassNames
 	 */
-	public function __construct(string $pageName, string $pageUrl = null, string $applicationName, string $applicationLogLevel = null, 
-			array $batchControllerClassNames, private array $extensionClassNames) {
+	public function __construct(string $pageName, string $pageUrl = null, string $applicationName, ?string $applicationLogLevel,
+			private bool $applicationReplicatable, array $batchControllerClassNames, private array $extensionClassNames) {
 		$this->pageName = $pageName;
 		$this->pageUrl = $pageUrl;
 		ArgUtils::assertTrue(1 === preg_match('#^\w+$#', $applicationName), 'Invalid application name.');
@@ -80,6 +80,11 @@ class GeneralConfig {
 		// @todo how to determine default loglevel
 		return LoggerLevel::toLevel($this->applicationLogLevel ?? LoggerLevel::ALL, LoggerLevel::getLevelAll());
 	}
+
+	function isApplicationReplicatable(): bool {
+		return $this->applicationReplicatable;
+	}
+
 	/**
 	 * @return array
 	 */
