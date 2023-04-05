@@ -21,10 +21,57 @@
  */
 namespace n2n\core\config\routing;
 
+use n2n\util\type\ArgUtils;
+use n2n\l10n\N2nLocale;
+
 class RoutingRule {
 
-	function __construct(public string $matcherName, public ?string $subsystemName = null,
-			public ?string $hostName = null, public ?string $contextPath = null,
-			public array $n2nLocales = [], public array $responseHeaders = []) {
+	function __construct(private string $matcherName, private ?string $subsystemName = null,
+			private ?string $hostName = null, private ?string $contextPath = null,
+			private array $n2nLocales = [], private array $responseHeaders = []) {
+		ArgUtils::valArray($this->n2nLocales, N2nLocale::class);
+		ArgUtils::valArray($this->responseHeaders, 'string');
+	}
+
+	/**
+	 * @return string
+	 */
+	public function getMatcherName(): string {
+		return $this->matcherName;
+	}
+
+	/**
+	 * @return string|null
+	 */
+	public function getSubsystemName(): ?string {
+		return $this->subsystemName;
+	}
+
+	/**
+	 * @return string|null
+	 */
+	public function getHostName(): ?string {
+		return $this->hostName;
+	}
+
+	/**
+	 * @return string|null
+	 */
+	public function getContextPath(): ?string {
+		return $this->contextPath;
+	}
+
+	/**
+	 * @return array
+	 */
+	public function getN2nLocales(): array {
+		return $this->n2nLocales;
+	}
+
+	/**
+	 * @return array
+	 */
+	public function getResponseHeaders(): array {
+		return $this->responseHeaders;
 	}
 }
