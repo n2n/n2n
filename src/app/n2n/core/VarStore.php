@@ -37,12 +37,16 @@ class VarStore {
 	const CATEGORY_SRV = 'srv';
 	const CATEGORY_BAK = 'bak';
 	const CATEGORY_TMP = 'tmp';
+
+	const SHARED_FOLDER = 'shared';
 	
 	private $varPath;
 	private $dirPerm;
 	private $filePerm;
 	
 	private $moduleOverwrittenPaths = array();
+
+	private $sharedEnabled = true;
 		
 	/**
 	 * 
@@ -71,6 +75,24 @@ class VarStore {
 	public function getFilePerm() {
 		return $this->filePerm;
 	}
+
+	/**
+	 * @return bool
+	 */
+	public function isSharedEnabled(): bool {
+		return $this->sharedEnabled;
+	}
+
+	/**
+	 * @param bool $sharedEnabled
+	 * @return VarStore
+	 */
+	public function setSharedEnabled(bool $sharedEnabled): VarStore {
+		$this->sharedEnabled = $sharedEnabled;
+		return $this;
+	}
+
+
 	
 	public function overwritePath(string $category, string $moduleNamespace, string $path) {
 		ArgUtils::valEnum($category, self::getCategories(), null, false, 'category');
@@ -95,21 +117,24 @@ class VarStore {
 	 * @param string|null $directoryName
 	 * @param bool $create
 	 * @param bool $required
+	 * @param bool $shared
 	 * @return FsPath
 	 * @throws FileOperationException
 	 */
 	public function requestDirFsPath(string $category, string $moduleNamespace = null, string $directoryName = null,
-			bool $create = true, bool $required = true): FsPath {
+			bool $create = true, bool $required = true, bool $shared = false): FsPath {
 		if (!in_array($category, self::getCategories())) {
 			throw new InvalidArgumentException('Invalid var category \'' . $category . '\'. Available categories: '
 					. implode(', ', self::getCategories()));
 		}
 		
 		$dirPath = null;
-		if ($moduleNamespace !== null && isset($this->moduleOverwrittenPaths[$category][$moduleNamespace])) {
+		if (!$shared && $moduleNamespace !== null && isset($this->moduleOverwrittenPaths[$category][$moduleNamespace])) {
 			$dirPath = $this->moduleOverwrittenPaths[$category][$moduleNamespace];
 		} else {
-			$dirPath = $this->varPath . DIRECTORY_SEPARATOR . $category;
+			$dirPath = $this->varPath
+					. ($shared && $this->sharedEnabled ? DIRECTORY_SEPARATOR . self::SHARED_FOLDER : '')
+					. DIRECTORY_SEPARATOR . $category;
 			
 			if (isset($moduleNamespace)) {
 				$modulePathPart = self::namespaceToDirName((string) $moduleNamespace);
@@ -139,8 +164,9 @@ class VarStore {
 		throw new InvalidPathException('Var directory not found: ' . $path);
 	}
 	
-	public function requestFileFsPath($category, $module, $folderName, $fileName, $createFolder = false, $createFile = false, $required = true) {
-		$dirPath = $this->requestDirFsPath($category, $module, $folderName, $createFolder || $createFile, $required);
+	public function requestFileFsPath($category, $module, $folderName, $fileName, $createFolder = false,
+			$createFile = false, $required = true, bool $shared = false) {
+		$dirPath = $this->requestDirFsPath($category, $module, $folderName, $createFolder || $createFile, $required, $shared);
 		
 		$this->validatePathPart($fileName);
 		$filePath = new FsPath($dirPath . DIRECTORY_SEPARATOR . $fileName);
