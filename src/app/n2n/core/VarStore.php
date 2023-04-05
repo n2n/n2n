@@ -45,8 +45,6 @@ class VarStore {
 	private $filePerm;
 	
 	private $moduleOverwrittenPaths = array();
-
-	private $sharedEnabled = true;
 		
 	/**
 	 * 
@@ -75,24 +73,6 @@ class VarStore {
 	public function getFilePerm() {
 		return $this->filePerm;
 	}
-
-	/**
-	 * @return bool
-	 */
-	public function isSharedEnabled(): bool {
-		return $this->sharedEnabled;
-	}
-
-	/**
-	 * @param bool $sharedEnabled
-	 * @return VarStore
-	 */
-	public function setSharedEnabled(bool $sharedEnabled): VarStore {
-		$this->sharedEnabled = $sharedEnabled;
-		return $this;
-	}
-
-
 	
 	public function overwritePath(string $category, string $moduleNamespace, string $path) {
 		ArgUtils::valEnum($category, self::getCategories(), null, false, 'category');
@@ -133,7 +113,7 @@ class VarStore {
 			$dirPath = $this->moduleOverwrittenPaths[$category][$moduleNamespace];
 		} else {
 			$dirPath = $this->varPath
-					. ($shared && $this->sharedEnabled ? DIRECTORY_SEPARATOR . self::SHARED_FOLDER : '')
+					. ($shared ? DIRECTORY_SEPARATOR . self::SHARED_FOLDER : '')
 					. DIRECTORY_SEPARATOR . $category;
 			
 			if (isset($moduleNamespace)) {
