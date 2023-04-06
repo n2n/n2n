@@ -60,6 +60,10 @@ class AppConfigFactoryTest extends TestCase {
 		$this->assertCount(1, $routingConfig->getN2nLocales());
 
 		$this->assertCount(1, $routingConfig->getRoutingRules());
+
+		$this->assertCount(2, $appConfig->web()->getAllN2nLocales());
+
+
 	}
 
 }
