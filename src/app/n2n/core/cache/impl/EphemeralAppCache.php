@@ -10,7 +10,7 @@ class EphemeralAppCache implements AppCache {
 
 	private array $cacheStores = [];
 
-	public function lookupCacheStore(string $namespace): CacheStore {
+	public function lookupCacheStore(string $namespace, bool $shared = false): CacheStore {
 		return $this->cacheStores[$namespace] ?? $this->cacheStores[$namespace] = new EphemeralCacheStore();
 	}
 

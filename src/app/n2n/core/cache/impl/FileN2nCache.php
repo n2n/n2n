@@ -85,21 +85,28 @@ class FileN2nCache implements N2nCache {
 }
 
 class FileAppCache implements AppCache {
-	private $dirFsPath;
 	private $dirPerm;
 	private $filePerm;
 	
-	public function __construct(FsPath $dirFsPath, string $dirPerm, string $filePerm) {
-		$this->dirFsPath = $dirFsPath;
+	public function __construct(private FsPath $dirFsPath, private FsPath $sharedDirFsPath, string $dirPerm, string $filePerm) {
 		$this->dirPerm = $dirPerm;
 		$this->filePerm = $filePerm;
 	}
+
+	private function determineDirFsPath(bool $shared): FsPath {
+		if (!$shared) {
+			return $this->dirFsPath;
+		}
+
+		return $this->sharedDirFsPath;
+	}
+
 	/**
 	 * {@inheritDoc}
 	 * @see \n2n\core\cache\AppCache::lookupCacheStore($namespace)
 	 */
-	public function lookupCacheStore(string $namespace): CacheStore {
-		$dirFsPath = $this->dirFsPath->ext(VarStore::namespaceToDirName($namespace));
+	public function lookupCacheStore(string $namespace, bool $shared = false): CacheStore {
+		$dirFsPath = $this->determineDirFsPath($shared)->ext(VarStore::namespaceToDirName($namespace));
 		if (!$dirFsPath->isDir()) {
 			$dirFsPath->mkdirs($this->dirPerm);
 			// chmod after mkdirs because of possible umask restrictions.

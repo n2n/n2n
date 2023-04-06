@@ -9,7 +9,7 @@ use n2n\util\cache\impl\EphemeralCacheStore;
 class NullAppCache implements AppCache {
 
 
-	public function lookupCacheStore(string $namespace): CacheStore {
+	public function lookupCacheStore(string $namespace, bool $shared = false): CacheStore {
 		return new EphemeralCacheStore();
 	}
 

@@ -28,7 +28,7 @@ interface AppCache extends \n2n\core\container\AppCache {
 	 * @param string $namespace or type name of a related package or type
 	 * @return CacheStore
 	 */
-	public function lookupCacheStore(string $namespace): CacheStore;
+	public function lookupCacheStore(string $namespace, bool $shared = false): CacheStore;
 
 	/**
 	 * Clear the cache of every cache store belonging to this {@see AppCache} instance.
