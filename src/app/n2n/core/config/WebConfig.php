@@ -178,10 +178,6 @@ class WebConfig {
 	 * @deprecated
 	 */
 	public function getAllN2nLocales() {
-		$n2nLocales = $this->legacyRoutingConfig->getN2nLocales();
-		foreach ($this->legacyRoutingConfig->getRoutingRules() as $routingRule) {
-			$n2nLocales = array_merge($n2nLocales, $routingRule->getN2nLocales());
-		}
-		return $n2nLocales;
+		return $this->legacyRoutingConfig->getAllN2nLocales();
 	}
 }

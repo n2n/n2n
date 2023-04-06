@@ -67,6 +67,14 @@ class RoutingConfig {
 		return $this->n2nLocales;
 	}
 
+	public function getAllN2nLocales() {
+		$n2nLocales = $this->getN2nLocales();
+		foreach ($this->getRoutingRules() as $routingRule) {
+			$n2nLocales = array_merge($n2nLocales, $routingRule->getN2nLocales());
+		}
+		return $n2nLocales;
+	}
+
 	/**
 	 * @return string[]
 	 */
