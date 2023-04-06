@@ -176,7 +176,6 @@ class N2N {
 		$ioConfig = $this->appConfig->io();
 		$this->varStore->setDirPerm($ioConfig->getPrivateDirPermission());
 		$this->varStore->setFilePerm($ioConfig->getPrivateFilePermission());
-		$this->varStore->setSharedEnabled($this->appConfig->general()->isApplicationReplicatable());
 		
 		$n2nLocaleConfig = $this->appConfig->locale();
 		L10n::setPeclIntlEnabled($this->appConfig->l10n()->isEnabled());
