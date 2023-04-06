@@ -27,13 +27,13 @@ interface AppCache extends \n2n\core\container\AppCache {
 	/**
 	 * @param string $namespace or type name of a related package or type
 	 * @param bool $shared true if this cache must be shared between replicas of this application in containerized
-	 * 		deployments.
+	 * 		deployments. If not use false for better performance.
 	 * @return CacheStore
 	 */
-	public function lookupCacheStore(string $namespace, bool $shared = false): CacheStore;
+	public function lookupCacheStore(string $namespace, bool $shared = true): CacheStore;
 
 	/**
 	 * Clear the cache of every cache store belonging to this {@see AppCache} instance.
 	 */
-	public function clear();
+	public function clear(): void;
 }

@@ -36,7 +36,7 @@ class FileN2nCache implements N2nCache {
 	const STARTUP_CACHE_DIR = 'startupcache';
 	const APP_CACHE_DIR = 'appcache';
 	
-	private $varStore;
+	private VarStore $varStore;
 	private $startupCacheStore;
 	private $dirPerm;
 	private $filePerm;
@@ -79,8 +79,10 @@ class FileN2nCache implements N2nCache {
 	}
 	
 	public function getAppCache(): AppCache {
-		return new FileAppCache($this->varStore->requestDirFsPath(VarStore::CATEGORY_TMP, N2N::NS, 
-				self::APP_CACHE_DIR), $this->dirPerm, $this->filePerm);
+		return new FileAppCache(
+				$this->varStore->requestDirFsPath(VarStore::CATEGORY_TMP, N2N::NS, self::APP_CACHE_DIR),
+				$this->varStore->requestDirFsPath(VarStore::CATEGORY_TMP, N2N::NS, self::APP_CACHE_DIR, shared: true),
+				$this->dirPerm, $this->filePerm);
 	}
 }
 
@@ -105,7 +107,7 @@ class FileAppCache implements AppCache {
 	 * {@inheritDoc}
 	 * @see \n2n\core\cache\AppCache::lookupCacheStore($namespace)
 	 */
-	public function lookupCacheStore(string $namespace, bool $shared = false): CacheStore {
+	public function lookupCacheStore(string $namespace, bool $shared = true): CacheStore {
 		$dirFsPath = $this->determineDirFsPath($shared)->ext(VarStore::namespaceToDirName($namespace));
 		if (!$dirFsPath->isDir()) {
 			$dirFsPath->mkdirs($this->dirPerm);
@@ -120,7 +122,7 @@ class FileAppCache implements AppCache {
 	 * {@inheritDoc}
 	 * @see \n2n\core\cache\AppCache::clear()
 	 */
-	public function clear() {
+	public function clear(): void {
 		$this->dirFsPath->delete();
 	}
 }
