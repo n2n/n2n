@@ -51,6 +51,8 @@ class AppConfig {
 		$this->localeConfig = $localeConfig;
 		$this->l10nConfig = $l10nConfig;
 		$this->pseudoL10nConfig = $pseudoL10nConfig;
+
+		$this->webConfig->legacyRoutingConfig = $this->routingConfig;
 	}
 	/**
 	 * @return \n2n\core\config\GeneralConfig
