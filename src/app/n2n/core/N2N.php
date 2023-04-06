@@ -203,7 +203,7 @@ class N2N {
 		}
 
 		$lookupSession = $n2nContext->getHttp()?->getLookupSession() ?? new SimpleLookupSession();
-		$lookupManager = new LookupManager($lookupSession, $this->n2nCache->getAppCache()->lookupCacheStore(LookupManager::class),
+		$lookupManager = new LookupManager($lookupSession, $this->n2nCache->getAppCache()->lookupCacheStore(LookupManager::class, true),
 				$n2nContext);
 		$n2nContext->setLookupManager($lookupManager);
 
@@ -483,11 +483,11 @@ class N2N {
 		return self::_i()->varStore;	
 	}
 	/**
-	 * 
+	 * @deprecated
 	 * @return \n2n\l10n\N2nLocale[]
 	 */
 	public static function getN2nLocales() {
-		return self::_i()->appConfig->web()->getAllN2nLocales();
+		return self::_i()->appConfig->routing()->getAllN2nLocales();
 	}
 	/**
 	 * 

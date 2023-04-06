@@ -26,6 +26,8 @@ use n2n\util\cache\CacheStore;
 interface AppCache extends \n2n\core\container\AppCache {
 	/**
 	 * @param string $namespace or type name of a related package or type
+	 * @param bool $shared true if this cache must be shared between replicas of this application in containerized
+	 * 		deployments.
 	 * @return CacheStore
 	 */
 	public function lookupCacheStore(string $namespace, bool $shared = false): CacheStore;
