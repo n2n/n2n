@@ -160,7 +160,7 @@ function testWeb() {
         $this->assertEquals('ssl://smtp.myapp.test', $appConfig->mail()->getDefaultSmtpConfig()->getHost());
         $this->assertEquals('587', $appConfig->mail()->getDefaultSmtpConfig()->getPort());
         $this->assertEquals('ssl', $appConfig->mail()->getDefaultSmtpConfig()->getSecurityMode());
-        $this->assertEquals('true', $appConfig->mail()->getDefaultSmtpConfig()->doAuthenticate());
+        $this->assertTrue($appConfig->mail()->getDefaultSmtpConfig()->doAuthenticate());
         $this->assertEquals('username', $appConfig->mail()->getDefaultSmtpConfig()->getUser());
         $this->assertEquals('pass', $appConfig->mail()->getDefaultSmtpConfig()->getPassword());
     }
