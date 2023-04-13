@@ -136,11 +136,23 @@ class ContainerUtil {
 		});
 	}
 
+	function prePrepare(\Closure $callback): void {
+		$mmi = $this->createMmiFromClosure($callback);
+		$prepareListener = $this->createClosureCommitListener();
+		$prepareListener->setPrePrepareCallback(function () use ($prepareListener, $mmi) {
+			$this->getTransactionManager()->unregisterCommitListener($prepareListener);
+			$mmi->invoke();
+		});
+	}
 
-	function extendTransaction(bool $ifRequiredOnly = true): void {
+	function prePrepareOrExtend(\Closure $closure): void {
 		$tm = $this->getTransactionManager();
-		if (!$ifRequiredOnly || !$tm->hasOpenTransaction() || $tm->getPhase()->isCompleting()) {
+		if ($tm->getPhase()->isCompleting()) {
 			$tm->extendCommitPreparation();
+			$this->createMmiFromClosure($closure)->invoke();
+			return;
 		}
+
+		$this->prePrepare($closure);
 	}
 }
