@@ -22,7 +22,9 @@
 namespace n2n\core\container;
 
 interface CommitListener {
-	
+
+	function prePrepare(Transaction $transaction): void;
+
 	public function preCommit(Transaction $transaction): void;
 
 	public function postCommit(Transaction $transaction): void;

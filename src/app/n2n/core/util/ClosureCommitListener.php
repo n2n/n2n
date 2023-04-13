@@ -27,11 +27,22 @@ use n2n\core\container\CommitListener;
 
 class ClosureCommitListener implements CommitListener {
 
-	function __construct(private ?\Closure $preCommitCallback = null,
+	function __construct(private ?\Closure $prePrepareCallback = null, private ?\Closure $preCommitCallback = null,
 			private ?\Closure $postCommitCallback = null, private ?\Closure $commitFailedCallback = null,
 			private ?\Closure $preRollbackCallback = null, private ?\Closure $postRollbackCallback = null,
 			private ?\Closure $finallyCallback = null) {
 
+	}
+
+	public function getPrePrepareCallback(): ?\Closure {
+		return $this->prePrepareCallback;
+	}
+
+	/**
+	 * @param \Closure|null $prePrepareCallback
+	 */
+	public function setPrePrepareCallback(?\Closure $prePrepareCallback): void {
+		$this->prePrepareCallback = $prePrepareCallback;
 	}
 
 	/**
@@ -119,6 +130,15 @@ class ClosureCommitListener implements CommitListener {
 	private function callFinally(Transaction $transaction) {
 		if ($this->finallyCallback !== null) {
 			($this->finallyCallback)($transaction);
+		}
+	}
+
+	/**
+	 * @inheritDoc
+	 */
+	public function prePrepare(Transaction $transaction): void {
+		if ($this->prePrepareCallback !== null) {
+			($this->prePrepareCallback)($transaction);
 		}
 	}
 
