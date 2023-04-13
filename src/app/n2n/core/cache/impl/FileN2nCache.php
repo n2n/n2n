@@ -124,5 +124,6 @@ class FileAppCache implements AppCache {
 	 */
 	public function clear(): void {
 		$this->dirFsPath->delete();
+		$this->sharedDirFsPath->delete();
 	}
 }
