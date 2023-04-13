@@ -21,11 +21,12 @@
  */
 namespace n2n\core\config;
 
+use n2n\util\type\ArgUtils;
+
 class DbConfig {
-	private $persistenceUnitConfigs;
-	
-	public function __construct(array $persistenceUnitConfigs) {
-		$this->persistenceUnitConfigs = $persistenceUnitConfigs;
+
+	public function __construct(private array $persistenceUnitConfigs = []) {
+		ArgUtils::valArray($this->persistenceUnitConfigs, PersistenceUnitConfig::class);
 	}
 	/**
 	 * @return PersistenceUnitConfig []

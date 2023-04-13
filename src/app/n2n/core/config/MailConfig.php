@@ -22,25 +22,18 @@
 namespace n2n\core\config;
 
 class MailConfig {
-	
-	private $sendingMailEnabled;
-	private $defaultAddresser;
-	private $systemManagerAddress;
-	private $customerAddress;
-	private $notificationRecipientAddresses;
-	private $defaultSmtpConfig;
-	
-	public function __construct($sendingMailEnabled, $defaultAddresser, $systemManagerAddress, $customerAddress, 
-			array $notificationRecipientAddresses, SmtpConfig $defaultSmtpConfig) {
-		$this->sendingMailEnabled = (boolean) $sendingMailEnabled;
-		$this->defaultAddresser = (string) $defaultAddresser;
-		$this->systemManagerAddress = (string) $systemManagerAddress;
-		$this->customerAddress = (string) $customerAddress; 
-		$this->notificationRecipientAddresses = $notificationRecipientAddresses;
-		$this->defaultSmtpConfig = $defaultSmtpConfig;
+    const MAIL_SENDING_ENABLED_DEFAULT = true;
+
+	public function __construct(private bool $sendingMailEnabled = self::MAIL_SENDING_ENABLED_DEFAULT,
+			private ?string $defaultAddresser = null,
+			private ?string $systemManagerAddress = null,
+			private ?string $customerAddress = null,
+			private array $notificationRecipientAddresses = [],
+			private ?SmtpConfig $defaultSmtpConfig = null) {
+
 	}
 	
-	public function isSendingMailEnabled() {
+	public function isSendingMailEnabled(): bool {
 		return $this->sendingMailEnabled;
 	}
 	
@@ -59,6 +52,7 @@ class MailConfig {
 	public function getNotificationRecipientsAddresses() {
 		return $this->notificationRecipientAddresses;
 	}
+
 	/**
 	 * @return \n2n\core\config\SmtpConfig
 	 */

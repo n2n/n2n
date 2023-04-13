@@ -22,15 +22,10 @@
 namespace n2n\core\config;
 
 class OrmConfig {
-	private $entityClassNames;
-	private $entityPropertyProviderClassNames;
-	private $namingStrategyClassName;
-	
-	public function __construct(array $entityClassNames, array $entityPropertyProviderClassNames, 
-			string $namingStrategyClassName = null) {
-		$this->entityClassNames = $entityClassNames;
-		$this->entityPropertyProviderClassNames = $entityPropertyProviderClassNames;
-		$this->namingStrategyClassName = $namingStrategyClassName;
+
+	public function __construct(private array $entityClassNames = [],
+			private array $entityPropertyProviderClassNames = [],
+			private ?string $namingStrategyClassName = null) {
 	}
 		
 	public function getEntityClassNames(): array {

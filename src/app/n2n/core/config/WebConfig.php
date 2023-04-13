@@ -23,22 +23,17 @@ namespace n2n\core\config;
 
 use n2n\util\type\ArgUtils;
 use n2n\l10n\N2nLocale;
+use n2n\util\crypt\EncryptionDescriptor;
 
 class WebConfig {
-	private $responseCachingEnabled;
-	private $responseBrowserCachingEnabled; 
-	private $responseSendEtagAllowed;
-	private $responseSendLastModifiedAllowed; 
-	private $responseServerPushAllowed;
-	private $viewCachingEnabled; 
-	private $viewClassNames;
-	private $dispatchPropertyProviderClassNames;
-	private $dispatchTargetCryptAlgorithm;
-	private $aliasN2nLocales;
-	private $responseDefaultHeaders;
-
-	private $responseContentSecurityPolicyEnabled;
-
+	const RESPONSE_CACHING_ENABLED_DEFAULT = true;
+	const RESPONSE_BROWSER_CACHING_ENABLED_DEFAULT = true;
+	const RESPONSE_SEND_ETAG_ALLOWED_DEFAULT = true;
+	const RESPONSE_SEND_LAST_MODIFIED_ALLOWED_DEFAULT = true;
+	const RESPONSE_SERVER_PUSH_ALLOWED_DEFAULT = true;
+	const RESPONSE_CONTENT_SECURITY_POLICY_ENABLED_DEFAULT = false;
+	const VIEW_CACHING_ENABLED_DEFAULT = true;
+	const DISPATCH_TARGET_CRYPT_ALGORITHM_DEFAULT = EncryptionDescriptor::ALGORITHM_AES_256_CTR;
 
 	/**
 	 * @param bool $responseCachingEnabled
@@ -50,29 +45,24 @@ class WebConfig {
 	 * @param bool $viewCachingEnabled
 	 * @param string[] $viewClassNames
 	 * @param string[] $dispatchPropertyProviderClassNames
-	 * @param string $dispatchTargetCryptAlgorithm
+	 * @param string|null $dispatchTargetCryptAlgorithm
 	 * @param N2nLocale[] $aliasN2nLocales
 	 * @param bool $responseContentSecurityPolicyEnabled
 	 */
-	public function __construct(bool $responseCachingEnabled, bool $responseBrowserCachingEnabled, 
-			bool $responseSendEtagAllowed, bool $responseServerPushAllowed, bool $responseSendLastModifiedAllowed,
-			array $responseDefaultHeaders,
-			bool $viewCachingEnabled, array $viewClassNames,
-			array $dispatchPropertyProviderClassNames, string $dispatchTargetCryptAlgorithm, array $aliasN2nLocales,
-			bool $responseContentSecurityPolicyEnabled) {
+	public function __construct(private bool $responseCachingEnabled = self::RESPONSE_CACHING_ENABLED_DEFAULT,
+			private bool $responseBrowserCachingEnabled = self::RESPONSE_BROWSER_CACHING_ENABLED_DEFAULT,
+			private bool $responseSendEtagAllowed = self::RESPONSE_SEND_ETAG_ALLOWED_DEFAULT,
+			private bool $responseSendLastModifiedAllowed = self::RESPONSE_SEND_LAST_MODIFIED_ALLOWED_DEFAULT,
+			private bool $responseServerPushAllowed = self::RESPONSE_SERVER_PUSH_ALLOWED_DEFAULT,
+			private array $responseDefaultHeaders = [],
+			private bool $viewCachingEnabled = self::VIEW_CACHING_ENABLED_DEFAULT,
+			private array $viewClassNames = [],
+			private array $dispatchPropertyProviderClassNames = [],
+			private ?string $dispatchTargetCryptAlgorithm = self::DISPATCH_TARGET_CRYPT_ALGORITHM_DEFAULT,
+			private array $aliasN2nLocales = [],
+			private bool $responseContentSecurityPolicyEnabled = self::RESPONSE_CONTENT_SECURITY_POLICY_ENABLED_DEFAULT) {
 
-		$this->responseCachingEnabled = $responseCachingEnabled;
-		$this->responseBrowserCachingEnabled = $responseBrowserCachingEnabled;
-		$this->responseSendEtagAllowed = $responseSendEtagAllowed;
-		$this->responseSendLastModifiedAllowed = $responseSendLastModifiedAllowed;
-		$this->responseServerPushAllowed = $responseServerPushAllowed;
-		$this->responseDefaultHeaders = $responseDefaultHeaders;
-		$this->viewCachingEnabled = $viewCachingEnabled;
-		$this->viewClassNames = $viewClassNames;
-		$this->dispatchPropertyProviderClassNames = $dispatchPropertyProviderClassNames;
-		$this->dispatchTargetCryptAlgorithm = $dispatchTargetCryptAlgorithm;
-		$this->aliasN2nLocales = $aliasN2nLocales;
-		$this->responseContentSecurityPolicyEnabled = $responseContentSecurityPolicyEnabled;
+		ArgUtils::valArray($this->aliasN2nLocales, N2nLocale::class);
 	}
 	
 	/**

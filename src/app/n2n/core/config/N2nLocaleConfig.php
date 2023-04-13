@@ -23,15 +23,17 @@ namespace n2n\core\config;
 
 use n2n\l10n\N2nLocale;
 
-class N2nLocaleConfig {	
-	private $fallbackN2nLocale; 
-	private $adminN2nLocale; 
-	private $defaultN2nLocale; 
-	
-	public function __construct(N2nLocale $fallbackN2nLocale, N2nLocale $adminN2nLocale, N2nLocale $defaultN2nLocale) {
-		$this->fallbackN2nLocale =  $fallbackN2nLocale;
-		$this->adminN2nLocale = $adminN2nLocale;
-		$this->defaultN2nLocale = $defaultN2nLocale;
+class N2nLocaleConfig {
+    const FALLBACK_LOCALE_ID_DEFAULT = 'en';
+    const ADMIN_LOCALE_ID_DEFAULT = 'rm_CH';
+    const DEFAULT_LOCALE_ID_DEFAULT = 'rm_CH';
+
+
+	public function __construct(
+			private N2nLocale $fallbackN2nLocale = new N2nLocale(self::FALLBACK_LOCALE_ID_DEFAULT),
+			private N2nLocale $adminN2nLocale = new N2nLocale(self::ADMIN_LOCALE_ID_DEFAULT),
+			private N2nLocale $defaultN2nLocale = new N2nLocale(self::DEFAULT_LOCALE_ID_DEFAULT)) {
+
 	}
 	
 	/**

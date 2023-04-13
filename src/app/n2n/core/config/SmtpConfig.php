@@ -26,7 +26,9 @@ use n2n\util\type\ArgUtils;
 use n2n\util\StringUtils;
 
 class SmtpConfig {
-	const SECURITY_MODE_TLS = 'tls';
+    const SMTP_AUTHENTICATION_REQUIRED_DEFAULT = false;
+
+    const SECURITY_MODE_TLS = 'tls';
 	const SECURITY_MODE_SSL = 'ssl';
 	
 	const PORT_DEFAULT = 25;
@@ -35,35 +37,23 @@ class SmtpConfig {
 	
 	const HOST_SSL_PREFIX = 'ssl://';
 	
-	private $host;
-	private $user;
-	private $password;
-	private $port = self::PORT_DEFAULT;
-	private $authenticate = self::AUTHENTICATE_DEFAULT;
-	private $securityMode = self::SECURITY_MODE_DEFAULT;
 	private $debugMode = false;
-	
+
 	/**
-	 * @param string $host
-	 * @param string $user
-	 * @param string $password
+	 * @param string|null $host
+	 * @param string|null $user
+	 * @param string|null $password
 	 * @param int $port
-	 * @throws \InvalidArgumentException
+	 * @param bool $authenticate
+	 * @param string|null $securityMode
 	 */
-	public function __construct($host, $user = null, $password = null, $port = null, 
-			$auth = null, $securityMode = null) {
-		$this->host = $host;
-		$this->user = $user;
-		$this->password = $password;
-		if (null !== $port) {
-			$this->port = $port;
-		}
-		if (null !== $auth) {
-			$this->authenticate = (bool) $auth;
-		}
-		if (null !== $securityMode) {
-			$this->setSecurityMode($securityMode);
-		}
+	public function __construct(private ?string $host,
+			private ?string $user = null,
+			private ?string $password = null,
+			private int $port = self::PORT_DEFAULT,
+			private bool $authenticate = self::AUTHENTICATE_DEFAULT,
+			private ?string $securityMode = self::SECURITY_MODE_DEFAULT) {
+        ArgUtils::valEnum($securityMode, self::getSecurityModes(), nullAllowed: true);
 	}
 	
 	public function getHost() {
@@ -82,7 +72,7 @@ class SmtpConfig {
 		return $this->password;
 	}
 	
-	public function getPort() {
+	public function getPort(): int {
 		return $this->port;
 	}
 	

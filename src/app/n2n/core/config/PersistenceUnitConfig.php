@@ -21,27 +21,18 @@
  */
 namespace n2n\core\config;
 
+use n2n\util\type\ArgUtils;
+
 class PersistenceUnitConfig {
 	const TIL_READ_UNCOMMITTED = "READ UNCOMMITTED";
 	const TIL_READ_COMMITTED = "READ COMMITTED";
 	const TIL_REPEATABLE_READ = "REPEATABLE READ";
 	const TIL_SERIALIZABLE = "SERIALIZABLE";
 	
-	private $name;
-	private $dsnUri;
-	private $user;
-	private $password;
-	private $transactionIsolationLevel;
-	private $dialectClassName;
-	
-	public function __construct($name, $dsnUri, $user, $password, $transactionIsolationLevel, $dialectClassName,
-			private bool $sslVerify, private ?string $sslCaCertificatePath) {
-		$this->name = $name;
-		$this->dsnUri = $dsnUri;
-		$this->user = $user;
-		$this->password = $password;
-		$this->transactionIsolationLevel = $transactionIsolationLevel;
-		$this->dialectClassName = $dialectClassName;
+	public function __construct(private string $name, private string $dsnUri, private string $user, private ?string $password,
+			private string $transactionIsolationLevel, private string $dialectClassName,
+			private bool $sslVerify = true, private ?string $sslCaCertificatePath = null) {
+		ArgUtils::valEnum($this->transactionIsolationLevel, self::getTransactionIsolationLevels());
 	}
 	
 	public function getName() {

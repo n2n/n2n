@@ -23,72 +23,62 @@ namespace n2n\core\config;
 
 class ErrorConfig {
 	const ERROR_VIEW_DEFAULT_KEY_SUFFIX = 'default';
+    const STRICT_ATTITUDE_DEFAULT = true;
+    const STARTUP_DETECT_ERRORS_DEFAULT = true;
+    const STARTUP_DETECT_BAD_REQUESTS_DEFAULT = true;
+    const LOG_SAVE_DETAIL_INFO_DEFAULT = true;
+    const LOG_SEND_MAIL_DEFAULT = false;
+    const LOG_HANDLE_HTTP_STATUS_EXCEPTIONS_DEFAULT = false;
 
-	private $strictAttitude; 
-	private $startupDetectErrors; 
-	private $startupDetectBadRequests; 
-	private $logSaveDetailInfo; 
-	private $logSendMail; 
-	private $logMailRecipient; 
-	private $logHandleStatusExceptions; 
-	private $logExcludedHttpStatuses; 
-	private $errorViewNames;
 
-	public function __construct(bool $strictAttitude, bool $startupDetectErrors, bool $startupDetectBadRequests, 
-			bool $logSaveDetailInfo, bool $logSendMail, string $logMailRecipient = null, bool $logHandleStatusExceptions, 
-			array $logExcludedHttpStatuses, array $errorViewNames, private readonly ?float $monitorSlowQueryTime) {
-		$this->strictAttitude = $strictAttitude;
-		$this->startupDetectErrors = $startupDetectErrors;
-		$this->startupDetectBadRequests = $startupDetectBadRequests;
-		$this->logSaveDetailInfo = $logSaveDetailInfo; 
-		$this->logSendMail = $logSendMail;
-		$this->logMailRecipient = $logMailRecipient;
-		$this->logHandleStatusExceptions = $logHandleStatusExceptions;
-		$this->logExcludedHttpStatuses = $logExcludedHttpStatuses;
-		$this->errorViewNames = $errorViewNames;
+	public function __construct(private bool $strictAttitude = self::STRICT_ATTITUDE_DEFAULT,
+			private bool $startupDetectErrors = self::STARTUP_DETECT_ERRORS_DEFAULT,
+			private bool $startupDetectBadRequests = self::STARTUP_DETECT_BAD_REQUESTS_DEFAULT,
+			private bool $logSaveDetailInfo = self::LOG_SAVE_DETAIL_INFO_DEFAULT,
+			private bool $logSendMail = self::LOG_SEND_MAIL_DEFAULT,
+			private ?string $logMailRecipient = null,
+			private bool $logHandleStatusExceptions = self::LOG_HANDLE_HTTP_STATUS_EXCEPTIONS_DEFAULT,
+			private array $logExcludedHttpStatuses = [],
+			private array $errorViewNames = [],
+			private readonly ?float $monitorSlowQueryTime = null) {
 	}
-	/**
-	 * @return bool
-	 */
+
+
 	public function isStrictAttitudeEnabled(): bool {
 		return $this->strictAttitude;
 	}
-	/**
-	 * @return bool
-	 */
+
+
 	public function isDetectStartupErrorsEnabled(): bool {
 		return $this->startupDetectErrors;
 	}
-	/**
-	 * @return bool
-	 */
+
+
 	public function isStartupDetectBadRequestsEnabled(): bool {
 		return $this->startupDetectBadRequests;
 	}
-	/**
-	 * @return bool
-	 */
+
+
 	public function isLogSaveDetailInfoEnabled(): bool {
 		return $this->logSaveDetailInfo;
 	}
-	/**
-	 * @return bool
-	 */
+
+
 	public function isLogSendMailEnabled(): bool {
 		return $this->logSendMail;
 	}
+
 	/**
 	 * @return string
 	 */
 	public function getLogMailRecipient() {
 		return $this->logMailRecipient;
 	}
-	/**
-	 * @return bool
-	 */
+
 	public function isLogHandleStatusExceptionsEnabled(): bool {
 		return $this->logHandleStatusExceptions;
 	}
+
 	/**
 	 * 
 	 * @return array
@@ -96,6 +86,7 @@ class ErrorConfig {
 	public function getLogExcludedHttpStatus(): array {
 		return $this->logExcludedHttpStatuses;
 	}
+
 	/**
 	 * @param int $httpStatus
 	 * @return bool
@@ -103,6 +94,7 @@ class ErrorConfig {
 	public function isLoggingForStatusExceptionEnabled($httpStatus): bool {
 		return $this->isLogHandleStatusExceptionsEnabled() && !in_array($httpStatus, $this->getLogExcludedHttpStatus());
 	}
+
 	/** 
 	 * @param int $httpStatus
 	 * @return string

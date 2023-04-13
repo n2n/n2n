@@ -21,42 +21,40 @@
  */
 namespace n2n\core\config;
 
+use n2n\util\type\ArgUtils;
+
 class IoConfig {
-	private $publicDirPermission;
-	private $publicFilePermission;
-	private $privateDirPermission;
-	private $privateFilePermission;
-	private $publicBaseDir;
-	private $publicBaseUrl;
-	
-	public function __construct(string $publicDirPermission, string $publicFilePermission, 
-			string $privateDirPermission, string $privateFilePermission) {
-		$this->publicDirPermission = $publicDirPermission;
-		$this->publicFilePermission = $publicFilePermission;
-		$this->privateDirPermission = $privateDirPermission;
-		$this->privateFilePermission = $privateFilePermission;
+    const PUBLIC_DIR_PERMISSION_DEFAULT = '0700';
+    const PUBLIC_FILE_PERMISSION_DEFAULT = '0600';
+    const PRIVATE_DIR_PERMISSION_DEFAULT = '0700';
+    const PRIVATE_FILE_PERMISSION_DEFAULT = '0600';
+
+	public function __construct(private string $publicDirPermission = self::PUBLIC_DIR_PERMISSION_DEFAULT,
+			private string $publicFilePermission = self::PUBLIC_FILE_PERMISSION_DEFAULT,
+			private string $privateDirPermission = self::PRIVATE_DIR_PERMISSION_DEFAULT,
+			private string $privateFilePermission = self::PRIVATE_FILE_PERMISSION_DEFAULT) {
+        ArgUtils::assertTrue(preg_match('/^[0][0-7]{3}$/', $this->publicDirPermission) !== false,
+                'Use the 4 digit dir permission style, default = 0700');
+        ArgUtils::assertTrue(preg_match('/^[0][0-7]{3}$/', $this->publicFilePermission) !== false,
+                'Use the 4 digit file permission style, default = 0600');
+        ArgUtils::assertTrue(preg_match('/^[0][0-7]{3}$/', $this->privateDirPermission) !== false,
+                'Use the 4 digit dir permission style, default = 0700');
+        ArgUtils::assertTrue(preg_match('/^[0][0-7]{3}$/', $this->privateFilePermission) !== false,
+                'Use the 4 digit file permission style, default = 0600');
 	}
-	/**
-	 * @return string
-	 */
+
 	public function getPublicDirPermission(): string {
 		return $this->publicDirPermission;
 	}
-	/**
-	 * @return string
-	 */
+
 	public function getPublicFilePermission(): string {
 		return $this->publicFilePermission;
 	}
-	/**
-	 * @return string
-	 */
+
 	public function getPrivateDirPermission(): string {
 		return $this->privateDirPermission;
 	}
-	/**
-	 * @return string
-	 */
+
 	public function getPrivateFilePermission(): string {
 		return $this->privateFilePermission;
 	}

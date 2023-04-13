@@ -25,21 +25,29 @@ use n2n\util\io\fs\FsPath;
 use n2n\util\uri\Url;
 
 class FilesConfig {
-	private $assetsDir;
-	private $assetsUrl;
-	private $managerPublicDir;
-	private $managerPublicUrl;
-	private $managerPrivateDir;
+    const ASSETS_DIR_DEFAULT = 'assets';
+    const ASSETS_URL_DEFAULT = 'assets';
+    const MANAGER_PUBLIC_DIR_DEFAULT = 'files';
+    const MANAGER_PUBLIC_URL_DEFAULT = 'files';
+
+    private FsPath $assetsDir;
+	private Url $assetsUrl;
+	private FsPath $managerPublicDir;
+	private Url $managerPublicUrl;
+	private ?FsPath $managerPrivateDir;
 	
-	public function __construct(FsPath $assetsDir, Url $assetsUrl, FsPath $managerPublicDir, Url $managerPublicUrl, 
-			FsPath $managerPrivateDir = null) {
-		$this->assetsDir = $assetsDir;
-		$this->assetsUrl = $assetsUrl;
-		$this->managerPublicDir = $managerPublicDir;
-		$this->managerPublicUrl = $managerPublicUrl;
-		$this->managerPrivateDir = $managerPrivateDir;
+	public function __construct(FsPath|string $assetsDir = self::ASSETS_DIR_DEFAULT,
+            Url|string $assetsUrl = self::ASSETS_URL_DEFAULT,
+            FsPath|string $managerPublicDir = self::MANAGER_PUBLIC_DIR_DEFAULT,
+            Url|string $managerPublicUrl = self::MANAGER_PUBLIC_URL_DEFAULT,
+			FsPath|string $managerPrivateDir = null) {
+
+		$this->assetsDir = FsPath::create($assetsDir);
+		$this->assetsUrl = Url::create($assetsUrl);
+		$this->managerPublicDir = FsPath::create($managerPublicDir);
+		$this->managerPublicUrl = Url::create($managerPublicUrl);
+		$this->managerPrivateDir = ($managerPrivateDir === null ? null : FsPath::create($managerPrivateDir));
 	}
-	
 
 	/**
 	 * @return string
@@ -47,25 +55,30 @@ class FilesConfig {
 	public function getAssetsDir(): FsPath {
 		return $this->assetsDir;
 	}
-	
-	public function getAssetsUrl(): Url {
+
+    /**
+     * @return Url
+     */
+    public function getAssetsUrl(): Url {
 		return $this->assetsUrl;
 	}
 	
 	/**
 	 * @return FsPath
 	 */
-	public function getManagerPublicDir() {
+	public function getManagerPublicDir(): FsPath {
 		return $this->managerPublicDir;
 	}
+
 	/**
 	 * @return Url
 	 */
-	public function getManagerPublicUrl() {
+	public function getManagerPublicUrl(): Url {
 		return $this->managerPublicUrl;
 	}
+
 	/**
-	 * @return FsPath
+	 * @return FsPath|null
 	 */
 	public function getManagerPrivateDir() {
 		return $this->managerPrivateDir;

@@ -26,7 +26,6 @@ use n2n\core\config\SmtpConfig;
 use n2n\l10n\DateTimeFormat;
 use n2n\l10n\N2nLocale;
 use n2n\core\config\PersistenceUnitConfig;
-use n2n\util\crypt\EncryptionDescriptor;
 use n2n\util\io\fs\FsPath;
 use n2n\util\uri\Url;
 use n2n\core\config\AppConfig;
@@ -98,56 +97,42 @@ class AppConfigFactory {
 				$this->createL10nConfig($reader->getGroupReaderByGroupName(self::GROUP_L10N)),
 				$this->createPseudoL10nConfig($reader->getGroupReaderByGroupName(self::GROUP_PSEUDO_L10N)));
 	}
-	
-	const PAGE_NAME_KEY = 'page.name';
-	const PAGE_NAME_DEFAULT = 'New awesome project';
-	const PAGE_URL_KEY = 'page.url';
-	
-	const APPLICATION_NAME_KEY = 'application.name';
-	const APPLICATION_NAME_DEFAULT = 'newAwesomeProject';
-	const APPLICATION_LOG_LEVEL_KEY = 'application.log_level';
-	const APPLICATION_BATCH_CONTROLLER_NAMES_KEY = 'application.batch_jobs';
-	const APPLICATION_REPLICATABLE_KEY = 'application.replicatable';
-	const APPLICATION_REPLICATABLE_DEFAULT = false;
 
+	const PAGE_NAME_KEY = 'page.name';
+	const PAGE_URL_KEY = 'page.url';
+	const APPLICATION_NAME_KEY = 'application.name';
+	const APPLICATION_LOG_LEVEL_KEY = 'application.log_level';
+	const APPLICATION_BATCH_JOB_CLASS_NAMES_KEY = 'application.batch_jobs';
+	const APPLICATION_REPLICATABLE_KEY = 'application.replicatable';
 	const EXTENSION_CLASS_NAMES_KEY = 'extensions';
 	
 	private function createGeneralConfig(GroupReader $groupReader) {
 		return new GeneralConfig(
-				$groupReader->getString(self::PAGE_NAME_KEY, false, self::PAGE_NAME_DEFAULT),
-				$groupReader->getString(self::PAGE_URL_KEY, false, null),
-				$groupReader->getNoIoStrictSpecialCharsString(self::APPLICATION_NAME_KEY, false, self::APPLICATION_NAME_DEFAULT),
+				$groupReader->getString(self::PAGE_NAME_KEY, false, GeneralConfig::PAGE_NAME_DEFAULT),
+				$groupReader->getString(self::PAGE_URL_KEY, false),
+				$groupReader->getNoIoStrictSpecialCharsString(self::APPLICATION_NAME_KEY, false, GeneralConfig::APPLICATION_NAME_DEFAULT),
 				$groupReader->getString(self::APPLICATION_LOG_LEVEL_KEY, false),
-				$groupReader->getBool(self::APPLICATION_REPLICATABLE_KEY, false, self::APPLICATION_REPLICATABLE_DEFAULT),
-				array_filter($groupReader->getScalarArray(self::APPLICATION_BATCH_CONTROLLER_NAMES_KEY, false, array())),
-				array_filter($groupReader->getScalarArray(self::EXTENSION_CLASS_NAMES_KEY, false, array())));
+				$groupReader->getBool(self::APPLICATION_REPLICATABLE_KEY, false, GeneralConfig::APPLICATION_REPLICATABLE_DEFAULT),
+				array_filter($groupReader->getScalarArray(self::APPLICATION_BATCH_JOB_CLASS_NAMES_KEY)),
+				array_filter($groupReader->getScalarArray(self::EXTENSION_CLASS_NAMES_KEY)));
 	}
 	
 	const RESPONSE_CACHING_ENABLED_KEY = 'response.caching_enabled';
-	const RESPONSE_CACHING_ENABLED_DEFAULT = true;
 	const RESPONSE_BROWSER_CACHING_ENABLED_KEY = 'response.browser_caching_enabled';
-	const RESPONSE_BROWSER_CACHING_ENABLED_DEFAULT = true;
 	const RESPONSE_SEND_ETAG_ALLOWED_KEY = 'response.send_etag';
-	const RESPONSE_SEND_ETAG_ALLOWED_DEFAULT = true;
 	const RESPONSE_SEND_LAST_MODIFIED_ALLOWED_KEY = 'response.send_last_modified';
-	const RESPONSE_SEND_LAST_MODIFIED_ALLOWED_DEFAULT = true;
 	const RESPONSE_SERVER_PUSH_ALLOWED_KEY = 'response.server_push';
-	const RESPONSE_SERVER_PUSH_ALLOWED_DEFAULT = true;
 	const RESPONSE_DEFAULT_HEADERS_KEY = 'response.default_headers';
 	const RESPONSE_CONTENT_SECURITY_POLICY_ENABLED_KEY = 'response.content_security_policy_enabled';
-	const RESPONSE_CONTENT_SECURITY_POLICY_ENABLED_DEFAULT = false;
-	
+
 	const VIEW_CACHING_ENABLED_KEY = 'view.caching_enabled';
-	const VIEW_CACHING_ENABLED_DEFAULT = true;
-	
+
 	const VIEW_TYPE_KEY_PREFIX = 'view.type.';
 	
 	const DISPATCH_PROPERTY_FACTORIES_NAMES_KEY = 'dispatch.property_providers';
 	const DISPATCH_TARGET_CRYPT_ENABLED_KEY = 'dispatch.target_crypt_enabled';
-	const DISPATCH_TARGET_CRYPT_ENABLED_DEFAULT = true;
 	const DISPATCH_TARGET_CRYPT_ALGORITHM_KEY = 'dispatch.target_crypt_algorithm';
-	const DISPATCH_TARGET_CRYPT_ALGORITHM_DEFAULT = EncryptionDescriptor::ALGORITHM_AES_256_CTR;
-	
+
 	const LOCALE_ALIASES_KEY = 'locale_aliases';
 	
 	const RESPONSE_HEADERS_KEY = 'response_headers';
@@ -159,25 +144,28 @@ class AppConfigFactory {
 	 */
 	private function createWebConfig(GroupReader $groupReader): WebConfig {
 		return new WebConfig(
-				$groupReader->getBool(self::RESPONSE_CACHING_ENABLED_KEY, false, 
-						self::RESPONSE_CACHING_ENABLED_DEFAULT),
-				$groupReader->getBool(self::RESPONSE_BROWSER_CACHING_ENABLED_KEY, false, 
-						self::RESPONSE_BROWSER_CACHING_ENABLED_DEFAULT),
-				$groupReader->getBool(self::RESPONSE_SEND_ETAG_ALLOWED_KEY, false, 
-						self::RESPONSE_SEND_ETAG_ALLOWED_DEFAULT),
+				$groupReader->getBool(self::RESPONSE_CACHING_ENABLED_KEY, false,
+						WebConfig::RESPONSE_CACHING_ENABLED_DEFAULT),
+				$groupReader->getBool(self::RESPONSE_BROWSER_CACHING_ENABLED_KEY, false,
+						WebConfig::RESPONSE_BROWSER_CACHING_ENABLED_DEFAULT),
+				$groupReader->getBool(self::RESPONSE_SEND_ETAG_ALLOWED_KEY, false,
+						WebConfig::RESPONSE_SEND_ETAG_ALLOWED_DEFAULT),
 				$groupReader->getBool(self::RESPONSE_SEND_LAST_MODIFIED_ALLOWED_KEY, false,
-						self::RESPONSE_SEND_LAST_MODIFIED_ALLOWED_DEFAULT),
+						WebConfig::RESPONSE_SEND_LAST_MODIFIED_ALLOWED_DEFAULT),
 				$groupReader->getBool(self::RESPONSE_SERVER_PUSH_ALLOWED_KEY, false,
-						self::RESPONSE_SERVER_PUSH_ALLOWED_DEFAULT),
+						WebConfig::RESPONSE_SERVER_PUSH_ALLOWED_DEFAULT),
 				$groupReader->getScalarArray(self::RESPONSE_DEFAULT_HEADERS_KEY),
-				$groupReader->getBool(self::VIEW_CACHING_ENABLED_KEY, false, self::VIEW_CACHING_ENABLED_DEFAULT),
+				$groupReader->getBool(self::VIEW_CACHING_ENABLED_KEY, false,
+						WebConfig::VIEW_CACHING_ENABLED_DEFAULT),
 				self::extractStringPropertyArray($groupReader, self::VIEW_TYPE_KEY_PREFIX),
-				array_unique($groupReader->getScalarArray(self::DISPATCH_PROPERTY_FACTORIES_NAMES_KEY, false, array())),
-				($groupReader->getBool(self::DISPATCH_TARGET_CRYPT_ENABLED_KEY, false, self::DISPATCH_TARGET_CRYPT_ENABLED_DEFAULT) 
-						? $groupReader->getString(self::DISPATCH_TARGET_CRYPT_ALGORITHM_KEY, false, self::DISPATCH_TARGET_CRYPT_ALGORITHM_DEFAULT) : null),
+				array_unique($groupReader->getScalarArray(self::DISPATCH_PROPERTY_FACTORIES_NAMES_KEY)),
+				($groupReader->getBool(self::DISPATCH_TARGET_CRYPT_ENABLED_KEY, false, true)
+						? $groupReader->getString(self::DISPATCH_TARGET_CRYPT_ALGORITHM_KEY, false,
+								WebConfig::DISPATCH_TARGET_CRYPT_ALGORITHM_DEFAULT)
+						: null),
 				$groupReader->getN2nLocaleKeyArray(self::LOCALE_ALIASES_KEY),
 				$groupReader->getBool(self::RESPONSE_CONTENT_SECURITY_POLICY_ENABLED_KEY, false,
-						self::RESPONSE_CONTENT_SECURITY_POLICY_ENABLED_DEFAULT));
+						WebConfig::RESPONSE_CONTENT_SECURITY_POLICY_ENABLED_DEFAULT));
 	}
 
 	const CONTROLLERS_KEY = 'controllers';
@@ -249,74 +237,66 @@ class AppConfigFactory {
 	}
 
 	const MAIL_SENDING_ENABLED_KEY = 'mail_sending_enabled';
-	const MAIL_SENDING_ENABLED_DEFAULT = true;
 	const DEFAULT_ADDRESSER_KEY = 'default_addresser';
 	const ADDRESS_SYSTEM_MANAGER_KEY = 'address.system_manager';
 	const ADDRESS_CUSTOMER_ADDRESS_KEY = 'address.customer';
 	const ADDRESS_NOTIFICATION_RECIPIENTS_KEY = 'address.notification_recipients';
 	const SMTP_HOST_KEY = 'smtp.host';
 	const SMTP_PORT_KEY = 'smtp.port';
-	const SMTP_SECURITY_MODE = 'smtp.security_mode';
-	const SMTP_AUTHENTICATION_REQUIRED_KEY = 'smtp.authentification.required';
-	const SMTP_AUTHENTICATION_REQUIRED_DEFAULT = false;
-	const SMTP_AUTHENTICATION_USER = 'smtp.authentification.user';
+	const SMTP_SECURITY_MODE_KEY = 'smtp.security_mode';
+    const SMTP_AUTHENTICATION_REQUIRED_KEY = 'smtp.authentification.required';
+	const SMTP_AUTHENTICATION_USER_KEY = 'smtp.authentification.user';
 	const SMTP_AUTHENTICATION_PASSWORD_KEY = 'smtp.authentification.password';
 	
 	private function createMailConfig(GroupReader $groupReader) {
 		// @todo redo
 		return new MailConfig(
-				$groupReader->getBool(self::MAIL_SENDING_ENABLED_KEY, false, 
-						self::MAIL_SENDING_ENABLED_DEFAULT),
+				$groupReader->getBool(self::MAIL_SENDING_ENABLED_KEY, false,
+                    MailConfig::MAIL_SENDING_ENABLED_DEFAULT),
 				$groupReader->getString(self::DEFAULT_ADDRESSER_KEY, false),
 				$groupReader->getString(self::ADDRESS_SYSTEM_MANAGER_KEY, false),
 				$groupReader->getString(self::ADDRESS_CUSTOMER_ADDRESS_KEY, false),
-				$groupReader->getScalarArray(self::ADDRESS_NOTIFICATION_RECIPIENTS_KEY, false, array()),
+				$groupReader->getScalarArray(self::ADDRESS_NOTIFICATION_RECIPIENTS_KEY),
 				new SmtpConfig(
 						$groupReader->getString(self::SMTP_HOST_KEY, false),
-						$groupReader->getString(self::SMTP_AUTHENTICATION_USER, false),
+						$groupReader->getString(self::SMTP_AUTHENTICATION_USER_KEY, false),
 						$groupReader->getString(self::SMTP_AUTHENTICATION_PASSWORD_KEY, false),
-						$groupReader->getInt(self::SMTP_PORT_KEY, false),
-						$groupReader->getBool(self::SMTP_AUTHENTICATION_REQUIRED_KEY, false, self::SMTP_AUTHENTICATION_REQUIRED_DEFAULT),
-						$groupReader->getEnum(self::SMTP_SECURITY_MODE, 
-								array(SmtpConfig::SECURITY_MODE_SSL, SmtpConfig::SECURITY_MODE_TLS), false)));
+						$groupReader->getInt(self::SMTP_PORT_KEY, false, SmtpConfig::PORT_DEFAULT),
+						$groupReader->getBool(self::SMTP_AUTHENTICATION_REQUIRED_KEY, false, SmtpConfig::SMTP_AUTHENTICATION_REQUIRED_DEFAULT),
+						$groupReader->getEnum(self::SMTP_SECURITY_MODE_KEY,
+								array(SmtpConfig::SECURITY_MODE_SSL, SmtpConfig::SECURITY_MODE_TLS), false,SmtpConfig::SECURITY_MODE_DEFAULT)));
 	}
 
 	const PUBLIC_DIR_PERMISSION_KEY = 'public.dir_permission';
-	const PUBLIC_DIR_PERMISSION_DEFAULT = '0700';
 	const PUBLIC_FILE_PERMISSION_KEY = 'public.file_permission';
-	const PUBLIC_FILE_PERMISSION_DEFAULT = '0600';
 	const PRIVATE_DIR_PERMISSION_KEY = 'private.dir_permission';
-	const PRIVATE_DIR_PERMISSION_DEFAULT = '0700';
 	const PRIVATE_FILE_PERMISSION_KEY = 'private.file_permission';
-	const PRIVATE_FILE_PERMISSION_DEFAULT = '0600';
-	
+
 	
 	private function createIoConfig(GroupReader $groupReader) {
 		return new IoConfig(
-				$groupReader->getString(self::PUBLIC_DIR_PERMISSION_KEY, false, self::PUBLIC_DIR_PERMISSION_DEFAULT),
-				$groupReader->getString(self::PUBLIC_FILE_PERMISSION_KEY, false, self::PUBLIC_FILE_PERMISSION_DEFAULT),
-				$groupReader->getString(self::PRIVATE_DIR_PERMISSION_KEY, false, self::PRIVATE_DIR_PERMISSION_DEFAULT),				
-				$groupReader->getString(self::PRIVATE_FILE_PERMISSION_KEY, false, self::PRIVATE_FILE_PERMISSION_DEFAULT));
+				$groupReader->getString(self::PUBLIC_DIR_PERMISSION_KEY, false, IoConfig::PUBLIC_DIR_PERMISSION_DEFAULT),
+				$groupReader->getString(self::PUBLIC_FILE_PERMISSION_KEY, false, IoConfig::PUBLIC_FILE_PERMISSION_DEFAULT),
+				$groupReader->getString(self::PRIVATE_DIR_PERMISSION_KEY, false, IoConfig::PRIVATE_DIR_PERMISSION_DEFAULT),
+				$groupReader->getString(self::PRIVATE_FILE_PERMISSION_KEY, false, IoConfig::PRIVATE_FILE_PERMISSION_DEFAULT));
 	}
 
 	const ASSETS_DIR_KEY = 'assets.dir';
-	const ASSETS_DIR_DEFAULT = 'assets';
 	const ASSETS_URL_KEY = 'assets.url';
 	const MANAGER_PUBLIC_DIR_KEY = 'manager.public.dir';
-	const MANAGER_PUBLIC_DIR_DEFAULT = 'files';
 	const MANAGER_PUBLIC_URL_KEY = 'manager.public.url';
-	const MANAGER_PUBLIC_URL_DEFAULT = 'files';
 	const MANAGER_PRIVATE_DIR_KEY = 'manager.private.dir';
 	
 	private function createFilesConfig(GroupReader $groupReader) {
 		return new FilesConfig(
 				$this->parsePublicFsPath($groupReader->getString(self::ASSETS_DIR_KEY,
-						false, self::ASSETS_DIR_DEFAULT)),
-				Url::create($groupReader->getString(self::ASSETS_URL_KEY, false, self::ASSETS_DIR_DEFAULT)),
+						false, FilesConfig::ASSETS_DIR_DEFAULT)),
+				Url::create($groupReader->getString(self::ASSETS_URL_KEY,
+                        false, FilesConfig::ASSETS_URL_DEFAULT)),
 				$this->parsePublicFsPath($groupReader->getString(self::MANAGER_PUBLIC_DIR_KEY,
-						false, self::MANAGER_PUBLIC_DIR_DEFAULT)),
+						false, FilesConfig::MANAGER_PUBLIC_DIR_DEFAULT)),
 				Url::create($groupReader->getString(self::MANAGER_PUBLIC_URL_KEY,
-						false, self::MANAGER_PUBLIC_URL_DEFAULT)),
+						false, FilesConfig::MANAGER_PUBLIC_URL_DEFAULT)),
 				$groupReader->getString(self::MANAGER_PRIVATE_DIR_KEY, false, null));
 	}
 	
@@ -328,35 +308,29 @@ class AppConfigFactory {
 	}
 	
 	const STRICT_ATTITUDE_KEY = 'strict_attitude';
-	const STRICT_ATTITUDE_DEFAULT = true;
 	const STARTUP_DETECT_ERRORS_KEY = 'startup.ignore_errors';
-	const STARTUP_DETECT_ERRORS_DEFAULT = true;
 	const STARTUP_DETECT_BAD_REQUESTS_KEY = 'startup.detect_bad_requests';
-	const STARTUP_DETECT_BAD_REQUESTS_DEFAULT = true;
 	const LOG_SAVE_DETAIL_INFO_KEY = 'log.save_detail_info';
-	const LOG_SAVE_DETAIL_INFO_DEFAULT = true;
 	const LOG_SEND_MAIL_KEY = 'log.send_mail';
-	const LOG_SEND_MAIL_DEFAULT = false;
 	const LOG_MAIL_RECIPIENT_KEY = 'log.mail_recipient';
 	const LOG_HANDLE_HTTP_STATUS_EXCEPTIONS_KEY = 'log.handle_http_status_exceptions';
-	const LOG_HANDLE_HTTP_STATUS_EXCEPTIONS_DEFAULT = false;
 	const LOG_EXCLUDED_HTTP_STATUS_KEY = 'log.excluded_http_status_exceptions';
-	const MONITOR_SLOW_QUERY_TIME = 'monitor.slow_query_time';
+	const MONITOR_SLOW_QUERY_TIME_KEY = 'monitor.slow_query_time';
 	const ERROR_VIEW_KEY_PREFIX = 'error_view.';
 	
 	
 	private function createErrorConfig(GroupReader $groupReader) {
 		return new ErrorConfig(
-				$groupReader->getBool(self::STRICT_ATTITUDE_KEY, false, self::STRICT_ATTITUDE_DEFAULT),
-				$groupReader->getBool(self::STARTUP_DETECT_ERRORS_KEY, false, self::STARTUP_DETECT_ERRORS_DEFAULT),
-				$groupReader->getBool(self::STARTUP_DETECT_BAD_REQUESTS_KEY, false, self::STARTUP_DETECT_BAD_REQUESTS_DEFAULT),
-				$groupReader->getBool(self::LOG_SAVE_DETAIL_INFO_KEY, false, self::LOG_SAVE_DETAIL_INFO_DEFAULT),
-				$groupReader->getBool(self::LOG_SEND_MAIL_KEY, false, self::LOG_SEND_MAIL_DEFAULT),
+				$groupReader->getBool(self::STRICT_ATTITUDE_KEY, false, ErrorConfig::STRICT_ATTITUDE_DEFAULT),
+				$groupReader->getBool(self::STARTUP_DETECT_ERRORS_KEY, false, ErrorConfig::STARTUP_DETECT_ERRORS_DEFAULT),
+				$groupReader->getBool(self::STARTUP_DETECT_BAD_REQUESTS_KEY, false, ErrorConfig::STARTUP_DETECT_BAD_REQUESTS_DEFAULT),
+				$groupReader->getBool(self::LOG_SAVE_DETAIL_INFO_KEY, false, ErrorConfig::LOG_SAVE_DETAIL_INFO_DEFAULT),
+				$groupReader->getBool(self::LOG_SEND_MAIL_KEY, false, ErrorConfig::LOG_SEND_MAIL_DEFAULT),
 				$groupReader->getString(self::LOG_MAIL_RECIPIENT_KEY, false),
-				$groupReader->getString(self::LOG_HANDLE_HTTP_STATUS_EXCEPTIONS_KEY, false, self::LOG_HANDLE_HTTP_STATUS_EXCEPTIONS_DEFAULT),
-				$groupReader->getScalarArray(self::LOG_EXCLUDED_HTTP_STATUS_KEY, false, array()),
+				$groupReader->getString(self::LOG_HANDLE_HTTP_STATUS_EXCEPTIONS_KEY, false, ErrorConfig::LOG_HANDLE_HTTP_STATUS_EXCEPTIONS_DEFAULT),
+				$groupReader->getScalarArray(self::LOG_EXCLUDED_HTTP_STATUS_KEY),
 				self::extractStringPropertyArray($groupReader, self::ERROR_VIEW_KEY_PREFIX),
-				$groupReader->getFloat(self::MONITOR_SLOW_QUERY_TIME, false));
+				$groupReader->getFloat(self::MONITOR_SLOW_QUERY_TIME_KEY, false));
 	}
 		
 	const KEY_EXT_DSN_URI = '.dsn_uri';
@@ -392,28 +366,23 @@ class AppConfigFactory {
 	const ENTITY_NAMING_STRATEGY_KEY = 'naming_strategy';
 	
 	private function createOrmConfig(GroupReader $groupReader) {
-		return new OrmConfig(array_unique($groupReader->getScalarArray(self::ENTITIES_KEY, false, array())),
-				array_unique($groupReader->getScalarArray(self::ENTITY_PROPERTY_PROVIDERS_KEY, false, array())),
+		return new OrmConfig(array_unique($groupReader->getScalarArray(self::ENTITIES_KEY)),
+				array_unique($groupReader->getScalarArray(self::ENTITY_PROPERTY_PROVIDERS_KEY)),
 				$groupReader->getString(self::ENTITY_NAMING_STRATEGY_KEY, false));
 	}
 
 	const FALLBACK_LOCALE_ID_KEY = 'fallback';
-	const FALLBACK_LOCALE_ID_DEFAULT = 'en';
 	const ADMIN_LOCALE_ID_KEY = 'admin';
-	const ADMIN_LOCALE_ID_DEFAULT = 'rm_CH';
 	const DEFAULT_LOCALE_ID_KEY = 'default';
-	const DEFAULT_LOCALE_ID_DEFAULT = 'rm_CH';
-	
+
 	private function createN2nLocalesConfig(GroupReader $groupReader) {
 		return new N2nLocaleConfig(
-				$groupReader->getN2nLocale(self::FALLBACK_LOCALE_ID_KEY, false, new N2nLocale(self::FALLBACK_LOCALE_ID_DEFAULT)),
-				$groupReader->getN2nLocale(self::ADMIN_LOCALE_ID_KEY, false, new N2nLocale(self::ADMIN_LOCALE_ID_DEFAULT)),
-				$groupReader->getN2nLocale(self::DEFAULT_LOCALE_ID_KEY, false, new N2nLocale(self::DEFAULT_LOCALE_ID_DEFAULT)));
+				$groupReader->getN2nLocale(self::FALLBACK_LOCALE_ID_KEY, false, new N2nLocale(N2nLocaleConfig::FALLBACK_LOCALE_ID_DEFAULT)),
+				$groupReader->getN2nLocale(self::ADMIN_LOCALE_ID_KEY, false, new N2nLocale(N2nLocaleConfig::ADMIN_LOCALE_ID_DEFAULT)),
+				$groupReader->getN2nLocale(self::DEFAULT_LOCALE_ID_KEY, false, new N2nLocale(N2nLocaleConfig::DEFAULT_LOCALE_ID_DEFAULT)));
 	}
 	
 	const L10N_ENABLED_KEY = 'l10n_enabled';
-	const L10N_ENABLED_DEFAULT = true;
-	
 	const PROP_DATE_DEFAULT_SUFFIX = '.date.default';
 	const PROP_DATE_INPUT_SUFFIX = '.date.input';
 	
@@ -423,7 +392,7 @@ class AppConfigFactory {
 	const PROP_DATETIME_FORMAT_SUFFIX = '.datetime.format';
 	
 	private function createL10nConfig(GroupReader $groupReader) {
-		return new L10nConfig($groupReader->getBool(self::L10N_ENABLED_KEY, false, self::L10N_ENABLED_DEFAULT),
+		return new L10nConfig($groupReader->getBool(self::L10N_ENABLED_KEY, false, L10nConfig::L10N_ENABLED_DEFAULT),
 				$this->createL10nStyles($groupReader));	
 	}
 	
@@ -456,8 +425,8 @@ class AppConfigFactory {
 			$l10nFormats[$n2nLocaleId] = new L10nFormat(
 					self::extractPatternArray($groupReader, $n2nLocaleId . self::PROP_DATE_PATTERN_STYLE_SUFFIX),
 					self::extractPatternArray($groupReader, $n2nLocaleId . self::PROP_TIME_PATTERN_STYLE_SUFFIX),
-					$groupReader->getString(self::PROP_DATE_PATTERN_INPUT_SUFFIX, false),
-					$groupReader->getString(self::PROP_DATE_PATTERN_INPUT_SUFFIX, false));
+					$groupReader->getString($n2nLocaleId . self::PROP_DATE_PATTERN_INPUT_SUFFIX, false),
+					$groupReader->getString($n2nLocaleId . self::PROP_TIME_PATTERN_INPUT_SUFFIX, false));
 		}
 		return $l10nFormats;
 	}
@@ -477,7 +446,7 @@ class AppConfigFactory {
 	
 	const DEFAULT_LEVEL_SEPARATOR = '.';
 	
-	private function extractPathParts(GroupReader $groupReader, string $prefix = null) {
+	private function extractPathParts(GroupReader $groupReader, string $prefix = null): array {
 		$names = array();
 		foreach ($groupReader->getNames() as $key) {
 			if ($prefix !== null) {

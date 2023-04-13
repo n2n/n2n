@@ -25,41 +25,42 @@ use n2n\log4php\LoggerLevel;
 use n2n\util\type\ArgUtils;
 
 class GeneralConfig {
-	private $pageName;
-	private $pageUrl;
-	private $applicationName;
-	private $applicationLogLevel;
-	private $batchControllerClassNames;
-	private $extensions = [];
+	const PAGE_NAME_DEFAULT = 'New awesome project';
+	const APPLICATION_NAME_DEFAULT = 'newAwesomeProject';
+	const APPLICATION_REPLICATABLE_DEFAULT = false;
 
 	/**
 	 * @param string $pageName
-	 * @param string $pageUrl
-	 * @param string $pageAssetsDir
-	 * @param string $pagePublicUploadDir
+	 * @param string|null $pageUrl
 	 * @param string $applicationName
-	 * @param string $applicationLogLevel
-	 * @param array $batchControllerClassNames
+	 * @param string|null $applicationLogLevel
+	 * @param bool $applicationReplicatable
+	 * @param string[] $batchJobClassNames
+	 * @param string[] $extensionClassNames
 	 */
-	public function __construct(string $pageName, string $pageUrl = null, string $applicationName, ?string $applicationLogLevel,
-			private bool $applicationReplicatable, array $batchControllerClassNames, private array $extensionClassNames) {
-		$this->pageName = $pageName;
-		$this->pageUrl = $pageUrl;
+	public function __construct(private string $pageName = self::PAGE_NAME_DEFAULT,
+			private ?string $pageUrl = null,
+			private string $applicationName = self::APPLICATION_NAME_DEFAULT,
+			private ?string $applicationLogLevel = null,
+			private bool $applicationReplicatable = self::APPLICATION_REPLICATABLE_DEFAULT,
+			private array $batchJobClassNames = [],
+			private array $extensionClassNames = []) {
 		ArgUtils::assertTrue(1 === preg_match('#^\w+$#', $applicationName), 'Invalid application name.');
-		$this->applicationName = $applicationName;
-		$this->applicationLogLevel = $applicationLogLevel;
-		$this->batchControllerClassNames = $batchControllerClassNames;
+		ArgUtils::valArray($this->batchJobClassNames, 'string');
+		ArgUtils::valArray($this->extensionClassNames, 'string');
 	}
+
 	/**
 	 * @return string
 	 */
 	public function getPageName(): string {
 		return $this->pageName;
 	}
-	/**
-	 * @return string
-	 */
-	public function getPageUrl() {
+
+    /**
+     * @return string|null
+     */
+	public function getPageUrl(): ?string {
 		return $this->pageUrl;
 	}
 	
@@ -69,6 +70,7 @@ class GeneralConfig {
 	public function getApplicationName(): string {
 		return $this->applicationName;
 	}
+
 	/**
 	 * @return LoggerLevel
 	 */
@@ -87,9 +89,14 @@ class GeneralConfig {
 
 	/**
 	 * @return array
+	 * @deprecated use {@link self::getBatchJobClassNames()}
 	 */
 	public function getBatchJobLookupIds(): array {
-		return $this->batchControllerClassNames;
+		return $this->batchJobClassNames;
+	}
+
+	function getBatchJobClassNames(): array {
+		return $this->batchJobClassNames;
 	}
 
 	function getExtensionClassNames(): array {

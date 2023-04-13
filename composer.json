@@ -36,8 +36,9 @@
 		"n2n/n2n-l10n" : "~7.4",
 		"n2n/n2n-log4php" : "~7.4",
 		"n2n/n2n-reflection" : "~7.4",
-		"n2n/n2n-util" : "~7.4"
-	},
+		"n2n/n2n-util" : "~7.4",
+        "ext-mbstring": "*"
+    },
 	"autoload" : {
 		"psr-4" : {
 			"n2n\\core\\" : "src/app/n2n/core"
