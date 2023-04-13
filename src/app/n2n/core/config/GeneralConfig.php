@@ -38,7 +38,7 @@ class GeneralConfig {
 	 * @param string[] $batchJobClassNames
 	 * @param string[] $extensionClassNames
 	 */
-	public function __construct(private string $pageName = self::PAGE_NAME_DEFAULT,
+	public function  __construct(private string $pageName = self::PAGE_NAME_DEFAULT,
 			private ?string $pageUrl = null,
 			private string $applicationName = self::APPLICATION_NAME_DEFAULT,
 			private ?string $applicationLogLevel = null,

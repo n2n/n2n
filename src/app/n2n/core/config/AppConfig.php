@@ -25,33 +25,18 @@ use n2n\l10n\L10nConfig;
 use n2n\l10n\PseudoL10nConfig;
 
 class AppConfig {
-	private $generalConfig;
-	private $webConfig;
-	private $mailConfig;
-	private $ioConfig;
-	private $filesConfig;
-	private $errorConfig;
-	private $dbConfig;
-	private $ormConfig;
-	private $localeConfig;
-	private $l10nConfig;
-	private $pseudoL10nConfig;
-	
-	public function __construct(GeneralConfig $generalConfig, WebConfig $webConfig, private readonly RoutingConfig $routingConfig,
-			MailConfig $mailConfig, IoConfig $ioConfig, FilesConfig $filesConfig, ErrorConfig $errorConfig, DbConfig $dbConfig,
-			OrmConfig $ormConfig, N2nLocaleConfig $localeConfig, L10nConfig $l10nConfig, PseudoL10nConfig $pseudoL10nConfig) {
-		$this->generalConfig = $generalConfig;
-		$this->webConfig = $webConfig;
-		$this->mailConfig = $mailConfig;
-		$this->ioConfig = $ioConfig;
-		$this->filesConfig = $filesConfig;
-		$this->errorConfig = $errorConfig;
-		$this->dbConfig = $dbConfig;
-		$this->ormConfig = $ormConfig;
-		$this->localeConfig = $localeConfig;
-		$this->l10nConfig = $l10nConfig;
-		$this->pseudoL10nConfig = $pseudoL10nConfig;
-
+		public function __construct(private GeneralConfig $generalConfig = new GeneralConfig(),
+			private WebConfig $webConfig = new WebConfig(),
+			private readonly RoutingConfig $routingConfig = new RoutingConfig(),
+			private MailConfig $mailConfig = new MailConfig(),
+			private IoConfig $ioConfig = new IoConfig(),
+			private FilesConfig $filesConfig = new FilesConfig(),
+			private ErrorConfig $errorConfig = new ErrorConfig(),
+			private DbConfig $dbConfig = new DbConfig(),
+			private OrmConfig $ormConfig = new OrmConfig(),
+			private N2nLocaleConfig $localeConfig = new N2nLocaleConfig(),
+			private L10nConfig $l10nConfig = new L10nConfig(),
+			private PseudoL10nConfig $pseudoL10nConfig = new PseudoL10nConfig()) {
 		$this->webConfig->legacyRoutingConfig = $this->routingConfig;
 	}
 	/**
