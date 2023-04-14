@@ -212,13 +212,13 @@ class TransactionManager extends ObjectAdapter {
 	 * @throws CommitPreparationFailedException
 	 */
 	private function prepareCommit(): void {
+		$this->tRef++;
+		$this->phase = TransactionPhase::PREPARE_COMMIT;
+
 		$transaction = $this->rootTransaction;
 		foreach ($this->commitListeners as $commitListener) {
 			$commitListener->prePrepare($transaction);
 		}
-
-		$this->tRef++;
-		$this->phase = TransactionPhase::PREPARE_COMMIT;
 
 		do {
 			$this->pendingCommitPreparations = $this->transactionalResources;
@@ -231,10 +231,15 @@ class TransactionManager extends ObjectAdapter {
 					break;
 				}
 			}
+
+			$transaction = $this->rootTransaction;
+			foreach ($this->commitListeners as $commitListener) {
+				$commitListener->postPrepare($transaction);
+			}
 		} while ($this->commitPreparationExtended);
 	}
 
-	private function commit() {
+	private function commit(): void {
 		$transaction = $this->rootTransaction;
 
 		foreach ($this->commitListeners as $commitListener) {

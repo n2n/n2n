@@ -27,10 +27,10 @@ use n2n\core\container\CommitListener;
 
 class ClosureCommitListener implements CommitListener {
 
-	function __construct(private ?\Closure $prePrepareCallback = null, private ?\Closure $preCommitCallback = null,
-			private ?\Closure $postCommitCallback = null, private ?\Closure $commitFailedCallback = null,
-			private ?\Closure $preRollbackCallback = null, private ?\Closure $postRollbackCallback = null,
-			private ?\Closure $finallyCallback = null) {
+	function __construct(private ?\Closure $prePrepareCallback = null, private ?\Closure $postPrepareCallback = null,
+			private ?\Closure $preCommitCallback = null, private ?\Closure $postCommitCallback = null,
+			private ?\Closure $commitFailedCallback = null, private ?\Closure $preRollbackCallback = null,
+			private ?\Closure $postRollbackCallback = null, private ?\Closure $finallyCallback = null) {
 
 	}
 
@@ -43,6 +43,14 @@ class ClosureCommitListener implements CommitListener {
 	 */
 	public function setPrePrepareCallback(?\Closure $prePrepareCallback): void {
 		$this->prePrepareCallback = $prePrepareCallback;
+	}
+
+	public function getPostPrepareCallback(): ?\Closure {
+		return $this->postPrepareCallback;
+	}
+
+	public function setPostPrepareCallback(?\Closure $postPrepareCallback): void {
+		$this->postPrepareCallback = $postPrepareCallback;
 	}
 
 	/**
@@ -139,6 +147,15 @@ class ClosureCommitListener implements CommitListener {
 	public function prePrepare(Transaction $transaction): void {
 		if ($this->prePrepareCallback !== null) {
 			($this->prePrepareCallback)($transaction);
+		}
+	}
+
+	/**
+	 * @inheritDoc
+	 */
+	public function postPrepare(Transaction $transaction): void {
+		if ($this->postPrepareCallback !== null) {
+			($this->postPrepareCallback)($transaction);
 		}
 	}
 

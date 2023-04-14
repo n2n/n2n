@@ -25,6 +25,8 @@ interface CommitListener {
 
 	function prePrepare(Transaction $transaction): void;
 
+	function postPrepare(Transaction $transaction): void;
+
 	public function preCommit(Transaction $transaction): void;
 
 	public function postCommit(Transaction $transaction): void;

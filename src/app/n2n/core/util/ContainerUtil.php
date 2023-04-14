@@ -155,4 +155,12 @@ class ContainerUtil {
 
 		$this->prePrepare($closure);
 	}
+
+	function postPrepareAndExtend(\Closure $callback): void {
+		$mmi = $this->createMmiFromClosure($callback);
+
+		$this->preCommit(function () use ($mmi) {
+			$this->getTransactionManager()->extendCommitPreparation();
+		});
+	}
 }
