@@ -144,7 +144,8 @@ class ContainerUtil {
 
 	function prePrepare(\Closure $callback): void {
 		$mmi = $this->createMmiFromClosure($callback);
-		$prepareListener = $this->createClosureCommitListener([TransactionPhase::COMMIT, TransactionPhase::ROLLBACK]);
+		$prepareListener = $this->createClosureCommitListener([TransactionPhase::PREPARE_COMMIT,
+				TransactionPhase::COMMIT, TransactionPhase::ROLLBACK]);
 
 		$prepareListener->setPrePrepareCallback(function () use ($prepareListener, $mmi) {
 			$this->getTransactionManager()->unregisterCommitListener($prepareListener);
