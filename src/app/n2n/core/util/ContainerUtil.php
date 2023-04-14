@@ -25,6 +25,8 @@ use n2n\core\container\N2nContext;
 use n2n\core\container\TransactionManager;
 use n2n\util\ex\IllegalStateException;
 use n2n\reflection\magic\MagicMethodInvoker;
+use n2n\core\container\TransactionStateException;
+use n2n\core\container\TransactionPhase;
 
 class ContainerUtil {
 	function __construct(private N2nContext $n2nContext) {
@@ -77,9 +79,13 @@ class ContainerUtil {
 	/**
 	 * @return ClosureCommitListener
 	 */
-	private function createClosureCommitListener(): ClosureCommitListener {
+	private function createClosureCommitListener(array $disallowedPhases = []): ClosureCommitListener {
 		$tm = $this->getTransactionManager();
 		$tm->ensureTransactionOpen();
+
+		if (in_array($tm->getPhase(), $disallowedPhases)) {
+			throw new TransactionStateException('Transaction is in ' . $tm->getPhase()->name . ' phase.');
+		}
 
 		$commitListener = new ClosureCommitListener();
 		$commitListener->setFinallyCallback(function () use ($tm, $commitListener) {
@@ -138,7 +144,8 @@ class ContainerUtil {
 
 	function prePrepare(\Closure $callback): void {
 		$mmi = $this->createMmiFromClosure($callback);
-		$prepareListener = $this->createClosureCommitListener();
+		$prepareListener = $this->createClosureCommitListener([TransactionPhase::COMMIT, TransactionPhase::ROLLBACK]);
+
 		$prepareListener->setPrePrepareCallback(function () use ($prepareListener, $mmi) {
 			$this->getTransactionManager()->unregisterCommitListener($prepareListener);
 			$mmi->invoke();
@@ -158,7 +165,8 @@ class ContainerUtil {
 
 	function postPrepare(\Closure $callback, bool $extend = false): void {
 		$mmi = $this->createMmiFromClosure($callback);
-		$prepareListener = $this->createClosureCommitListener();
+		$prepareListener = $this->createClosureCommitListener([TransactionPhase::COMMIT, TransactionPhase::ROLLBACK]);
+
 		$prepareListener->setPostPrepareCallback(function () use ($prepareListener, $mmi, $extend) {
 			$tm = $this->getTransactionManager();
 			$tm->unregisterCommitListener($prepareListener);
