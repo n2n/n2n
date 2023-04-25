@@ -70,10 +70,8 @@ class LazyModule implements Module {
 	public function getNamespace() {
 		return $this->namespace;
 	}
-	/**
-	 * @return ConfigSource
-	 */
-	public function getAppConfigSource() {
+
+	public function getAppConfigSource(): ?ConfigSource {
 		return $this->appConfigSource;
 	}
 	
