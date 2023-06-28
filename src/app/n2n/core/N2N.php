@@ -389,19 +389,19 @@ class N2N {
     		if (!self::$exceptionHandler->isStable()) return;
 	    }
 
-		try {
-			if (!N2N::isInitialized()) return;
-				
-			if (N2N::isHttpContextAvailable() && !N2N::getCurrentResponse()->isFlushed()) {
-				N2N::getCurrentResponse()->flush();
-			}
-		} catch (\Throwable $t) {
-		    if (self::$exceptionHandler === null) {
-		        throw $t;
-		    }
-		    
-			self::$exceptionHandler->handleThrowable($t);
-		}
+//		try {
+//			if (!N2N::isInitialized()) return;
+//
+//			if (N2N::isHttpContextAvailable() && !N2N::getCurrentResponse()->isFlushed()) {
+//				N2N::getCurrentResponse()->flush();
+//			}
+//		} catch (\Throwable $t) {
+//		    if (self::$exceptionHandler === null) {
+//		        throw $t;
+//		    }
+//
+//			self::$exceptionHandler->handleThrowable($t);
+//		}
 
 		self::$n2nContext?->finalize();
 	}
