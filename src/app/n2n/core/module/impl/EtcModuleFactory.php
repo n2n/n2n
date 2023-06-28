@@ -68,10 +68,10 @@ class EtcModuleFactory implements ModuleFactory {
 			array_push($etcFsPaths, ...$this->additionalEtcFsPaths);
 		}
 		
-		foreach ($etcFsPaths as $key =>  $etcFsPath) {
+		foreach ($etcFsPaths as $key => $etcFsPath) {
 			foreach ($etcFsPath->getChildDirectories() as $confDirPath) {
 				$moduleNamespace = VarStore::dirNameToNamespace($confDirPath->getName());
-					
+
 				$appConfigSource = null;
 				if (is_file($appConfigFilePath = $confDirPath . DIRECTORY_SEPARATOR . $this->appIniFileName)) {
 					$appConfigSource = new IniFileConfigSource($appConfigFilePath);
@@ -81,7 +81,12 @@ class EtcModuleFactory implements ModuleFactory {
 				if (is_file($moduleConfigFilePath = $confDirPath . DIRECTORY_SEPARATOR . $this->moduleIniFileName)) {
 					$moduleConfigSource = new IniFileConfigSource($moduleConfigFilePath);
 				}
-					
+
+				if (isset($this->modules[$moduleNamespace])
+						&& $this->modules[$moduleNamespace]->getAppConfigSource() !== null) {
+					continue;
+				}
+
 				$this->modules[$moduleNamespace] = new LazyModule($moduleNamespace, $appConfigSource,
 						$moduleConfigSource);
 				

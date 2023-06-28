@@ -92,6 +92,7 @@ class AppConfigFactoryTest extends TestCase {
         $this->assertEquals(ErrorConfig::LOG_SAVE_DETAIL_INFO_DEFAULT, $appConfig->error()->isLogSaveDetailInfoEnabled());
         $this->assertEquals(ErrorConfig::LOG_SEND_MAIL_DEFAULT, $appConfig->error()->isLogSendMailEnabled());
         $this->assertEquals(ErrorConfig::LOG_HANDLE_HTTP_STATUS_EXCEPTIONS_DEFAULT, $appConfig->error()->isLogHandleStatusExceptionsEnabled());
+        $this->assertEquals(ErrorConfig::MONITOR_ENABLED_DEFAULT, $appConfig->error()->isMonitorEnabled());
 
         $this->assertEquals(FsPath::create(['public', FilesConfig::ASSETS_DIR_DEFAULT]), $appConfig->files()->getAssetsDir());
         $this->assertEquals(Url::create(FilesConfig::ASSETS_URL_DEFAULT), $appConfig->files()->getAssetsUrl());
@@ -103,8 +104,6 @@ class AppConfigFactoryTest extends TestCase {
         $this->assertEquals(N2nLocaleConfig::ADMIN_LOCALE_ID_DEFAULT, $appConfig->locale()->getAdminN2nLocale());
 
         $this->assertEquals(L10nConfig::L10N_ENABLED_DEFAULT, $appConfig->l10n()->isEnabled());
-
-
     }
 
 	function testGeneral() {
@@ -182,7 +181,8 @@ function testWeb() {
         $this->assertFalse($appConfig->error()->isLogSaveDetailInfoEnabled());
         $this->assertTrue($appConfig->error()->isLogSendMailEnabled());
         $this->assertTrue($appConfig->error()->isLogHandleStatusExceptionsEnabled());
-    }
+		$this->assertFalse($appConfig->error()->isMonitorEnabled());
+	}
     function testDatabase() {
         $appConfig = $this->createFromFsPath('database.app.ini');
 
@@ -201,7 +201,6 @@ function testWeb() {
 
 		$this->assertEquals('path/to/ca.crt', $persistenceUnitConfig2->getSslCaCertificatePath());
 		$this->assertEquals(false, $persistenceUnitConfig2->isSslVerify());
-
     }
 	function testOrm() {
 		$appConfig = $this->createFromFsPath('orm.app.ini');

@@ -29,6 +29,7 @@ class ErrorConfig {
     const LOG_SAVE_DETAIL_INFO_DEFAULT = true;
     const LOG_SEND_MAIL_DEFAULT = false;
     const LOG_HANDLE_HTTP_STATUS_EXCEPTIONS_DEFAULT = false;
+	const MONITOR_ENABLED_DEFAULT = true;
 
 
 	public function __construct(private bool $strictAttitude = self::STRICT_ATTITUDE_DEFAULT,
@@ -40,6 +41,7 @@ class ErrorConfig {
 			private bool $logHandleStatusExceptions = self::LOG_HANDLE_HTTP_STATUS_EXCEPTIONS_DEFAULT,
 			private array $logExcludedHttpStatuses = [],
 			private array $errorViewNames = [],
+			private bool $monitorEnabled = self::MONITOR_ENABLED_DEFAULT,
 			private readonly ?float $monitorSlowQueryTime = null) {
 	}
 
@@ -117,6 +119,10 @@ class ErrorConfig {
 	
 	function getDefaultErrorViewName() {
 		return $this->errorViewNames[self::ERROR_VIEW_DEFAULT_KEY_SUFFIX] ?? null;
+	}
+
+	function isMonitorEnabled(): bool {
+		return $this->monitorEnabled;
 	}
 
 	function getMonitorSlowQueryTime(): ?float {
