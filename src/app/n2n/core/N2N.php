@@ -32,9 +32,6 @@ use n2n\batch\BatchJobRegistry;
 use n2n\context\LookupManager;
 use n2n\web\http\controller\ControllerRegistry;
 use n2n\core\config\AppConfig;
-use n2n\web\http\Request;
-use n2n\web\http\Session;
-use n2n\web\http\VarsRequest;
 use n2n\core\module\ModuleFactory;
 use n2n\core\module\impl\LazyModule;
 use n2n\util\io\fs\FsPath;
@@ -43,18 +40,12 @@ use n2n\core\config\build\AppConfigFactory;
 use n2n\l10n\L10n;
 use n2n\core\module\ModuleManager;
 use n2n\core\container\impl\AppN2nContext;
-use n2n\web\http\HttpContext;
 use n2n\util\type\CastUtils;
 use n2n\core\module\impl\EtcModuleFactory;
-use n2n\web\http\Method;
-use n2n\web\http\MethodNotAllowedException;
 use n2n\l10n\MessageContainer;
 use n2n\web\dispatch\DispatchContext;
-use n2n\web\http\VarsSession;
-use n2n\web\http\BadRequestException;
 use n2n\util\StringUtils;
 use n2n\core\module\UnknownModuleException;
-use n2n\web\http\controller\ControllingPlan;
 use n2n\core\err\LogMailer;
 use n2n\core\container\impl\PhpVars;
 use n2n\core\ext\N2nExtension;
@@ -624,8 +615,11 @@ class N2N {
 	public static function isHttpContextAvailable(): bool {
 		return self::$n2nContext->isHttpContextAvailable();
 	}
-	
-	public static function getHttpContext(): HttpContext {
+
+	/**
+	 * @return \n2n\web\http\HttpContext
+	 */
+	public static function getHttpContext() {
 		return self::$n2nContext->getHttpContext();
 	}
 	/**
@@ -645,20 +639,20 @@ class N2N {
 		return self::getHttpContext()->getResponse();
 	}
 	
-	public static function createControllingPlan($subsystemName = null) {
-		$request = self::$n2nContext->getHttpContext()->getRequest();
-		if ($subsystemName === null) {
-			$subsystemName = $request->getSubsystemName();
-		}
-
-		/**
-		 * @var ControllerRegistry
-		 */
-		$controllerRegistry = self::$n2nContext->lookup(ControllerRegistry::class);
-
-		return $controllerRegistry->createControllingPlan(
-				self::$n2nContext, $request->getCmdPath(), $subsystemName);
-	}
+//	public static function createControllingPlan($subsystemName = null) {
+//		$request = self::$n2nContext->getHttpContext()->getRequest();
+//		if ($subsystemName === null) {
+//			$subsystemName = $request->getSubsystemName();
+//		}
+//
+//		/**
+//		 * @var ControllerRegistry
+//		 */
+//		$controllerRegistry = self::$n2nContext->lookup(ControllerRegistry::class);
+//
+//		return $controllerRegistry->createControllingPlan(
+//				self::$n2nContext, $request->getCmdPath(), $subsystemName);
+//	}
 	
 	public static function autoInvokeBatchJobs() {
 		$n2nContext = self::$n2nContext;
@@ -668,8 +662,8 @@ class N2N {
 		
 	}
 	
-	public static function autoInvokeControllers() {
-		self::$n2nContext->getHttp()?->invokerControllers();
+	public static function autoInvokeControllers(): void {
+		self::$n2nContext->getHttp()?->invokerControllers(true);
 	}
 	
 //	public static function invokerControllers(string $subsystemName = null, Path $cmdPath = null) {
