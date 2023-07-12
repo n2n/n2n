@@ -270,4 +270,14 @@ function testWeb() {
 		$this->assertEquals('H:i:s O', $l10Format->getTimePatterns()['long']);
 		$this->assertEquals('H:i:s O e', $l10Format->getTimePatterns()['full']);
     }
+
+	function testFiles() {
+		$appConfig = $this->createFromFsPath('files.app.ini');
+
+		$this->assertEquals(FsPath::create(['public', 'hidemyassets']), $appConfig->files()->getAssetsDir());
+		$this->assertEquals(Url::create('hidemyassets'), $appConfig->files()->getAssetsUrl());
+		$this->assertEquals(FsPath::create(['public', 'hidemyfiles']), $appConfig->files()->getManagerPublicDir());
+		$this->assertEquals(Url::create('hidemyfiles'), $appConfig->files()->getManagerPublicUrl());
+		$this->assertEquals(FsPath::create(['hidemyprivatefiles']), $appConfig->files()->getManagerPrivateDir());
+	}
 }

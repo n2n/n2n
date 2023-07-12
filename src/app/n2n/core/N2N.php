@@ -434,7 +434,7 @@ class N2N {
 		return !defined('N2N_STAGE') || N2N_STAGE == self::STAGE_LIVE;
 	}
 
-	static function isTestSTageOn(): bool {
+	static function isTestStageOn(): bool {
 		return defined('N2N_STAGE') && N2N_STAGE == self::STAGE_TEST;
 	}
 	
@@ -474,29 +474,31 @@ class N2N {
 		return self::_i()->varStore;	
 	}
 	/**
-	 * @deprecated
+	 * @deprecated use HttpContext
 	 * @return \n2n\l10n\N2nLocale[]
 	 */
 	public static function getN2nLocales() {
 		return self::_i()->appConfig->routing()->getAllN2nLocales();
 	}
 	/**
-	 * 
+	 * @deprecated use HttpContext
 	 * @param string $n2nLocaleId
 	 * @return boolean
 	 */
 	public static function hasN2nLocale($n2nLocaleId) {
-		return isset(self::_i()->n2nLocales[(string) $n2nLocaleId]);
+		$n2nLocales = self::getN2nLocales();
+		return isset($n2nLocales[(string) $n2nLocaleId]);
 	}
 	/**
-	 * 
+	 * @deprecated use HttpContext
 	 * @param string $n2nLocaleId
 	 * @throws N2nLocaleNotFoundException
 	 * @return \n2n\l10n\N2nLocale
 	 */
 	public static function getN2nLocaleById($n2nLocaleId) {
-		if (isset(self::_i()->n2nLocales[(string) $n2nLocaleId])) {
-			return self::_i()->n2nLocales[(string) $n2nLocaleId];
+		$n2nLocales = self::getN2nLocales();
+		if (isset($n2nLocales[(string) $n2nLocaleId])) {
+			return $n2nLocales[(string) $n2nLocaleId];
 		}
 		
 		throw new N2nLocaleNotFoundException('N2nLocale not found: ' . $n2nLocaleId);

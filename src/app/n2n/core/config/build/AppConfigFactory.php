@@ -68,8 +68,8 @@ class AppConfigFactory {
 	
 	public function getGroupNames() {
 		return array(self::GROUP_GENERAL, self::GROUP_WEB, self::GROUP_ROUTING, self::GROUP_MAIL, self::GROUP_IO, 
-				self::GROUP_ERROR, self::GROUP_DATABASE, self::GROUP_ORM, self::GROUP_LOCALES, self::GROUP_L10N, 
-				self::GROUP_PSEUDO_L10N);
+				self::GROUP_FILES, self::GROUP_ERROR, self::GROUP_DATABASE, self::GROUP_ORM, self::GROUP_LOCALES,
+				self::GROUP_L10N, self::GROUP_PSEUDO_L10N);
 	}
 	
 	/**

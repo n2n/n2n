@@ -80,7 +80,7 @@ class FilesConfig {
 	/**
 	 * @return FsPath|null
 	 */
-	public function getManagerPrivateDir() {
+	public function getManagerPrivateDir(): ?FsPath {
 		return $this->managerPrivateDir;
 	}
 }
