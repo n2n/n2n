@@ -54,6 +54,7 @@ use n2n\core\cache\N2nCache;
 use n2n\core\container\N2nContext;
 use n2n\util\ex\IllegalStateException;
 use n2n\core\cache\impl\N2nCaches;
+use n2n\core\ext\ConfigN2nExtension;
 
 define('N2N_CRLF', "\r\n");
 
@@ -95,126 +96,115 @@ class N2N {
 	 */
 	private function __construct(FsPath $publicDirPath, FsPath $varDirPath) {
 		$this->publicDirPath = $publicDirPath;
-		$this->varStore = new VarStore($varDirPath, null, null);
-		
-		$this->combinedConfigSource = new CombinedConfigSource();
+
+
 	}
 	
-	protected function initModules(ModuleFactory $moduleFactory): void {
-		$moduleFactory->init($this->varStore);
+	private static function initModules(ModuleFactory $moduleFactory, VarStore $varStore,
+			CombinedConfigSource $combinedConfigSource): ModuleManager {
+		$moduleFactory->init($varStore);
 		
-		$this->combinedConfigSource->setMain($moduleFactory->getMainAppConfigSource());
-		$this->moduleManager = new ModuleManager();
+		$combinedConfigSource->setMain($moduleFactory->getMainAppConfigSource());
+		$moduleManager = new ModuleManager();
 		
 		foreach ($moduleFactory->getModules() as $module) {
-			$this->moduleManager->registerModule($module);
+			$moduleManager->registerModule($module);
 			if (null !== ($appConfigSource = $module->getAppConfigSource())) {
-				$this->combinedConfigSource->putAdditional((string) $module, $appConfigSource);
+				$combinedConfigSource->putAdditional((string) $module, $appConfigSource);
 			}
 		}
 		
-		if (!$this->moduleManager->containsModuleNs(self::NS)) {
-			$this->moduleManager->registerModule(new LazyModule(self::NS));
+		if (!$moduleManager->containsModuleNs(self::NS)) {
+			$moduleManager->registerModule(new LazyModule(self::NS));
 		}
+
+		return $moduleManager;
 	}
 
 	/**
-	 * 
-	 * @param \n2n\core\config\AppConfig
-	 * @throws InvalidConfigurationException
+	 *
+	 * @param N2nCache $n2nCache
+	 * @param VarStore $varStore
+	 * @return AppConfig
 	 */
-	private function initConfiguration(N2nCache $n2nCache): void {
-		$n2nCache->varStoreInitialized($this->varStore);
+	private static function initConfiguration(CombinedConfigSource $combinedConfigSource, N2nCache $n2nCache,
+			VarStore $varStore, FsPath $publicDirPath): AppConfig {
+		$n2nCache->varStoreInitialized($varStore);
 
-		$this->n2nCache = $n2nCache;
 		$cacheStore = $n2nCache->getStartupCacheStore();
 		$hashCode = null;
-		if ($cacheStore === null || null === ($hashCode = $this->combinedConfigSource->hashCode())) {
-			$appConfigFactory = new AppConfigFactory($this->publicDirPath);
-			$this->appConfig = $appConfigFactory->create($this->combinedConfigSource, N2N::getStage());
-			$this->applyConfiguration($n2nCache);
-			return;
+		if ($cacheStore === null || null === ($hashCode = $combinedConfigSource->hashCode())) {
+			$appConfigFactory = new AppConfigFactory($publicDirPath);
+			$appConfig = $appConfigFactory->create($combinedConfigSource, N2N::getStage());
+			self::applyConfiguration($appConfig, $n2nCache, $varStore);
+			return $appConfig;
 		}
 		
 		$characteristics = array('version' => N2N::VERSION, 'stage' => N2N::getStage(),
-				'hashCode' => $hashCode, 'publicDir' => (string) $this->publicDirPath);
+				'hashCode' => $hashCode, 'publicDir' => $publicDirPath);
 		if (null !== ($cacheItem = $cacheStore->get(self::CONFIG_CACHE_NAME, $characteristics))) {
 			$cachedAppConfig = $cacheItem->getData();
 			if ($cachedAppConfig instanceof AppConfig) {
-				$this->appConfig = $cachedAppConfig;
-				$this->applyConfiguration($n2nCache);
-				return;
+				$appConfig = $cachedAppConfig;
+				self::applyConfiguration($appConfig, $n2nCache, $varStore);
+				return $appConfig;
 			}
 		}
 
 		$appConfigFactory = new AppConfigFactory($this->publicDirPath);
-		$this->appConfig = $appConfigFactory->create($this->combinedConfigSource, N2N::getStage());
-		$this->applyConfiguration($n2nCache);
+		$appConfig = $appConfigFactory->create($this->combinedConfigSource, N2N::getStage());
+		self::applyConfiguration($appConfig, $n2nCache, $varStore);
 		$cacheStore->removeAll(self::CONFIG_CACHE_NAME);
 		$cacheStore->store(self::CONFIG_CACHE_NAME, $characteristics, $this->appConfig);
 	}
 
-	private function applyConfiguration(N2nCache $n2nCache): void {
-		$errorConfig = $this->appConfig->error();
+	private static function applyConfiguration(AppConfig $appConfig, N2nCache $n2nCache, VarStore $varStore): void {
+		$errorConfig = $appConfig->error();
 		self::$exceptionHandler?->setStrictAttitude($errorConfig->isStrictAttitudeEnabled());
 		self::$exceptionHandler?->setDetectStartupErrorsEnabled($errorConfig->isDetectStartupErrorsEnabled());
 
 		if ($errorConfig->isLogSendMailEnabled()) {
 			self::$exceptionHandler?->setLogMailRecipient($errorConfig->getLogMailRecipient(),
-					$this->appConfig->mail()->getDefaultAddresser());
+					$appConfig->mail()->getDefaultAddresser());
 		}
 
-		$ioConfig = $this->appConfig->io();
-		$this->varStore->setDirPerm($ioConfig->getPrivateDirPermission());
-		$this->varStore->setFilePerm($ioConfig->getPrivateFilePermission());
+		$ioConfig = $appConfig->io();
+		$varStore->setDirPerm($ioConfig->getPrivateDirPermission());
+		$varStore->setFilePerm($ioConfig->getPrivateFilePermission());
 		
-		$n2nLocaleConfig = $this->appConfig->locale();
-		L10n::setPeclIntlEnabled($this->appConfig->l10n()->isEnabled());
+		$n2nLocaleConfig = $appConfig->locale();
+		L10n::setPeclIntlEnabled($appConfig->l10n()->isEnabled());
 		N2nLocale::setDefault($n2nLocaleConfig->getDefaultN2nLocale());
 		N2nLocale::setFallback($n2nLocaleConfig->getFallbackN2nLocale());
 		N2nLocale::setAdmin($n2nLocaleConfig->getAdminN2nLocale());
-		N2nLocale::setWebAliases($this->appConfig->web()->getAliasN2nLocales());
+		N2nLocale::setWebAliases($appConfig->web()->getAliasN2nLocales());
 		
-		L10n::setL10nConfig($this->appConfig->l10n());
-		L10n::setPseudoL10nConfig($this->appConfig->pseudoL10n());
+		L10n::setL10nConfig($appConfig->l10n());
+		L10n::setPseudoL10nConfig($appConfig->pseudoL10n());
 		
-		$n2nCache->appConfigInitialized($this->appConfig);
+		$n2nCache->appConfigInitialized($appConfig);
+	}
 
-		foreach ($this->appConfig->general()->getExtensionClassNames() as $extensionClassName) {
-			$this->setUpExtension($extensionClassName);
+	private static function initExtensions(N2nApplication $n2nApplication): void {
+		foreach ($n2nApplication->getAppConfig()->general()->getExtensionClassNames() as $extensionClassName) {
+			self::setUpExtension($extensionClassName, $n2nApplication);
 		}
 	}
 
-	function createN2nContext(TransactionManager $transactionManager = null): AppN2nContext {
-		$n2nContext = new AppN2nContext($transactionManager ?? new TransactionManager(), $this->moduleManager, $this->n2nCache->getAppCache(),
-				$this->varStore, $this->appConfig, PhpVars::fromEnv());
-
-		foreach ($this->n2nExtensions as $n2nExtension) {
-			$n2nExtension->setUp($n2nContext);
-		}
-
-		$lookupSession = $n2nContext->getHttp()?->getLookupSession() ?? new SimpleLookupSession();
-		$lookupManager = new LookupManager($lookupSession, $this->n2nCache->getAppCache()->lookupCacheStore(LookupManager::class, true),
-				$n2nContext);
-		$n2nContext->setLookupManager($lookupManager);
-
-		return $n2nContext;
-	}
-
-	private function setUpExtension(string $extensionClassName): void {
+	private function setUpExtension(string $extensionClassName, N2nApplication $n2nApplication): void {
 		try {
 			$class = new \ReflectionClass($extensionClassName);
 		} catch (\ReflectionException $e) {
 			throw new N2nStartupException('Could not set up extension: ' . $extensionClassName, null, $e);
 		}
 
-		if (!$class->implementsInterface(N2nExtension::class)) {
-			throw new N2nStartupException('Extension class must implement \'' . N2nExtension::class
+		if (!$class->implementsInterface(ConfigN2nExtension::class)) {
+			throw new N2nStartupException('Extension class must implement \'' . ConfigN2nExtension::class
 					. '\': ' . $extensionClassName);
 		}
 
 		try {
-			$this->n2nExtensions[$extensionClassName] = $class->newInstance($this->appConfig, $this->n2nCache->getAppCache());
+			$n2nApplication->registerN2nExtension($class->newInstance($n2nApplication));
 		} catch (\ReflectionException $e) {
 			throw new InvalidConfigurationException('Invalid extension class: ' . $extensionClassName, 0,
 					$e);
@@ -250,7 +240,7 @@ class N2N {
 	 */
 
 	private static ?ExceptionHandler $exceptionHandler = null;
-	private static ?N2N $n2n = null;
+	private static ?N2nApplication $n2nApplication = null;
 	private static array $shutdownListeners = array();
 
 	private static ?AppN2nContext $n2nContext = null;
@@ -258,13 +248,12 @@ class N2N {
 	
 	public static function setup(string $publicDirPath, string $varDirPath,
 			N2nCache $n2nCache = null, ModuleFactory $moduleFactory = null, bool $enableExceptionHandler = true,
-			LogMailer $logMailer = null): N2N {
+			LogMailer $logMailer = null): N2nApplication {
 
 		// ignore if deprecated FileN2nCache from old projects
 		if ($n2nCache instanceof FileN2nCache) {
 			$n2nCache = null;
 		}
-
 
 		mb_internal_encoding(self::CHARSET);
 		// 		ini_set('default_charset', self::CHARSET);
@@ -272,15 +261,20 @@ class N2N {
 		if ($enableExceptionHandler) {
 			self::setUpExceptionHandler($logMailer);
 		}
-		
-		self::$n2n = new N2N(new FsPath(IoUtils::realpath($publicDirPath)),
-				new FsPath(IoUtils::realpath($varDirPath)));
-		self::$n2n->initModules($moduleFactory ?? new EtcModuleFactory());
-		self::$n2n->initConfiguration($n2nCache ?? (N2N::isTestStageOn() ? N2nCaches::null() : N2nCaches::file()));
-		
-		Sync::init(self::$n2n->varStore->requestDirFsPath(VarStore::CATEGORY_TMP, self::NS, self::SYNC_DIR));
 
-		return self::$n2n;
+		$publicDirFsPath = new FsPath(IoUtils::realpath($publicDirPath));
+		$n2nCache = $n2nCache ?? (N2N::isTestStageOn() ? N2nCaches::null() : N2nCaches::file());
+		$varStore = new VarStore(new FsPath(IoUtils::realpath($varDirPath)), null, null);
+		$combinedConfigSource = new CombinedConfigSource();
+		$moduleManager = self::initModules($moduleFactory ?? new EtcModuleFactory(), $varStore, $combinedConfigSource);
+		$appConfig = self::initConfiguration($combinedConfigSource, $n2nCache, $varStore, $publicDirFsPath);
+
+		Sync::init($varStore->requestDirFsPath(VarStore::CATEGORY_TMP, self::NS, self::SYNC_DIR));
+
+		self::$n2nApplication = new N2nApplication($varStore, $moduleManager, $n2nCache->getAppCache(), $appConfig, $publicDirFsPath);
+		self::initExtensions(self::$n2nApplication);
+
+		return self::$n2nApplication;
 	}
 
 	private static function setUpExceptionHandler(?LogMailer $logMailer): void {
@@ -297,14 +291,14 @@ class N2N {
 			LogMailer $logMailer = null): void {
 		self::setup($publicDirPath, $varDirPath, $n2nCache, $moduleFactory, $enableExceptionHandler, $logMailer);
 		
-		self::$n2nContext = self::$n2n->createN2nContext();
+		self::$n2nContext = self::$n2nApplication->createN2nContext();
 //		self::registerShutdownListener(self::$n2nContext);
 
 
 		self::$initialized = true;
 		
 		// @todo move up so exception will be grouped earlier.
-		self::initLogging(self::$n2n);
+		self::initLogging(self::$n2nApplication);
 
 		self::$exceptionHandler?->checkForStartupErrors();
 	}
@@ -416,10 +410,10 @@ class N2N {
 	 * @throws N2nHasNotYetBeenInitializedException
 	 */
 	protected static function _i() {
-		if(self::$n2n === null) {
+		if(self::$n2nApplication === null) {
 			throw new N2nHasNotYetBeenInitializedException('No N2N instance has been initialized for current thread.');
 		}
-		return self::$n2n;
+		return self::$n2nApplication;
 	}
 	/**
 	 * @return bool
