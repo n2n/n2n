@@ -139,7 +139,7 @@ class N2N {
 			self::applyConfiguration($appConfig, $n2nCache, $varStore);
 			return $appConfig;
 		}
-		
+
 		$characteristics = array('version' => N2N::VERSION, 'stage' => N2N::getStage(),
 				'hashCode' => $hashCode, 'publicDir' => $publicDirPath);
 		if (null !== ($cacheItem = $cacheStore->get(self::CONFIG_CACHE_NAME, $characteristics))) {
@@ -151,11 +151,13 @@ class N2N {
 			}
 		}
 
-		$appConfigFactory = new AppConfigFactory($this->publicDirPath);
-		$appConfig = $appConfigFactory->create($this->combinedConfigSource, N2N::getStage());
+		$appConfigFactory = new AppConfigFactory($publicDirPath);
+		$appConfig = $appConfigFactory->create($combinedConfigSource, N2N::getStage());
 		self::applyConfiguration($appConfig, $n2nCache, $varStore);
 		$cacheStore->removeAll(self::CONFIG_CACHE_NAME);
-		$cacheStore->store(self::CONFIG_CACHE_NAME, $characteristics, $this->appConfig);
+		$cacheStore->store(self::CONFIG_CACHE_NAME, $characteristics, $appConfig);
+
+		return $appConfig;
 	}
 
 	private static function applyConfiguration(AppConfig $appConfig, N2nCache $n2nCache, VarStore $varStore): void {
@@ -191,7 +193,7 @@ class N2N {
 		}
 	}
 
-	private function setUpExtension(string $extensionClassName, N2nApplication $n2nApplication): void {
+	private static function setUpExtension(string $extensionClassName, N2nApplication $n2nApplication): void {
 		try {
 			$class = new \ReflectionClass($extensionClassName);
 		} catch (\ReflectionException $e) {
@@ -274,6 +276,7 @@ class N2N {
 		self::$n2nApplication = new N2nApplication($varStore, $moduleManager, $n2nCache->getAppCache(), $appConfig, $publicDirFsPath);
 		self::initExtensions(self::$n2nApplication);
 
+
 		return self::$n2nApplication;
 	}
 
@@ -303,17 +306,17 @@ class N2N {
 		self::$exceptionHandler?->checkForStartupErrors();
 	}
 
-	private static function initLogging(N2N $n2n): void {
+	private static function initLogging(N2nApplication $n2nApplication): void {
 		if (self::$exceptionHandler === null) {
 			return;
 		}
 
-		$errorConfig = $n2n->appConfig->error();
+		$errorConfig = $n2nApplication->getAppConfig()->error();
 		
 		if ($errorConfig->isLogSaveDetailInfoEnabled()) {
 			self::$exceptionHandler->setLogDetailDirPath(
-					(string) $n2n->varStore->requestDirFsPath(VarStore::CATEGORY_LOG, self::NS, self::LOG_EXCEPTION_DETAIL_DIR, true),
-					$n2n->appConfig->io()->getPrivateFilePermission());
+					(string) $n2nApplication->getVarStore()->requestDirFsPath(VarStore::CATEGORY_LOG, self::NS, self::LOG_EXCEPTION_DETAIL_DIR, true),
+					$n2nApplication->getAppConfig()->io()->getPrivateFilePermission());
 		}
 		
 		if ($errorConfig->isLogHandleStatusExceptionsEnabled()) {
@@ -325,13 +328,13 @@ class N2N {
 		
 		if ($errorConfig->isLogSendMailEnabled()) {
 			self::$exceptionHandler->setLogMailBufferDirPath(
-					$n2n->varStore->requestDirFsPath(VarStore::CATEGORY_TMP, self::NS, self::LOG_MAIL_BUFFER_DIR));
+					$n2nApplication->getVarStore()->requestDirFsPath(VarStore::CATEGORY_TMP, self::NS, self::LOG_MAIL_BUFFER_DIR));
 		}
 		
-		Logger::configure((string) $n2n->varStore->requestFileFsPath(
+		Logger::configure((string) $n2nApplication->getVarStore()->requestFileFsPath(
 				VarStore::CATEGORY_ETC, null, null, self::LOG4PHP_CONFIG_FILE, true, false));
 	
-		$logLevel = $n2n->appConfig->general()->getApplicationLogLevel();
+		$logLevel = $n2nApplication->getAppConfig()->general()->getApplicationLogLevel();
 		
 		if (isset($logLevel)) {
 			Logger::getRootLogger()->setLevel($logLevel);
@@ -343,11 +346,11 @@ class N2N {
 	 * 
 	 * @return bool
 	 */
-	public static function isInitialized() {
+	public static function isInitialized(): bool {
 		return self::$initialized;
 	}
 	
-	public static function finalize() {
+	public static function finalize(): void {
 		foreach (self::$shutdownListeners as $shutdownListener) {
 			$shutdownListener->onShutdown();
 		}
@@ -394,7 +397,7 @@ class N2N {
 	 * @param \n2n\core\ShutdownListener $shutdownListener
 	 * @deprecated unsafe can cause memory leaks
 	 */
-	public static function registerShutdownListener(ShutdownListener $shutdownListener) {
+	public static function registerShutdownListener(ShutdownListener $shutdownListener): void {
 		self::$shutdownListeners[spl_object_hash($shutdownListener)] = $shutdownListener;
 	}
 	/**
@@ -402,14 +405,14 @@ class N2N {
 	 * @param \n2n\core\ShutdownListener $shutdownListener
 	 * @deprecated unsafe can cause memory leaks
 	 */
-	public static function unregisterShutdownListener(ShutdownListener $shutdownListener) {
+	public static function unregisterShutdownListener(ShutdownListener $shutdownListener): void {
 		unset(self::$shutdownListeners[spl_object_hash($shutdownListener)]);
 	}
 	/**
-	 * @return N2N
+	 * @return N2nApplication
 	 * @throws N2nHasNotYetBeenInitializedException
 	 */
-	protected static function _i() {
+	protected static function _i(): ?N2nApplication {
 		if(self::$n2nApplication === null) {
 			throw new N2nHasNotYetBeenInitializedException('No N2N instance has been initialized for current thread.');
 		}
@@ -418,13 +421,13 @@ class N2N {
 	/**
 	 * @return bool
 	 */
-	public static function isDevelopmentModeOn() {
+	public static function isDevelopmentModeOn(): bool {
 		return defined('N2N_STAGE') && N2N_STAGE == self::STAGE_DEVELOPMENT;
 	}
 	/**
 	 * @return bool
 	 */
-	public static function isLiveStageOn() {
+	public static function isLiveStageOn(): bool {
 		return !defined('N2N_STAGE') || N2N_STAGE == self::STAGE_LIVE;
 	}
 
@@ -441,45 +444,48 @@ class N2N {
 	}
 	/**
 	 * 
-	 * @return \n2n\core\err\ExceptionHandler
+	 * @return ExceptionHandler
 	 */
-	public static function getExceptionHandler() {
+	public static function getExceptionHandler(): ?ExceptionHandler {
 		return self::$exceptionHandler;
 	}
 	/**
 	 * 
-	 * @return \n2n\core\config\AppConfig
+	 * @return AppConfig
+	 * @deprecated
 	 */
-	public static function getAppConfig() {
-		return self::_i()->appConfig;
+	public static function getAppConfig(): AppConfig {
+		return self::_i()->getAppConfig();
 	}
 	/**
 	 * 
-	 * @return string
+	 * @return FsPath|null
+	 * @deprecated
 	 */
-	public static function getPublicDirPath() {
-		return self::_i()->publicDirPath;
+	public static function getPublicDirPath(): ?FsPath {
+		return self::_i()->getPublicFsPath();
 	}
 	/**
 	 * 
-	 * @return \n2n\core\VarStore
+	 * @return VarStore
+	 * @deprecated
 	 */
-	public static function getVarStore() {
-		return self::_i()->varStore;	
+	public static function getVarStore(): VarStore {
+		return self::_i()->getVarStore();
 	}
 	/**
 	 * @deprecated use HttpContext
 	 * @return \n2n\l10n\N2nLocale[]
 	 */
 	public static function getN2nLocales() {
-		return self::_i()->appConfig->routing()->getAllN2nLocales();
+		return self::_i()->getAppConfig()->routing()->getAllN2nLocales();
 	}
 	/**
 	 * @deprecated use HttpContext
 	 * @param string $n2nLocaleId
 	 * @return boolean
 	 */
-	public static function hasN2nLocale($n2nLocaleId) {
+	public static function hasN2nLocale($n2nLocaleId): bool {
 		$n2nLocales = self::getN2nLocales();
 		return isset($n2nLocales[(string) $n2nLocaleId]);
 	}
@@ -489,7 +495,7 @@ class N2N {
 	 * @throws N2nLocaleNotFoundException
 	 * @return \n2n\l10n\N2nLocale
 	 */
-	public static function getN2nLocaleById($n2nLocaleId) {
+	public static function getN2nLocaleById($n2nLocaleId): N2nLocale {
 		$n2nLocales = self::getN2nLocales();
 		if (isset($n2nLocales[(string) $n2nLocaleId])) {
 			return $n2nLocales[(string) $n2nLocaleId];
@@ -570,29 +576,31 @@ class N2N {
 	 * @return \n2n\core\module\Module[]
 	 */
 	public static function getModules() {
-		return self::_i()->moduleManager->getModules();
+		return self::_i()->getModuleManager()->getModules();
 	}
 
 	public static function registerModule(Module $module) {
-		self::_i()->moduleManager->registerModule($module);
-		if (null !== ($appConfigSource = $module->getAppConfigSource())) {
-			self::_i()->combinedConfigSource->putAdditional((string) $module, $appConfigSource);
-		}
+		self::_i()->getModuleManager()->registerModule($module);
 	}
 
 	public static function unregisterModule($module) {
 		$namespace = (string) $module;
 
-		self::_i()->moduleManager->unregisterModuleByNamespace($namespace);
-		self::_i()->combinedConfigSource->removeAdditionalByKey($namespace);
+		self::_i()->getModuleManager()->unregisterModuleByNamespace($namespace);
 	}
 
+	/**
+	 * @deprecated
+	 */
 	public static function containsModule($module) {
-		return self::_i()->getN2nContext()->getModuleManager()->containsModuleNs($module);
+		return self::_i()->getModuleManager()->containsModuleNs($module);
 	}
-	
+
+	/**
+	 * @deprecated
+	 */
  	public static function getModuleByClassName(string $className) {
- 		foreach (self::_i()->getN2nContext()->getModuleManager()->getModules() as $namespace => $module) {
+ 		foreach (self::_i()->getModuleManager()->getModules() as $namespace => $module) {
  			if (StringUtils::startsWith($namespace, $className)) {
  				return $module;
  			}
