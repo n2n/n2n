@@ -434,7 +434,7 @@ class N2N {
 		return !defined('N2N_STAGE') || N2N_STAGE == self::STAGE_LIVE;
 	}
 
-	static function isTestSTageOn(): bool {
+	static function isTestStageOn(): bool {
 		return defined('N2N_STAGE') && N2N_STAGE == self::STAGE_TEST;
 	}
 	
