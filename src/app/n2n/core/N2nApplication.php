@@ -33,6 +33,10 @@ class N2nApplication {
 		return $this->appConfig;
 	}
 
+	function getAppCache(): AppCache {
+		return $this->appCache;
+	}
+
 	function getPublicFsPath(): ?FsPath {
 		return $this->publicFsPath;
 	}
@@ -43,7 +47,7 @@ class N2nApplication {
 
 	function createN2nContext(TransactionManager $transactionManager = null): AppN2nContext {
 		$n2nContext = new AppN2nContext($transactionManager ?? new TransactionManager(),
-				$this->moduleManager, $this->appCache, $this->varStore, $this->appConfig, PhpVars::fromEnv());
+				$this, PhpVars::fromEnv());
 
 		foreach ($this->n2nExtensions as $n2nExtension) {
 			$n2nExtension->applyToN2nContext($n2nContext);
