@@ -161,7 +161,7 @@ class AppN2nContext implements N2nContext, ShutdownListener {
 			return $this->moduleConfigs[$namespace];
 		}
 
-		$module = $this->moduleManager->getModuleByNs($namespace);
+		$module = $this->getModuleManager()->getModuleByNs($namespace);
 		if ($module->hasConfigDescriber()) {
 			return $this->moduleConfigs[$namespace] = $module->createConfigDescriber($this)->buildCustomConfig();
 		}
