@@ -46,6 +46,9 @@ interface N2nContext extends MagicContext {
 
 	function isHttpContextAvailable(): bool;
 
+	/**
+	 * @deprecated
+	 */
 	function getHttpContext(): HttpContext;
 
 	function getAppCache(): \n2n\core\cache\AppCache;
