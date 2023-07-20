@@ -412,12 +412,17 @@ class N2N {
 	 * @return N2nApplication
 	 * @throws N2nHasNotYetBeenInitializedException
 	 */
-	protected static function _i(): ?N2nApplication {
+	protected static function _i(): N2nApplication {
 		if(self::$n2nApplication === null) {
 			throw new N2nHasNotYetBeenInitializedException('No N2N instance has been initialized for current thread.');
 		}
 		return self::$n2nApplication;
 	}
+
+	static function getN2nApplication(): N2nApplication {
+		return self::_i();
+	}
+
 	/**
 	 * @return bool
 	 */
