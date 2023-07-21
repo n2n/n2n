@@ -26,6 +26,7 @@ use n2n\l10n\N2nLocale;
 use n2n\util\crypt\EncryptionDescriptor;
 
 class WebConfig {
+	const PAYLOAD_CACHING_ENABLED_DEFAULT = true;
 	const RESPONSE_CACHING_ENABLED_DEFAULT = true;
 	const RESPONSE_BROWSER_CACHING_ENABLED_DEFAULT = true;
 	const RESPONSE_SEND_ETAG_ALLOWED_DEFAULT = true;
@@ -36,6 +37,7 @@ class WebConfig {
 	const DISPATCH_TARGET_CRYPT_ALGORITHM_DEFAULT = EncryptionDescriptor::ALGORITHM_AES_256_CTR;
 
 	/**
+	 * @param bool $payloadCachingEnabled
 	 * @param bool $responseCachingEnabled
 	 * @param bool $responseBrowserCachingEnabled
 	 * @param bool $responseSendEtagAllowed
@@ -49,7 +51,8 @@ class WebConfig {
 	 * @param N2nLocale[] $aliasN2nLocales
 	 * @param bool $responseContentSecurityPolicyEnabled
 	 */
-	public function __construct(private bool $responseCachingEnabled = self::RESPONSE_CACHING_ENABLED_DEFAULT,
+	public function __construct(private bool $payloadCachingEnabled = self::PAYLOAD_CACHING_ENABLED_DEFAULT,
+			private bool $responseCachingEnabled = self::RESPONSE_CACHING_ENABLED_DEFAULT,
 			private bool $responseBrowserCachingEnabled = self::RESPONSE_BROWSER_CACHING_ENABLED_DEFAULT,
 			private bool $responseSendEtagAllowed = self::RESPONSE_SEND_ETAG_ALLOWED_DEFAULT,
 			private bool $responseSendLastModifiedAllowed = self::RESPONSE_SEND_LAST_MODIFIED_ALLOWED_DEFAULT,
@@ -64,14 +67,21 @@ class WebConfig {
 
 		ArgUtils::valArray($this->aliasN2nLocales, N2nLocale::class);
 	}
-	
+
+	/**
+	 * @return boolean
+	 */
+	public function isPayloadCachingEnabled() {
+		return $this->payloadCachingEnabled;
+	}
+
 	/**
 	 * @return boolean
 	 */
 	public function isResponseCachingEnabled() {
 		return $this->responseCachingEnabled;
 	}
-	
+
 	/**
 	 * @return boolean
 	 */
