@@ -117,6 +117,7 @@ class AppConfigFactory {
 				array_filter($groupReader->getScalarArray(self::EXTENSION_CLASS_NAMES_KEY)));
 	}
 	
+	const PAYLOAD_CACHING_ENABLED_KEY = 'payload.caching_enabled';
 	const RESPONSE_CACHING_ENABLED_KEY = 'response.caching_enabled';
 	const RESPONSE_BROWSER_CACHING_ENABLED_KEY = 'response.browser_caching_enabled';
 	const RESPONSE_SEND_ETAG_ALLOWED_KEY = 'response.send_etag';
@@ -144,6 +145,8 @@ class AppConfigFactory {
 	 */
 	private function createWebConfig(GroupReader $groupReader): WebConfig {
 		return new WebConfig(
+				$groupReader->getBool(self::PAYLOAD_CACHING_ENABLED_KEY , false,
+						WebConfig::PAYLOAD_CACHING_ENABLED_DEFAULT),
 				$groupReader->getBool(self::RESPONSE_CACHING_ENABLED_KEY, false,
 						WebConfig::RESPONSE_CACHING_ENABLED_DEFAULT),
 				$groupReader->getBool(self::RESPONSE_BROWSER_CACHING_ENABLED_KEY, false,

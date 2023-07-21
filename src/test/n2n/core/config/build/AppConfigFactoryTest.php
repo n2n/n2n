@@ -67,6 +67,7 @@ class AppConfigFactoryTest extends TestCase {
 		$this->assertEquals(GeneralConfig::APPLICATION_NAME_DEFAULT, $appConfig->general()->getApplicationName());
 		$this->assertEquals(GeneralConfig::APPLICATION_REPLICATABLE_DEFAULT, $appConfig->general()->isApplicationReplicatable());
 
+		$this->assertEquals(WebConfig::PAYLOAD_CACHING_ENABLED_DEFAULT, $appConfig->web()->isPayloadCachingEnabled());
 		$this->assertEquals(WebConfig::RESPONSE_CACHING_ENABLED_DEFAULT, $appConfig->web()->isResponseCachingEnabled());
 		$this->assertEquals(WebConfig::RESPONSE_BROWSER_CACHING_ENABLED_DEFAULT, $appConfig->web()->isResponseBrowserCachingEnabled());
 		$this->assertEquals(WebConfig::RESPONSE_SEND_ETAG_ALLOWED_DEFAULT, $appConfig->web()->isResponseSendEtagAllowed());
@@ -117,6 +118,7 @@ class AppConfigFactoryTest extends TestCase {
 function testWeb() {
 		$appConfig = $this->createFromFsPath('web.app.ini');
 
+		$this->assertFalse($appConfig->web()->isPayloadCachingEnabled());
 		$this->assertFalse($appConfig->web()->isResponseCachingEnabled());
 		$this->assertFalse($appConfig->web()->isResponseBrowserCachingEnabled());
 		$this->assertFalse($appConfig->web()->isResponseSendEtagAllowed());

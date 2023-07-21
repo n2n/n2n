@@ -23,6 +23,7 @@ namespace n2n\core\config;
 
 use n2n\log4php\LoggerLevel;
 use n2n\util\type\ArgUtils;
+use n2n\util\uri\Url;
 
 class GeneralConfig {
 	const PAGE_NAME_DEFAULT = 'New awesome project';
@@ -31,7 +32,7 @@ class GeneralConfig {
 
 	/**
 	 * @param string $pageName
-	 * @param string|null $pageUrl
+	 * @param Url|string|null $pageUrl
 	 * @param string $applicationName
 	 * @param string|null $applicationLogLevel
 	 * @param bool $applicationReplicatable
@@ -39,7 +40,7 @@ class GeneralConfig {
 	 * @param string[] $extensionClassNames
 	 */
 	public function  __construct(private string $pageName = self::PAGE_NAME_DEFAULT,
-			private ?string $pageUrl = null,
+			private Url|string|null $pageUrl = null,
 			private string $applicationName = self::APPLICATION_NAME_DEFAULT,
 			private ?string $applicationLogLevel = null,
 			private bool $applicationReplicatable = self::APPLICATION_REPLICATABLE_DEFAULT,
@@ -48,6 +49,7 @@ class GeneralConfig {
 		ArgUtils::assertTrue(1 === preg_match('#^\w+$#', $applicationName), 'Invalid application name.');
 		ArgUtils::valArray($this->batchJobClassNames, 'string');
 		ArgUtils::valArray($this->extensionClassNames, 'string');
+		$this->pageUrl = Url::build($this->pageUrl);
 	}
 
 	/**
@@ -58,9 +60,9 @@ class GeneralConfig {
 	}
 
     /**
-     * @return string|null
+     * @return Url|null
      */
-	public function getPageUrl(): ?string {
+	public function getPageUrl(): ?Url {
 		return $this->pageUrl;
 	}
 	
