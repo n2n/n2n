@@ -21,15 +21,16 @@
  */
 namespace n2n\core\container;
 
-class CommitPreparationFailedException extends \Exception {
+class RollbackFailedException extends \Exception {
+
 	/**
-	 * @throws CommitPreparationFailedException
+	 * @throws RollbackFailedException
 	 */
 	static function try(\Closure $closure): mixed {
 		try {
 			return $closure();
 		} catch (\Throwable $t) {
-			throw new CommitPreparationFailedException($t->getMessage(), previous: $t);
+			throw new RollbackFailedException($t->getMessage(), previous: $t);
 		}
 	}
 }

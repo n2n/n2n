@@ -22,7 +22,6 @@
 namespace n2n\core\container;
 	  
 use n2n\reflection\ObjectAdapter;
-use n2n\util\ex\IllegalStateException;
 use n2n\util\EnumUtils;
 
 class TransactionManager extends ObjectAdapter {
@@ -30,6 +29,9 @@ class TransactionManager extends ObjectAdapter {
 	 * @var TransactionalResource[]
 	 */
 	private $transactionalResources = array();
+	/**
+	 * @var CommitListener[]
+	 */
 	private $commitListeners = array();
 	private $tRef = 1;
 	
@@ -39,7 +41,7 @@ class TransactionManager extends ObjectAdapter {
 	private bool $rollingBack = false;
 	private array $transactions = array();
 
-	private $phase = TransactionPhase::CLOSED;
+	private TransactionPhase $phase = TransactionPhase::CLOSED;
 
 	private bool $commitPreparationExtended = false;
 	private int $commitPreparationsNum = 0;
@@ -159,18 +161,38 @@ class TransactionManager extends ObjectAdapter {
 
 			$this->prepareCommit();
 			$this->commit();
+			$this->reset();
 		} catch (CommitPreparationFailedException $e) {
-			$this->rollBack();
+			$this->unexpectedlyRollBack($e);
+			$this->reset();
+
 			throw new UnexpectedRollbackException(
 					'Failure in transaction commit phase caused an unexpected rollback.', 0, $e);
 		} catch (CommitFailedException $e) {
-			throw new IllegalStateException('Transaction commit failed. State could be corrupted!', 0, $e);
-		} finally {
-			$this->reset();
+			throw $this->enterCorruptedState('Transaction commit failed.', $e);
+		} catch (RollbackFailedException $e) {
+			throw $this->enterCorruptedState('Transaction rollback failed.', $e);
 		}
 	}
+
+	private function unexpectedlyRollBack(\Throwable $previous): void {
+		try {
+			$this->rollBack();
+		} catch (RollbackFailedException $e) {
+			throw $this->enterCorruptedState('Unexpected rollback caused by exception "'
+					. get_class($previous) . ': ' . $previous->getMessage()
+					. '" failed. State could be corrupted!', $e);
+		}
+	}
+
+	private function enterCorruptedState(string $reason, \Throwable $previous): TransactionStateException {
+		$this->phase = TransactionPhase::CORRUPTED_STATE;
+
+		return new TransactionStateException('TransactionManager state could be corrupted. Reason: ' . $reason,
+				previous: $previous);
+	}
 	
-	private function reset() {
+	private function reset(): void {
 		$this->rootTransaction = null;
 		$this->rollingBack = false;
 		$this->readOnly = null;
@@ -217,7 +239,7 @@ class TransactionManager extends ObjectAdapter {
 
 		$transaction = $this->rootTransaction;
 		foreach ($this->commitListeners as $commitListener) {
-			$commitListener->prePrepare($transaction);
+			CommitPreparationFailedException::try(fn () => $commitListener->prePrepare($transaction));
 		}
 
 		do {
@@ -226,7 +248,7 @@ class TransactionManager extends ObjectAdapter {
 			$this->commitPreparationsNum++;
 
 			while (null !== ($resource = array_shift($this->pendingCommitPreparations))) {
-				$resource->prepareCommit($this->rootTransaction);
+				CommitPreparationFailedException::try(fn () => $resource->prepareCommit($this->rootTransaction));
 				if ($this->commitPreparationExtended) {
 					break;
 				}
@@ -234,16 +256,19 @@ class TransactionManager extends ObjectAdapter {
 
 			$transaction = $this->rootTransaction;
 			foreach ($this->commitListeners as $commitListener) {
-				$commitListener->postPrepare($transaction);
+				CommitPreparationFailedException::try(fn () => $commitListener->postPrepare($transaction));
 			}
 		} while ($this->commitPreparationExtended);
 	}
 
+	/**
+	 * @throws CommitFailedException
+	 */
 	private function commit(): void {
 		$transaction = $this->rootTransaction;
 
 		foreach ($this->commitListeners as $commitListener) {
-			$commitListener->preCommit($transaction);
+			CommitFailedException::try(fn () => $commitListener->preCommit($transaction));
 		}
 
 		$this->tRef++;
@@ -251,13 +276,9 @@ class TransactionManager extends ObjectAdapter {
 		
 		try {
 			foreach ($this->transactionalResources as $resource) {
-				$resource->commit($transaction);
+				CommitFailedException::try(fn () => $resource->commit($transaction));
 			}
-
-			$this->reset();
 		} catch (CommitFailedException $e) {
-			$this->reset();
-
 			$tsm = array();
 			foreach ($this->commitListeners as $commitListener) {
 				try {
@@ -277,26 +298,29 @@ class TransactionManager extends ObjectAdapter {
 
 		
 		foreach ($this->commitListeners as $commitListener) {
-			$commitListener->postCommit($transaction);
+			CommitFailedException::try(fn () => $commitListener->postCommit($transaction));
 		}
 	}
 
-	private function rollBack() {
+	/**
+	 * @throws RollbackFailedException
+	 */
+	private function rollBack(): void {
 		$this->tRef++;
 		$this->phase = TransactionPhase::ROLLBACK;
 
 		$transaction = $this->rootTransaction;
 
 		foreach ($this->commitListeners as $commitListener) {
-			$commitListener->preRollback($transaction);
+			RollbackFailedException::try(fn () => $commitListener->preRollback($transaction));
 		}
 
 		foreach ($this->transactionalResources as $listener) {
-			$listener->rollBack($this->rootTransaction);
+			RollbackFailedException::try(fn () => $listener->rollBack($this->rootTransaction));
 		}
 
 		foreach ($this->commitListeners as $commitListener) {
-			$commitListener->postRollback($transaction);
+			RollbackFailedException::try(fn () => $commitListener->postRollback($transaction));
 		}
 	}
 
