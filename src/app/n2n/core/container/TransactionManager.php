@@ -156,6 +156,7 @@ class TransactionManager extends ObjectAdapter {
 		try {
 			if ($this->rollingBack) {
 				$this->rollBack();
+				$this->reset();
 				return;
 			}
 
