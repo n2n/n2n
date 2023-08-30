@@ -28,6 +28,29 @@ use n2n\util\ex\IllegalStateException;
 
 class TransactionManagerTest extends TestCase {
 
+	function testRollback() {
+		$tr = new TransactionalResourceMock();
+		$tr2 = new TransactionalResourceMock();
+
+		$tm = new TransactionManager();
+		$tm->registerResource($tr);
+		$tm->registerResource($tr2);
+
+		$tx = $tm->createTransaction();
+
+		$tx->rollBack();
+
+		$this->assertCount(2, $tr->callMethods);
+		$this->assertEquals('beginTransaction', $tr->callMethods[0]);
+		$this->assertEquals('rollBack', $tr->callMethods[1]);
+
+		$this->assertCount(2, $tr2->callMethods);
+		$this->assertEquals('beginTransaction', $tr2->callMethods[0]);
+		$this->assertEquals('rollBack', $tr2->callMethods[1]);
+
+		$this->assertEquals(TransactionPhase::CLOSED, $tm->getPhase());
+	}
+
 
 	function testSomething() {
 		$tr = new TransactionalResourceMock();
@@ -43,12 +66,12 @@ class TransactionManagerTest extends TestCase {
 		};
 
 		$this->assertFalse($tm->hasOpenTransaction());
-		$this->assertEquals($tm->getPhase(), TransactionPhase::CLOSED);
+		$this->assertEquals(TransactionPhase::CLOSED, $tm->getPhase());
 
 		$tx = $tm->createTransaction();
 
 		$this->assertTrue($tm->hasOpenTransaction());
-		$this->assertEquals($tm->getPhase(), TransactionPhase::OPEN);
+		$this->assertEquals(TransactionPhase::OPEN, $tm->getPhase());
 
 		$this->assertCount(1, $tr->callMethods);
 		$this->assertEquals('beginTransaction', $tr->callMethods[0]);
@@ -71,6 +94,8 @@ class TransactionManagerTest extends TestCase {
 		$this->assertEquals('beginTransaction', $tr2->callMethods[0]);
 		$this->assertEquals('prepareCommit', $tr2->callMethods[1]);
 		$this->assertEquals('commit', $tr2->callMethods[2]);
+
+		$this->assertEquals(TransactionPhase::CLOSED, $tm->getPhase());
 	}
 
 
@@ -204,7 +229,6 @@ class TransactionManagerTest extends TestCase {
 		$tr2->rollbackOnce = fn() => throw new IllegalStateException('rollback fail mock ex');
 
 		$tx = $tm->createTransaction();
-
 
 		try {
 			$tx->commit();
