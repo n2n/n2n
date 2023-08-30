@@ -9,6 +9,7 @@ enum TransactionPhase: string {
 	case COMMIT = 'commit';
 
 	case ROLLBACK = 'rollback';
+	case CORRUPTED_STATE = 'corrupted state';
 
 	function isCompleting(): bool {
 		return in_array($this, [self::PREPARE_COMMIT, self::COMMIT, self::ROLLBACK]);

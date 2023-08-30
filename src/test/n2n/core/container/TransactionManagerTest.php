@@ -23,6 +23,8 @@ namespace n2n\core\container;
 
 use PHPUnit\Framework\TestCase;
 use n2n\core\container\mock\TransactionalResourceMock;
+use n2n\util\StringUtils;
+use n2n\util\ex\IllegalStateException;
 
 class TransactionManagerTest extends TestCase {
 
@@ -97,9 +99,139 @@ class TransactionManagerTest extends TestCase {
 			$tm->extendCommitPreparation();
 		};
 
-		$this->expectException(TransactionStateException::class);
-		$tx->commit();
+		try {
+			$tx->commit();
+			$this->fail('Exception expected.');
+		} catch (TransactionStateException $e) {
+			$previous = $e->getPrevious();
+			$this->assertInstanceOf(CommitFailedException::class, $previous);
+			$previous = $previous->getPrevious();
+			$this->assertInstanceOf(TransactionStateException::class, $previous);
+			$this->assertTrue(StringUtils::startsWith('Can not extend commit', $previous->getMessage()));
+		}
+	}
 
+	function testPreparationFailure() {
+		$tr = new TransactionalResourceMock();
+		$tr2 = new TransactionalResourceMock();
+
+		$tm = new TransactionManager();
+		$tm->registerResource($tr);
+		$tm->registerResource($tr2);
+
+		$tr->prepareOnce = fn() => throw new IllegalStateException();
+
+		$tx = $tm->createTransaction();
+
+		try {
+			$tx->commit();
+			$this->fail('exeception expected');
+		} catch (UnexpectedRollbackException $e) {
+			$previous = $e->getPrevious();
+			$this->assertInstanceOf(CommitPreparationFailedException::class, $previous);
+			$previous = $previous->getPrevious();
+			$this->assertInstanceOf(IllegalStateException::class, $previous);
+		}
+
+		$this->assertCount(3, $tr->callMethods);
+		$this->assertEquals('beginTransaction', $tr->callMethods[0]);
+		$this->assertEquals('prepareCommit', $tr->callMethods[1]);
+		$this->assertEquals('rollBack', $tr->callMethods[2]);
+
+		$this->assertCount(2, $tr2->callMethods);
+		$this->assertEquals('beginTransaction', $tr2->callMethods[0]);
+		$this->assertEquals('rollBack', $tr2->callMethods[1]);
+
+		$tx = $tm->createTransaction();
+
+		$this->assertCount(4, $tr->callMethods);
+		$this->assertEquals('beginTransaction', $tr->callMethods[3]);
+
+		$this->assertCount(3, $tr2->callMethods);
+		$this->assertEquals('beginTransaction', $tr2->callMethods[2]);
+	}
+
+	function testCommitFailure() {
+		$tr = new TransactionalResourceMock();
+		$tr2 = new TransactionalResourceMock();
+
+		$tm = new TransactionManager();
+		$tm->registerResource($tr);
+		$tm->registerResource($tr2);
+
+		$tr2->commitOnce = fn() => throw new IllegalStateException();
+
+		$tx = $tm->createTransaction();
+
+		$this->expectException(TransactionStateException::class);
+		try {
+			$tx->commit();
+			$this->fail('exception expected');
+		} catch (TransactionStateException $e) {
+			$this->assertInstanceOf(CommitFailedException::class, $e->getPrevious());
+		}
+
+		$this->assertCount(3, $tr->callMethods);
+		$this->assertEquals('beginTransaction', $tr->callMethods[0]);
+		$this->assertEquals('prepareCommit', $tr->callMethods[1]);
+		$this->assertEquals('commit', $tr->callMethods[2]);
+
+		$this->assertCount(3, $tr2->callMethods);
+		$this->assertEquals('beginTransaction', $tr2->callMethods[0]);
+		$this->assertEquals('prepareCommit', $tr2->callMethods[1]);
+		$this->assertEquals('commit', $tr2->callMethods[2]);
+
+		$this->assertEquals(TransactionPhase::CORRUPTED_STATE, $tm->getPhase());
+
+		$this->expectException(TransactionStateException::class);
+		try {
+			$tx = $tm->createTransaction();
+		} finally {
+			$this->assertCount(3, $tr->callMethods);
+			$this->assertCount(3, $tr2->callMethods);
+		}
+	}
+
+	function testUnexpectedRollbackFailure() {
+		$tr = new TransactionalResourceMock();
+		$tr2 = new TransactionalResourceMock();
+
+		$tm = new TransactionManager();
+		$tm->registerResource($tr);
+		$tm->registerResource($tr2);
+
+		$tr->prepareOnce = fn() => throw new IllegalStateException('commit fail mock ex');
+		$tr2->rollbackOnce = fn() => throw new IllegalStateException('rollback fail mock ex');
+
+		$tx = $tm->createTransaction();
+
+
+		try {
+			$tx->commit();
+			$this->fail('exception expected.');
+		} catch (TransactionStateException $e) {
+			$this->assertTrue(StringUtils::contains('commit fail mock ex', $e->getMessage()));
+			$this->assertInstanceOf(RollbackFailedException::class, $e->getPrevious());
+		}
+
+		$this->assertCount(3, $tr->callMethods);
+		$this->assertEquals('beginTransaction', $tr->callMethods[0]);
+		$this->assertEquals('prepareCommit', $tr->callMethods[1]);
+		$this->assertEquals('rollBack', $tr->callMethods[2]);
+
+		$this->assertCount(2, $tr2->callMethods);
+		$this->assertEquals('beginTransaction', $tr2->callMethods[0]);
+		$this->assertEquals('rollBack', $tr2->callMethods[1]);
+
+		$this->assertEquals(TransactionPhase::CORRUPTED_STATE, $tm->getPhase());
+
+		$this->expectException(TransactionStateException::class);
+		try {
+			$tm->createTransaction();
+		} finally {
+			$this->assertCount(3, $tr->callMethods);
+			$this->assertCount(2, $tr2->callMethods);
+		}
 	}
 
 }

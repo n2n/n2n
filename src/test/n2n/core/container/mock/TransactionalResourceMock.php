@@ -13,6 +13,7 @@ class TransactionalResourceMock implements TransactionalResource {
 
 	public \Closure|null $prepareOnce = null;
 	public \Closure|null $commitOnce = null;
+	public \Closure|null $rollbackOnce = null;
 
 	public function beginTransaction(Transaction $transaction): void {
 		$this->callMethods[] = 'beginTransaction';
@@ -48,6 +49,14 @@ class TransactionalResourceMock implements TransactionalResource {
 	public function rollBack(Transaction $transaction): void {
 		$this->callMethods[] = 'rollBack';
 		$this->callTransactions[] = $transaction;
+
+		if ($this->rollbackOnce === null) {
+			return;
+		}
+
+		$c = $this->rollbackOnce;
+		$this->rollbackOnce = null;
+		$c();
 	}
 
 	function release(): void {

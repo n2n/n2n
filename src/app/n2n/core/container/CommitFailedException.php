@@ -22,5 +22,14 @@
 namespace n2n\core\container;
 
 class CommitFailedException extends \Exception {
-	
+	/**
+	 * @throws CommitFailedException
+	 */
+	static function try(\Closure $closure): mixed {
+		try {
+			return $closure();
+		} catch (\Throwable $t) {
+			throw new CommitFailedException($t->getMessage(), previous: $t);
+		}
+	}
 }
