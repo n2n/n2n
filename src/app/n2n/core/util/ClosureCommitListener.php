@@ -21,16 +21,17 @@
  */
 namespace n2n\core\util;
 
-use n2n\core\container\CommitFailedException;
 use n2n\core\container\Transaction;
 use n2n\core\container\CommitListener;
+use n2n\core\container\err\TransactionPhaseException;
 
 class ClosureCommitListener implements CommitListener {
 
 	function __construct(private ?\Closure $prePrepareCallback = null, private ?\Closure $postPrepareCallback = null,
 			private ?\Closure $preCommitCallback = null, private ?\Closure $postCommitCallback = null,
-			private ?\Closure $commitFailedCallback = null, private ?\Closure $preRollbackCallback = null,
-			private ?\Closure $postRollbackCallback = null, private ?\Closure $finallyCallback = null) {
+			private ?\Closure $preRollbackCallback = null, private ?\Closure $postRollbackCallback = null,
+			private ?\Closure $postCloseCallback = null, private ?\Closure $postCorruptedStateCallback = null,
+			private ?\Closure $finallyCallback = null) {
 
 	}
 
@@ -113,15 +114,29 @@ class ClosureCommitListener implements CommitListener {
 	/**
 	 * @return \Closure|null
 	 */
-	public function getCommitFailedCallback(): ?\Closure {
-		return $this->commitFailedCallback;
+	public function getPostCloseCallback(): ?\Closure {
+		return $this->postCloseCallback;
 	}
 
 	/**
-	 * @param \Closure|null $commitFailedCallback
+	 * @param \Closure|null $postCorruptedStateCallback
 	 */
-	public function setCommitFailedCallback(?\Closure $commitFailedCallback): void {
-		$this->commitFailedCallback = $commitFailedCallback;
+	public function setPostCloseCallback(?\Closure $postClosedCallback): void {
+		$this->postCloseCallback = $postClosedCallback;
+	}
+
+	/**
+	 * @return \Closure|null
+	 */
+	public function getPostCorruptedStateCallback(): ?\Closure {
+		return $this->postCorruptedStateCallback;
+	}
+
+	/**
+	 * @param \Closure|null $postCorruptedStateCallback
+	 */
+	public function setPostCorruptedStateCallback(?\Closure $postCorruptedStateCallback): void {
+		$this->postCorruptedStateCallback = $postCorruptedStateCallback;
 	}
 
 	public function getFinallyCallback(): ?\Closure {
@@ -175,19 +190,6 @@ class ClosureCommitListener implements CommitListener {
 		if ($this->postCommitCallback !== null) {
 			($this->postCommitCallback)($transaction);
 		}
-
-		$this->callFinally($transaction);
-	}
-
-	/**
-	 * @inheritDoc
-	 */
-	public function commitFailed(Transaction $transaction, CommitFailedException $e): void {
-		if ($this->commitFailedCallback !== null) {
-			($this->commitFailedCallback)($transaction);
-		}
-
-		$this->callFinally($transaction);
 	}
 
 	/**
@@ -206,11 +208,25 @@ class ClosureCommitListener implements CommitListener {
 		if ($this->postRollbackCallback !== null) {
 			($this->postRollbackCallback)($transaction);
 		}
+	}
+
+
+	public function postClose(Transaction $transaction): void {
+		if ($this->postCloseCallback !== null) {
+			($this->postCloseCallback)($transaction);
+		}
 
 		$this->callFinally($transaction);
 	}
 
-	function closed(Transaction $transaction): void {
-		// TODO: Implement closed() method.
+	/**
+	 * @inheritDoc
+	 */
+	public function postCorruptedState(?Transaction $transaction, TransactionPhaseException $e): void {
+		if ($this->postCorruptedStateCallback !== null) {
+			($this->postCorruptedStateCallback)($transaction, $e);
+		}
+
+		$this->callFinally($transaction);
 	}
 }

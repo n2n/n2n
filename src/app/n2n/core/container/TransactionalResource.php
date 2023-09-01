@@ -22,6 +22,9 @@
 namespace n2n\core\container;
 
 use n2n\util\ex\IllegalStateException;
+use n2n\core\container\err\CommitFailedException;
+use n2n\core\container\err\CommitRequestFailedException;
+use n2n\core\container\err\RollbackFailedException;
 
 /**
  * Each TransactionalResource represents a participant in the two phase commit protocol
