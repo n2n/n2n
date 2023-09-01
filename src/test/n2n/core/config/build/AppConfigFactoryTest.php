@@ -200,9 +200,12 @@ function testWeb() {
         $this->assertEquals('pass', $persistenceUnitConfig1->getPassword());
         $this->assertEquals('n2n\persistence\meta\impl\mysql\MysqlDialect', $persistenceUnitConfig1->getDialectClassName());
         $this->assertEquals('SERIALIZABLE', $persistenceUnitConfig1->getTransactionIsolationLevel());
+		$this->assertEquals(true, $persistenceUnitConfig1->isSslVerify());
+		$this->assertEquals(false, $persistenceUnitConfig1->isPersistent());
 
 		$this->assertEquals('path/to/ca.crt', $persistenceUnitConfig2->getSslCaCertificatePath());
 		$this->assertEquals(false, $persistenceUnitConfig2->isSslVerify());
+		$this->assertEquals(true, $persistenceUnitConfig2->isPersistent());
     }
 	function testOrm() {
 		$appConfig = $this->createFromFsPath('orm.app.ini');

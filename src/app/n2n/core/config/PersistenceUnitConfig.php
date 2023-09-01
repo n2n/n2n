@@ -31,7 +31,7 @@ class PersistenceUnitConfig {
 	
 	public function __construct(private string $name, private string $dsnUri, private string $user, private ?string $password,
 			private string $transactionIsolationLevel, private string $dialectClassName,
-			private bool $sslVerify = true, private ?string $sslCaCertificatePath = null) {
+			private bool $sslVerify = true, private ?string $sslCaCertificatePath = null, private bool $persistent = false) {
 		ArgUtils::valEnum($this->transactionIsolationLevel, self::getTransactionIsolationLevels());
 	}
 	
@@ -70,5 +70,9 @@ class PersistenceUnitConfig {
 	public static function getTransactionIsolationLevels() {
 		return array(self::TIL_READ_UNCOMMITTED, self::TIL_READ_COMMITTED, 
 				self::TIL_REPEATABLE_READ, self::TIL_SERIALIZABLE);
+	}
+
+	public function isPersistent(): bool {
+		return $this->persistent;
 	}
 }

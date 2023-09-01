@@ -345,6 +345,7 @@ class AppConfigFactory {
 	const KEY_EXT_DIALECT_CLASS = '.dialect';
 	const KEY_EXT_SSl_VERIFY = '.ssl.verify';
 	const KEY_EXT_CA_CERTIFICATE_PATH = '.ssl.ca_certificate_path';
+	const KEY_EXT_PERSISTENT = '.persistent';
 
 	private function createDatabaseConfig(GroupReader $groupReader) {
 		$persistenceUnitConfigs = array();
@@ -357,7 +358,8 @@ class AppConfigFactory {
 							PersistenceUnitConfig::TIL_SERIALIZABLE),
 					$groupReader->getString($name . self::KEY_EXT_DIALECT_CLASS, true),
 					$groupReader->getBool($name . self::KEY_EXT_SSl_VERIFY, false, true),
-					$groupReader->getString($name . self::KEY_EXT_CA_CERTIFICATE_PATH, false));
+					$groupReader->getString($name . self::KEY_EXT_CA_CERTIFICATE_PATH, false),
+					$groupReader->getBool($name . self::KEY_EXT_PERSISTENT, false, false));
 		}
 				
 // 		$persistenceUnitConfigs[] = new PersistenceUnitConfig('default', 
