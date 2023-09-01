@@ -49,19 +49,19 @@ interface TransactionalResource {
 	 */
 	public function prepareCommit(Transaction $transaction): void;
 	
-//	/**
-//	 * Phase 1 (voting phase) of the two-phase commit protocol.
-//	 *
-//	 * @param Transaction $transaction
-//	 * @throws CommitPreparationFailedException causes the transaction to rollback and close.
-//	 */
-//	public function requestCommit(Transaction $transaction): void;
+	/**
+	 * Phase 1 (voting phase) of the two-phase commit protocol.
+	 *
+	 * @param Transaction $transaction
+	 * @throws CommitRequestFailedException|\Throwable equivalent of voting no, causes the transaction to roll back and close.
+	 */
+	public function requestCommit(Transaction $transaction): void;
 	
 	/**
 	 * Phase 2 of the two-phase commit protocol when all TransactionalResources voted yes on Phase 1.
 	 *
 	 * @param Transaction $transaction
-	 * @throws CommitFailedException causes the transaction to enter a corrupted state.
+	 * @throws CommitFailedException|\Throwable causes the transaction to enter a corrupted state.
 	 */	
 	public function commit(Transaction $transaction): void;
 	
@@ -69,7 +69,7 @@ interface TransactionalResource {
 	 * Phase 2 of the two-phase commit protocol when some TransactionalResources voted no on Phase 1.
 	 *
 	 * @param Transaction $transaction
-	 * @throws RollbackFailedException causes the transaction to enter a corrupted state.
+	 * @throws RollbackFailedException|\Throwable causes the transaction to enter a corrupted state.
 	 */
 	public function rollBack(Transaction $transaction): void;
 

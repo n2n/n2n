@@ -37,5 +37,5 @@ interface CommitListener {
 
 	public function postRollback(Transaction $transaction): void;
 
-	public function closed(Transaction $transaction): void;
+	public function postClose(Transaction $transaction): void;
 }

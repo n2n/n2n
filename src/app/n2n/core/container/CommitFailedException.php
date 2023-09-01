@@ -28,6 +28,8 @@ class CommitFailedException extends \Exception {
 	static function try(\Closure $closure): mixed {
 		try {
 			return $closure();
+		} catch (CommitFailedException $e) {
+			throw $e;
 		} catch (\Throwable $t) {
 			throw new CommitFailedException($t->getMessage(), previous: $t);
 		}

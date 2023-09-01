@@ -29,6 +29,8 @@ class RollbackFailedException extends \Exception {
 	static function try(\Closure $closure): mixed {
 		try {
 			return $closure();
+		} catch (RollbackFailedException $e) {
+			throw $e;
 		} catch (\Throwable $t) {
 			throw new RollbackFailedException($t->getMessage(), previous: $t);
 		}

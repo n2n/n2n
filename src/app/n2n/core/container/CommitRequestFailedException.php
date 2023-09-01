@@ -21,15 +21,17 @@
  */
 namespace n2n\core\container;
 
-class CommitPreparationFailedException extends \Exception {
+class CommitRequestFailedException extends \Exception {
 	/**
-	 * @throws CommitPreparationFailedException
+	 * @throws CommitRequestFailedException
 	 */
 	static function try(\Closure $closure): mixed {
 		try {
 			return $closure();
+		} catch (CommitRequestFailedException $e) {
+			throw $e;
 		} catch (\Throwable $t) {
-			throw new CommitPreparationFailedException($t->getMessage(), previous: $t);
+			throw new CommitRequestFailedException($t->getMessage(), previous: $t);
 		}
 	}
 }

@@ -153,7 +153,7 @@ class TransactionManagerTest extends TestCase {
 			$this->fail('exeception expected');
 		} catch (UnexpectedRollbackException $e) {
 			$previous = $e->getPrevious();
-			$this->assertInstanceOf(CommitPreparationFailedException::class, $previous);
+			$this->assertInstanceOf(CommitRequestFailedException::class, $previous);
 			$previous = $previous->getPrevious();
 			$this->assertInstanceOf(IllegalStateException::class, $previous);
 		}
