@@ -19,17 +19,8 @@
  * Bert Hofmänner.......: Idea, Frontend UI, Community Leader, Marketing
  * Thomas Günther.......: Developer, Hangar
  */
-namespace n2n\core\container;
+namespace n2n\core\container\err;
 
-class CommitPreparationFailedException extends \Exception {
-	/**
-	 * @throws CommitPreparationFailedException
-	 */
-	static function try(\Closure $closure): mixed {
-		try {
-			return $closure();
-		} catch (\Throwable $t) {
-			throw new CommitPreparationFailedException($t->getMessage(), previous: $t);
-		}
-	}
+class UnexpectedRollbackException extends TransactionStateException {
+	
 }

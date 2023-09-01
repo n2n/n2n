@@ -21,6 +21,8 @@
  */
 namespace n2n\core\container;
 
+use n2n\core\container\err\TransactionPhaseException;
+
 interface CommitListener {
 
 	function prePrepare(Transaction $transaction): void;
@@ -30,10 +32,12 @@ interface CommitListener {
 	public function preCommit(Transaction $transaction): void;
 
 	public function postCommit(Transaction $transaction): void;
-	
-	public function commitFailed(Transaction $transaction, CommitFailedException $e): void;
 
 	public function preRollback(Transaction $transaction): void;
 
 	public function postRollback(Transaction $transaction): void;
+
+	public function postClose(Transaction $transaction): void;
+
+	public function postCorruptedState(?Transaction $transaction, TransactionPhaseException $e): void;
 }

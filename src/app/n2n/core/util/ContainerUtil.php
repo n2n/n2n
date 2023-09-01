@@ -23,9 +23,8 @@ namespace n2n\core\util;
 
 use n2n\core\container\N2nContext;
 use n2n\core\container\TransactionManager;
-use n2n\util\ex\IllegalStateException;
 use n2n\reflection\magic\MagicMethodInvoker;
-use n2n\core\container\TransactionStateException;
+use n2n\core\container\err\TransactionStateException;
 use n2n\core\container\TransactionPhase;
 
 class ContainerUtil {
@@ -63,16 +62,16 @@ class ContainerUtil {
 	 * @param \Closure $callback
 	 * @return void
 	 */
-	function outsideTransaction(\Closure $callback, bool $invokeOnFaliedCommit = false): void {
+	function outsideTransaction(\Closure $callback, bool $invokeOnCorruptedState = false): void {
 		if (!$this->hasOpenTransaction()) {
 			$this->createMmiFromClosure($callback)->invoke();
 			return;
 		}
 
-		$this->postCommit($callback);
+		$this->postClose($callback);
 
-		if ($invokeOnFaliedCommit) {
-			$this->failedCommit($callback);
+		if ($invokeOnCorruptedState) {
+			$this->postCorruptedState($callback);
 		}
 	}
 
@@ -110,15 +109,6 @@ class ContainerUtil {
 		$mmi = $this->createMmiFromClosure($callback);
 		$commitListener = $this->createClosureCommitListener();
 		$commitListener->setPostCommitCallback(function () use ($commitListener, $mmi) {
-			$this->getTransactionManager()->unregisterCommitListener($commitListener);
-			$mmi->invoke();
-		});
-	}
-
-	function failedCommit(\Closure $callback): void {
-		$mmi = $this->createMmiFromClosure($callback);
-		$commitListener = $this->createClosureCommitListener();
-		$commitListener->setCommitFailedCallback(function () use ($commitListener, $mmi) {
 			$this->getTransactionManager()->unregisterCommitListener($commitListener);
 			$mmi->invoke();
 		});
@@ -180,5 +170,23 @@ class ContainerUtil {
 
 	function postPrepareAndExtend(\Closure $callback): void {
 		$this->postPrepare($callback, true);
+	}
+
+	function postCorruptedState(\Closure $callback): void {
+		$mmi = $this->createMmiFromClosure($callback);
+		$commitListener = $this->createClosureCommitListener();
+		$commitListener->setPostCorruptedStateCallback(function () use ($commitListener, $mmi) {
+			$this->getTransactionManager()->unregisterCommitListener($commitListener);
+			$mmi->invoke();
+		});
+	}
+
+	function postClose(\Closure $callback): void {
+		$mmi = $this->createMmiFromClosure($callback);
+		$commitListener = $this->createClosureCommitListener();
+		$commitListener->setPostCloseCallback(function() use ($commitListener, $mmi) {
+			$this->getTransactionManager()->unregisterCommitListener($commitListener);
+			$mmi->invoke();
+		});
 	}
 }

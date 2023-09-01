@@ -25,6 +25,11 @@ use PHPUnit\Framework\TestCase;
 use n2n\core\container\mock\TransactionalResourceMock;
 use n2n\util\StringUtils;
 use n2n\util\ex\IllegalStateException;
+use n2n\core\container\err\CommitFailedException;
+use n2n\core\container\err\CommitRequestFailedException;
+use n2n\core\container\err\RollbackFailedException;
+use n2n\core\container\err\TransactionStateException;
+use n2n\core\container\err\UnexpectedRollbackException;
 
 class TransactionManagerTest extends TestCase {
 
@@ -84,16 +89,18 @@ class TransactionManagerTest extends TestCase {
 
 		$tx->commit();
 
-		$this->assertCount(4, $tr->callMethods);
+		$this->assertCount(5, $tr->callMethods);
 		$this->assertEquals('beginTransaction', $tr->callMethods[0]);
 		$this->assertEquals('prepareCommit', $tr->callMethods[1]);
 		$this->assertEquals('prepareCommit', $tr->callMethods[2]);
-		$this->assertEquals('commit', $tr->callMethods[3]);
+		$this->assertEquals('requestCommit', $tr->callMethods[3]);
+		$this->assertEquals('commit', $tr->callMethods[4]);
 
-		$this->assertCount(3, $tr2->callMethods);
+		$this->assertCount(4, $tr2->callMethods);
 		$this->assertEquals('beginTransaction', $tr2->callMethods[0]);
 		$this->assertEquals('prepareCommit', $tr2->callMethods[1]);
-		$this->assertEquals('commit', $tr2->callMethods[2]);
+		$this->assertEquals('requestCommit', $tr2->callMethods[2]);
+		$this->assertEquals('commit', $tr2->callMethods[3]);
 
 		$this->assertEquals(TransactionPhase::CLOSED, $tm->getPhase());
 	}
@@ -136,7 +143,7 @@ class TransactionManagerTest extends TestCase {
 		}
 	}
 
-	function testPreparationFailure() {
+	function testRequestCommitFailure() {
 		$tr = new TransactionalResourceMock();
 		$tr2 = new TransactionalResourceMock();
 
@@ -144,7 +151,7 @@ class TransactionManagerTest extends TestCase {
 		$tm->registerResource($tr);
 		$tm->registerResource($tr2);
 
-		$tr->prepareOnce = fn() => throw new IllegalStateException();
+		$tr->requestCommitOnce = fn() => throw new IllegalStateException();
 
 		$tx = $tm->createTransaction();
 
@@ -153,27 +160,29 @@ class TransactionManagerTest extends TestCase {
 			$this->fail('exeception expected');
 		} catch (UnexpectedRollbackException $e) {
 			$previous = $e->getPrevious();
-			$this->assertInstanceOf(CommitPreparationFailedException::class, $previous);
+			$this->assertInstanceOf(CommitRequestFailedException::class, $previous);
 			$previous = $previous->getPrevious();
 			$this->assertInstanceOf(IllegalStateException::class, $previous);
 		}
 
-		$this->assertCount(3, $tr->callMethods);
+		$this->assertCount(4, $tr->callMethods);
 		$this->assertEquals('beginTransaction', $tr->callMethods[0]);
 		$this->assertEquals('prepareCommit', $tr->callMethods[1]);
-		$this->assertEquals('rollBack', $tr->callMethods[2]);
+		$this->assertEquals('requestCommit', $tr->callMethods[2]);
+		$this->assertEquals('rollBack', $tr->callMethods[3]);
 
-		$this->assertCount(2, $tr2->callMethods);
+		$this->assertCount(3, $tr2->callMethods);
 		$this->assertEquals('beginTransaction', $tr2->callMethods[0]);
-		$this->assertEquals('rollBack', $tr2->callMethods[1]);
+		$this->assertEquals('prepareCommit', $tr->callMethods[1]);
+		$this->assertEquals('rollBack', $tr2->callMethods[2]);
 
 		$tx = $tm->createTransaction();
 
-		$this->assertCount(4, $tr->callMethods);
-		$this->assertEquals('beginTransaction', $tr->callMethods[3]);
+		$this->assertCount(5, $tr->callMethods);
+		$this->assertEquals('beginTransaction', $tr->callMethods[4]);
 
-		$this->assertCount(3, $tr2->callMethods);
-		$this->assertEquals('beginTransaction', $tr2->callMethods[2]);
+		$this->assertCount(4, $tr2->callMethods);
+		$this->assertEquals('beginTransaction', $tr2->callMethods[3]);
 	}
 
 	function testCommitFailure() {
@@ -196,15 +205,17 @@ class TransactionManagerTest extends TestCase {
 			$this->assertInstanceOf(CommitFailedException::class, $e->getPrevious());
 		}
 
-		$this->assertCount(3, $tr->callMethods);
+		$this->assertCount(4, $tr->callMethods);
 		$this->assertEquals('beginTransaction', $tr->callMethods[0]);
 		$this->assertEquals('prepareCommit', $tr->callMethods[1]);
-		$this->assertEquals('commit', $tr->callMethods[2]);
+		$this->assertEquals('requestCommit', $tr->callMethods[2]);
+		$this->assertEquals('commit', $tr->callMethods[3]);
 
-		$this->assertCount(3, $tr2->callMethods);
+		$this->assertCount(4, $tr2->callMethods);
 		$this->assertEquals('beginTransaction', $tr2->callMethods[0]);
 		$this->assertEquals('prepareCommit', $tr2->callMethods[1]);
-		$this->assertEquals('commit', $tr2->callMethods[2]);
+		$this->assertEquals('requestCommit', $tr2->callMethods[2]);
+		$this->assertEquals('commit', $tr2->callMethods[3]);
 
 		$this->assertEquals(TransactionPhase::CORRUPTED_STATE, $tm->getPhase());
 
@@ -212,8 +223,8 @@ class TransactionManagerTest extends TestCase {
 		try {
 			$tx = $tm->createTransaction();
 		} finally {
-			$this->assertCount(3, $tr->callMethods);
-			$this->assertCount(3, $tr2->callMethods);
+			$this->assertCount(4, $tr->callMethods);
+			$this->assertCount(4, $tr2->callMethods);
 		}
 	}
 
@@ -225,7 +236,7 @@ class TransactionManagerTest extends TestCase {
 		$tm->registerResource($tr);
 		$tm->registerResource($tr2);
 
-		$tr->prepareOnce = fn() => throw new IllegalStateException('commit fail mock ex');
+		$tr->requestCommitOnce = fn() => throw new IllegalStateException('commit fail mock ex');
 		$tr2->rollbackOnce = fn() => throw new IllegalStateException('rollback fail mock ex');
 
 		$tx = $tm->createTransaction();
@@ -238,14 +249,16 @@ class TransactionManagerTest extends TestCase {
 			$this->assertInstanceOf(RollbackFailedException::class, $e->getPrevious());
 		}
 
-		$this->assertCount(3, $tr->callMethods);
+		$this->assertCount(4, $tr->callMethods);
 		$this->assertEquals('beginTransaction', $tr->callMethods[0]);
 		$this->assertEquals('prepareCommit', $tr->callMethods[1]);
-		$this->assertEquals('rollBack', $tr->callMethods[2]);
+		$this->assertEquals('requestCommit', $tr->callMethods[2]);
+		$this->assertEquals('rollBack', $tr->callMethods[3]);
 
-		$this->assertCount(2, $tr2->callMethods);
+		$this->assertCount(3, $tr2->callMethods);
 		$this->assertEquals('beginTransaction', $tr2->callMethods[0]);
-		$this->assertEquals('rollBack', $tr2->callMethods[1]);
+		$this->assertEquals('prepareCommit', $tr2->callMethods[1]);
+		$this->assertEquals('rollBack', $tr2->callMethods[2]);
 
 		$this->assertEquals(TransactionPhase::CORRUPTED_STATE, $tm->getPhase());
 
@@ -253,8 +266,8 @@ class TransactionManagerTest extends TestCase {
 		try {
 			$tm->createTransaction();
 		} finally {
-			$this->assertCount(3, $tr->callMethods);
-			$this->assertCount(2, $tr2->callMethods);
+			$this->assertCount(4, $tr->callMethods);
+			$this->assertCount(3, $tr2->callMethods);
 		}
 	}
 

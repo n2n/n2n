@@ -12,6 +12,7 @@ class TransactionalResourceMock implements TransactionalResource {
 	public array $callTransactions = [];
 
 	public \Closure|null $prepareOnce = null;
+	public \Closure|null $requestCommitOnce = null;
 	public \Closure|null $commitOnce = null;
 	public \Closure|null $rollbackOnce = null;
 
@@ -30,6 +31,19 @@ class TransactionalResourceMock implements TransactionalResource {
 
 		$c = $this->prepareOnce;
 		$this->prepareOnce = null;
+		$c();
+	}
+
+	public function requestCommit(Transaction $transaction): void {
+		$this->callMethods[] = 'requestCommit';
+		$this->callTransactions[] = $transaction;
+
+		if ($this->requestCommitOnce === null) {
+			return;
+		}
+
+		$c = $this->requestCommitOnce;
+		$this->requestCommitOnce = null;
 		$c();
 	}
 

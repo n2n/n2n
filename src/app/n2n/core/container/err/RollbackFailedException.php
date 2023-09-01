@@ -19,9 +19,9 @@
  * Bert Hofmänner.......: Idea, Frontend UI, Community Leader, Marketing
  * Thomas Günther.......: Developer, Hangar
  */
-namespace n2n\core\container;
+namespace n2n\core\container\err;
 
-class RollbackFailedException extends \Exception {
+class RollbackFailedException extends TransactionPhaseException {
 
 	/**
 	 * @throws RollbackFailedException
@@ -29,6 +29,8 @@ class RollbackFailedException extends \Exception {
 	static function try(\Closure $closure): mixed {
 		try {
 			return $closure();
+		} catch (RollbackFailedException $e) {
+			throw $e;
 		} catch (\Throwable $t) {
 			throw new RollbackFailedException($t->getMessage(), previous: $t);
 		}
