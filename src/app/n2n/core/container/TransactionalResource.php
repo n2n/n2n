@@ -24,29 +24,52 @@ namespace n2n\core\container;
 use n2n\util\ex\IllegalStateException;
 
 /**
- * Each method gets called two times.
+ * Each TransactionalResource represents a participant in the two phase commit protocol
+ * (@link https://en.wikipedia.org/wiki/Two-phase_commit_protocol).
  *
+ * N2N adds additional prepare phase in which participants can settle the commit between them. This phase happens
+ * in advance of the commit request (or voting) phase.
  */
 interface TransactionalResource {
 	/**
 	 * @param Transaction $transaction
 	 */
 	public function beginTransaction(Transaction $transaction): void;
-	
+
 	/**
+	 * Will be called previous to {@link self::requestCommit()}. Contrary to prepareCommit() this method could
+	 * be called multiple times. This happens when the prepare phase was extended
+	 * ({@link TransactionManager::extendCommitPreparation() was called or {@link self::prepareCommit()} of
+	 * any TransactionalResource returned false).
+	 *
+	 *
 	 * @param Transaction $transaction
-	 * @throws CommitPreparationFailedException causes the transaction to roll back
+	 * @return void
+	 * @throws \Throwable causes the abort of the commit but the transaction will remain open.
 	 */
 	public function prepareCommit(Transaction $transaction): void;
 	
+//	/**
+//	 * Phase 1 (voting phase) of the two-phase commit protocol.
+//	 *
+//	 * @param Transaction $transaction
+//	 * @throws CommitPreparationFailedException causes the transaction to rollback and close.
+//	 */
+//	public function requestCommit(Transaction $transaction): void;
+	
 	/**
+	 * Phase 2 of the two-phase commit protocol when all TransactionalResources voted yes on Phase 1.
+	 *
 	 * @param Transaction $transaction
-	 * @throws CommitFailedException
+	 * @throws CommitFailedException causes the transaction to enter a corrupted state.
 	 */	
 	public function commit(Transaction $transaction): void;
 	
 	/**
+	 * Phase 2 of the two-phase commit protocol when some TransactionalResources voted no on Phase 1.
+	 *
 	 * @param Transaction $transaction
+	 * @throws RollbackFailedException causes the transaction to enter a corrupted state.
 	 */
 	public function rollBack(Transaction $transaction): void;
 

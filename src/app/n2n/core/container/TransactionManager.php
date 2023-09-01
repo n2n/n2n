@@ -156,16 +156,16 @@ class TransactionManager extends ObjectAdapter {
 		try {
 			if ($this->rollingBack) {
 				$this->rollBack();
-				$this->reset();
+				$this->close();
 				return;
 			}
 
 			$this->prepareCommit();
 			$this->commit();
-			$this->reset();
+			$this->close();
 		} catch (CommitPreparationFailedException $e) {
 			$this->unexpectedlyRollBack($e);
-			$this->reset();
+			$this->close();
 
 			throw new UnexpectedRollbackException(
 					'Failure in transaction commit phase caused an unexpected rollback.', 0, $e);
@@ -193,7 +193,9 @@ class TransactionManager extends ObjectAdapter {
 				previous: $previous);
 	}
 	
-	private function reset(): void {
+	private function close(): void {
+		$transaction = $this->rootTransaction;
+
 		$this->rootTransaction = null;
 		$this->rollingBack = false;
 		$this->readOnly = null;
@@ -201,6 +203,16 @@ class TransactionManager extends ObjectAdapter {
 		$this->commitPreparationExtended = false;
 		$this->commitPreparationsNum = 0;
 		$this->pendingCommitPreparations = null;
+
+		$closedTs = [];
+
+		foreach ($this->commitListeners as $commitListener) {
+			try {
+				$commitListener->closed($transaction);
+			} catch (\Throwable $e) {
+
+			}
+		}
 	}
 	
 	private function begin(Transaction $transaction) {

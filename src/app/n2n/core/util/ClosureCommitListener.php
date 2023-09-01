@@ -209,4 +209,8 @@ class ClosureCommitListener implements CommitListener {
 
 		$this->callFinally($transaction);
 	}
+
+	function closed(Transaction $transaction): void {
+		// TODO: Implement closed() method.
+	}
 }
