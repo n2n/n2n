@@ -37,6 +37,8 @@ class TransactionManager extends ObjectAdapter {
 	 * @var TransactionalResource[]
 	 */
 	private $transactionalResources = array();
+
+	private ?array $begunTransactionalResources = null;
 	/**
 	 * @var CommitListener[]
 	 */
@@ -80,6 +82,8 @@ class TransactionManager extends ObjectAdapter {
 			$this->begin($transaction);
 		} catch (BeginFailedException $e) {
 			$this->failWithUnexpectedRollBackAndClose($e);
+		} finally {
+			$this->cleanUpBegin();
 		}
 		return $transaction;
 	}
@@ -331,9 +335,15 @@ class TransactionManager extends ObjectAdapter {
 	private function begin(Transaction $transaction): void {
 		$this->phase = TransactionPhase::OPEN;
 
+		$this->begunTransactionalResources = [];
 		foreach ($this->transactionalResources as $resource) {
 			BeginFailedException::try(fn () => $resource->beginTransaction($transaction));
+			$this->begunTransactionalResources[] = $resource;
 		}
+	}
+
+	private function cleanUpBegin(): void {
+		$this->begunTransactionalResources = null;
 	}
 
 	/**
@@ -429,7 +439,7 @@ class TransactionManager extends ObjectAdapter {
 					fn () => $commitListener->preRollback($transaction));
 		}
 
-		foreach ($this->transactionalResources as $listener) {
+		foreach ($this->begunTransactionalResources ?? $this->transactionalResources as $listener) {
 			RollbackFailedException::try(fn () => $listener->rollBack($this->rootTransaction));
 		}
 
