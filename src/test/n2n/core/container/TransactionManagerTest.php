@@ -297,11 +297,13 @@ class TransactionManagerTest extends TestCase {
 
 	function testBeginFailure(): void {
 		$tr = new TransactionalResourceMock();
+		$tr2 = new TransactionalResourceMock();
 
 		$tm = new TransactionManager();
 		$tm->registerResource($tr);
+		$tm->registerResource($tr2);
 
-		$tr->beginOnce = fn() => throw new IllegalStateException('begin fail mock ex');
+		$tr2->beginOnce = fn() => throw new IllegalStateException('begin fail mock ex');
 
 		try {
 			$tx = $tm->createTransaction();
@@ -313,6 +315,9 @@ class TransactionManagerTest extends TestCase {
 		$this->assertCount(2, $tr->callMethods);
 		$this->assertEquals('beginTransaction', $tr->callMethods[0]);
 		$this->assertEquals('rollBack', $tr->callMethods[1]);
+
+		$this->assertCount(1, $tr2->callMethods);
+		$this->assertEquals('beginTransaction', $tr2->callMethods[0]);
 
 		$this->assertFalse($tm->hasOpenTransaction());
 		$this->assertEquals(TransactionPhase::CLOSED, $tm->getPhase());
