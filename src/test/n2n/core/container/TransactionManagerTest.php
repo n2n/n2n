@@ -271,4 +271,53 @@ class TransactionManagerTest extends TestCase {
 		}
 	}
 
+	function testRollbackAfterPrepareFailure(): void {
+		$tr = new TransactionalResourceMock();
+
+		$tm = new TransactionManager();
+		$tm->registerResource($tr);
+
+		$tr->prepareOnce = fn() => throw new IllegalStateException('prepare fail mock ex');
+
+		$tx = $tm->createTransaction();
+
+		try {
+			$tx->commit();
+			$this->fail('exception expected.');
+		} catch (IllegalStateException $e) {
+			$this->assertTrue(StringUtils::contains('prepare fail mock ex', $e->getMessage()));
+		}
+
+		$this->assertTrue($tm->hasOpenTransaction());
+		$tx->rollBack();
+
+		$this->assertFalse($tm->hasOpenTransaction());
+		$this->assertEquals(TransactionPhase::CLOSED, $tm->getPhase());
+	}
+
+	function testBeginFailure(): void {
+		$tr = new TransactionalResourceMock();
+
+		$tm = new TransactionManager();
+		$tm->registerResource($tr);
+
+		$tr->beginOnce = fn() => throw new IllegalStateException('begin fail mock ex');
+
+		try {
+			$tx = $tm->createTransaction();
+			$this->fail('exception expected.');
+		} catch (UnexpectedRollbackException $e) {
+			$this->assertTrue(StringUtils::contains('begin fail mock ex', $e->getPrevious()->getMessage()));
+		}
+
+		$this->assertCount(2, $tr->callMethods);
+		$this->assertEquals('beginTransaction', $tr->callMethods[0]);
+		$this->assertEquals('rollBack', $tr->callMethods[1]);
+
+		$this->assertFalse($tm->hasOpenTransaction());
+		$this->assertEquals(TransactionPhase::CLOSED, $tm->getPhase());
+
+
+	}
+
 }
