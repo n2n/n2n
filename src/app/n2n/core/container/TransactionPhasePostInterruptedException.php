@@ -10,7 +10,7 @@ class TransactionPhasePostInterruptedException extends \Exception {
 		try {
 			return $closure();
 		} catch (\Throwable $t) {
-			throw new TransactionPhasePostInterruptedException($pre,
+			throw new TransactionPhasePostInterruptedException(
 					'Callback ' . $callbackName . ' caused error: ' . $t->getMessage(),
 					previous: $t);
 		}
