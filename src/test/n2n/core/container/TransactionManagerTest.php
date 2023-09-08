@@ -30,6 +30,7 @@ use n2n\core\container\err\CommitRequestFailedException;
 use n2n\core\container\err\RollbackFailedException;
 use n2n\core\container\err\TransactionStateException;
 use n2n\core\container\err\UnexpectedRollbackException;
+use n2n\core\container\mock\CommitListenerMock;
 
 class TransactionManagerTest extends TestCase {
 
@@ -323,6 +324,36 @@ class TransactionManagerTest extends TestCase {
 		$this->assertEquals(TransactionPhase::CLOSED, $tm->getPhase());
 
 
+	}
+
+	public function testPreCommitInterruption(): void {
+
+		$tr = new TransactionalResourceMock();
+		$cl = new CommitListenerMock();
+
+		$cl->preCommitOnce = fn () => throw new IllegalStateException();
+
+		$tm = new TransactionManager();
+		$tm->registerResource($tr);
+		$tm->registerCommitListener($cl);
+
+		$tx = $tm->createTransaction();
+
+
+		$this->expectException(TransactionStateException::class);
+		try {
+			$tx->commit();
+		} finally {
+			$this->assertEquals(TransactionPhase::OPEN, $tm->getPhase());
+			$this->assertCount(3, $cl->callMethods);
+			$this->assertEquals('prePrepare', $cl->callMethods[0]);
+			$this->assertEquals('postPrepare', $cl->callMethods[1]);
+			$this->assertEquals('preCommit', $cl->callMethods[2]);
+
+			$this->assertCount(2, $tr->callMethods);
+			$this->assertEquals('beginTransaction', $tr->callMethods[0]);
+			$this->assertEquals('prepareCommit', $tr->callMethods[1]);
+		}
 	}
 
 }

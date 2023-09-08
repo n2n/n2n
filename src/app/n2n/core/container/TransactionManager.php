@@ -481,15 +481,15 @@ class TransactionManager extends ObjectAdapter {
 		}
 	}
 
-	public function unregisterResource(TransactionalResource $resource) {
+	public function unregisterResource(TransactionalResource $resource): void {
 		unset($this->transactionalResources[spl_object_hash($resource)]);
 	}
 	
-	public function registerCommitListener(CommitListener $commitListener) {
+	public function registerCommitListener(CommitListener $commitListener): void {
 		$this->commitListeners[spl_object_hash($commitListener)] = $commitListener;
 	}
 	
-	public function unregisterCommitListener(CommitListener $commitListener) {
+	public function unregisterCommitListener(CommitListener $commitListener): void {
 		unset($this->commitListeners[spl_object_hash($commitListener)]);
 	}
 }
