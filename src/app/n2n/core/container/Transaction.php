@@ -50,6 +50,10 @@ class Transaction {
 		return $this->readOnly;
 	}
 
+	function isOpen(): bool {
+		return $this->transactionalContext->isLevelOpen($this->level, $this->tcRef);
+	}
+
 	public function commit() {
 		$this->transactionalContext->closeLevel($this->level, $this->tcRef, true);
 	}
