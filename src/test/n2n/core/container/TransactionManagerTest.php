@@ -77,6 +77,7 @@ class TransactionManagerTest extends TestCase {
 		$tx = $tm->createTransaction();
 
 		$this->assertTrue($tm->hasOpenTransaction());
+		$this->assertTrue($tx->isOpen());
 		$this->assertEquals(TransactionPhase::OPEN, $tm->getPhase());
 
 		$this->assertCount(1, $tr->callMethods);
@@ -104,6 +105,7 @@ class TransactionManagerTest extends TestCase {
 		$this->assertEquals('commit', $tr2->callMethods[3]);
 
 		$this->assertEquals(TransactionPhase::CLOSED, $tm->getPhase());
+		$this->assertFalse($tx->isOpen());
 	}
 
 
@@ -197,6 +199,7 @@ class TransactionManagerTest extends TestCase {
 		$tr2->commitOnce = fn() => throw new IllegalStateException();
 
 		$tx = $tm->createTransaction();
+		$this->assertTrue($tx->isOpen());
 
 		$this->expectException(TransactionStateException::class);
 		try {
@@ -205,6 +208,7 @@ class TransactionManagerTest extends TestCase {
 		} catch (TransactionStateException $e) {
 			$this->assertInstanceOf(CommitFailedException::class, $e->getPrevious());
 		}
+		$this->assertFalse($tx->isOpen());
 
 		$this->assertCount(4, $tr->callMethods);
 		$this->assertEquals('beginTransaction', $tr->callMethods[0]);
@@ -241,6 +245,7 @@ class TransactionManagerTest extends TestCase {
 		$tr2->rollbackOnce = fn() => throw new IllegalStateException('rollback fail mock ex');
 
 		$tx = $tm->createTransaction();
+		$this->assertTrue($tx->isOpen());
 
 		try {
 			$tx->commit();
@@ -249,6 +254,7 @@ class TransactionManagerTest extends TestCase {
 			$this->assertTrue(StringUtils::contains('commit fail mock ex', $e->getMessage()));
 			$this->assertInstanceOf(RollbackFailedException::class, $e->getPrevious());
 		}
+		$this->assertFalse($tx->isOpen());
 
 		$this->assertCount(4, $tr->callMethods);
 		$this->assertEquals('beginTransaction', $tr->callMethods[0]);
@@ -281,6 +287,7 @@ class TransactionManagerTest extends TestCase {
 		$tr->prepareOnce = fn() => throw new IllegalStateException('prepare fail mock ex');
 
 		$tx = $tm->createTransaction();
+		$this->assertTrue($tx->isOpen());
 
 		try {
 			$tx->commit();
@@ -289,6 +296,7 @@ class TransactionManagerTest extends TestCase {
 			$this->assertTrue(StringUtils::contains('prepare fail mock ex', $e->getMessage()));
 		}
 
+		$this->assertTrue($tx->isOpen());
 		$this->assertTrue($tm->hasOpenTransaction());
 		$tx->rollBack();
 

@@ -153,6 +153,10 @@ class TransactionManager extends ObjectAdapter {
 		throw new TransactionStateException('No active transaction.');
 	}
 
+	public function isLevelOpen(int $level, int $tRef): bool {
+		return !($this->tRef != $tRef || $level > $this->currentLevel);
+	}
+
 	public function closeLevel(int $level, int $tRef, bool $commit): void {
 		if ($this->tRef != $tRef || $level > $this->currentLevel) {
 			throw new TransactionStateException('Transaction is already closed.');
