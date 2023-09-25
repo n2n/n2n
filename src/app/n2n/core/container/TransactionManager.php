@@ -22,14 +22,26 @@
 namespace n2n\core\container;
 	  
 use n2n\reflection\ObjectAdapter;
-use n2n\util\ex\IllegalStateException;
 use n2n\util\EnumUtils;
+use n2n\util\ex\IllegalStateException;
+use n2n\core\container\err\CommitFailedException;
+use n2n\core\container\err\CommitRequestFailedException;
+use n2n\core\container\err\RollbackFailedException;
+use n2n\core\container\err\TransactionStateException;
+use n2n\core\container\err\UnexpectedRollbackException;
+use n2n\core\container\err\TransactionPhaseException;
+use n2n\core\container\err\BeginFailedException;
 
 class TransactionManager extends ObjectAdapter {
 	/**
 	 * @var TransactionalResource[]
 	 */
 	private $transactionalResources = array();
+
+	private ?array $begunTransactionalResources = null;
+	/**
+	 * @var CommitListener[]
+	 */
 	private $commitListeners = array();
 	private $tRef = 1;
 	
@@ -37,32 +49,43 @@ class TransactionManager extends ObjectAdapter {
 	private int $currentLevel = 0;
 	private ?bool $readOnly = null;
 	private bool $rollingBack = false;
-	private array $transactions = array();
+	private array $subTransactions = array();
 
-	private $phase = TransactionPhase::CLOSED;
+	private TransactionPhase $phase = TransactionPhase::CLOSED;
 
 	private bool $commitPreparationExtended = false;
 	private int $commitPreparationsNum = 0;
 	private ?array $pendingCommitPreparations = null;
 
 	public function createTransaction($readOnly = false): Transaction {
-		$this->currentLevel++;
-
 		if (!in_array($this->phase, [TransactionPhase::CLOSED, TransactionPhase::OPEN])) {
 			throw new TransactionStateException('Can not create transaction in '
 					. EnumUtils::unitToBacked($this->phase) . ' phase.');
 		}
 
+		$this->currentLevel++;
+
 		$transaction = new Transaction($this, $this->currentLevel, $this->tRef, $readOnly);
-		if ($this->currentLevel == 1) {
-			$this->readOnly = $readOnly;
-			$this->begin($transaction);
-		} else if ($this->readOnly && !$readOnly) {
-			throw new TransactionStateException(
-					'Cannot create non readonly transaction in readonly transaction.');
+
+		if ($this->currentLevel > 1) {
+			if ($this->readOnly && !$readOnly) {
+				throw new TransactionStateException(
+						'Cannot create non readonly transaction in readonly transaction.');
+			}
+
+			return $this->subTransactions[$this->currentLevel] = $transaction;
 		}
-		
-		return $this->transactions[$this->currentLevel] = $transaction;
+
+		$this->readOnly = $readOnly;
+		$this->rootTransaction = $transaction;
+		try {
+			$this->begin($transaction);
+		} catch (BeginFailedException $e) {
+			$this->failWithUnexpectedRollBackAndClose($e);
+		} finally {
+			$this->cleanUpBegin();
+		}
+		return $transaction;
 	}
 
 	
@@ -82,7 +105,7 @@ class TransactionManager extends ObjectAdapter {
 
 	/**
 	 * Returns true if there is an open read only transaction.
-	 * @return bool true or false if a transaction is open, otherwise null.
+	 * @return bool|null true or false if a transaction is open, otherwise null.
 	 */
 	public function isReadyOnly(): ?bool {
 		return $this->readOnly;
@@ -105,21 +128,21 @@ class TransactionManager extends ObjectAdapter {
 	}
 
 	/**
-	 * @return \n2n\core\container\Transaction
+	 * @return Transaction
 	 * @throws TransactionStateException if no transaction is open.
 	 */
-	public function getRootTransaction() {
+	public function getRootTransaction(): Transaction {
 		$this->ensureTransactionOpen();
 
 		return $this->rootTransaction;
 	}
 	
 	/**
-	 * @return \n2n\core\container\Transaction
+	 * @return Transaction
 	 * @throws TransactionStateException if no transaction is open.
 	 */
-	public function getCurrentTransaction() { 
-		if (false !== ($transaction = end($this->transactions))) {
+	public function getCurrentTransaction(): ?Transaction {
+		if (false !== ($transaction = end($this->subTransactions))) {
 			return $transaction;
 		}
 		
@@ -129,8 +152,12 @@ class TransactionManager extends ObjectAdapter {
 
 		throw new TransactionStateException('No active transaction.');
 	}
-	
-	public function closeLevel($level, $tRef, bool $commit) {
+
+	public function isLevelOpen(int $level, int $tRef): bool {
+		return !($this->tRef != $tRef || $level > $this->currentLevel);
+	}
+
+	public function closeLevel(int $level, int $tRef, bool $commit): void {
 		if ($this->tRef != $tRef || $level > $this->currentLevel) {
 			throw new TransactionStateException('Transaction is already closed.');
 		}
@@ -142,51 +169,185 @@ class TransactionManager extends ObjectAdapter {
 					'Transaction cannot be committed because sub transaction was rolled back');
 		}
 
-		foreach (array_keys($this->transactions) as $tlevel) {
-			if ($level > $tlevel) continue;
+		foreach (array_keys($this->subTransactions) as $tlevel) {
+			if ($level > $tlevel) {
+				continue;
+			}
 			
-			unset($this->transactions[$tlevel]);
+			unset($this->subTransactions[$tlevel]);
 			$this->currentLevel = $level - 1;
 		}
 		
-		if (!empty($this->transactions)) return;
-			
-		try {
-			if ($this->rollingBack) {
-				$this->rollBack();
-				return;
-			}
+		if (!empty($this->subTransactions) || $level !== 1) {
+			return;
+		}
 
-			$this->prepareCommit();
-			$this->commit();
-		} catch (CommitPreparationFailedException $e) {
+		if ($this->rollingBack) {
+			$this->endByRollingBack();
+			return;
+		}
+
+		$this->endByCommit();
+	}
+
+	private function endByRollingBack(): void {
+		try {
+			$this->tRef++;
 			$this->rollBack();
-			throw new UnexpectedRollbackException(
-					'Failure in transaction commit phase caused an unexpected rollback.', 0, $e);
-		} catch (CommitFailedException $e) {
-			throw new IllegalStateException('Transaction commit failed. State could be corrupted!', 0, $e);
-		} finally {
-			$this->reset();
+		} catch (RollbackFailedException $e) {
+			$this->failWithEnterCorruptedState('Transaction rollback failed.', $e);
+		} catch (TransactionPhasePreInterruptedException $e) {
+			$this->tRef--;
+			$this->failWithReopen('Transaction rollback interrupted.', $e);
+		} catch (TransactionPhasePostInterruptedException $e) {
+			$this->failWithClose('Transaction rollback interrupted.', $e);
+		}
+
+		try {
+			$this->close();
+		} catch (TransactionPhasePostInterruptedException $e) {
+			$this->fail('Transaction close interrupted.', $e);
 		}
 	}
-	
-	private function reset() {
+
+	private function endByCommit(): void {
+		try {
+			$this->prepareCommit();
+		} finally {
+			$this->cleanUpPrepare();
+		}
+
+		try {
+			$this->tRef++;
+			$this->commit();
+		} catch (CommitRequestFailedException $e) {
+			$this->failWithUnexpectedRollBackAndClose($e);
+		} catch (CommitFailedException $e) {
+			$this->failWithEnterCorruptedState('Transaction commit failed.', $e);
+		} catch (TransactionPhasePreInterruptedException $e) {
+			$this->tRef--;
+			$this->failWithReopen('Transaction commit interrupted.', $e);
+		} catch (TransactionPhasePostInterruptedException $e) {
+			$this->failWithClose('Transaction commit interrupted.', $e);
+		}
+
+		try {
+			$this->close();
+		} catch (TransactionPhasePostInterruptedException $e) {
+			$this->fail('Transaction close interrupted.', $e);
+		}
+	}
+
+	private function failWithUnexpectedRollBackAndClose(TransactionPhaseException $previous): void {
+		try {
+			$this->rollBack();
+			$this->close();
+
+			throw new UnexpectedRollbackException(
+					'Failure in transaction phase caused unexpected rollback.', 0, $previous);
+		} catch (RollbackFailedException|TransactionPhasePreInterruptedException|TransactionPhasePostInterruptedException $e) {
+			$this->failWithEnterCorruptedState('Unexpected rollback threw an exception "'
+					. get_class($previous) . ': ' . $previous->getMessage()
+					. '" failed. State could be corrupted!', $e);
+		}
+	}
+
+	private function failWithClose(string $reason, TransactionPhasePostInterruptedException $previous): void {
+		try {
+			$this->close();
+
+			$this->fail('Unexpected transaction close: ' . $reason, $previous);
+		} catch (RollbackFailedException|TransactionPhasePreInterruptedException|TransactionPhasePostInterruptedException $e) {
+			$this->failWithEnterCorruptedState('Unexpected rollback threw an exception "'
+					. get_class($previous) . ': ' . $previous->getMessage()
+					. '" failed. State could be corrupted!', $e);
+		}
+	}
+
+
+	private function fail(string $message, \Throwable $previous): void {
+		throw new TransactionStateException($message, previous: $previous);
+	}
+
+	private function failWithReopen(string $reason, \Throwable $previous): void {
+		$this->reopen();
+
+		throw new TransactionStateException('Transaction unexpectedly reopened. Reason: ' . $reason,
+				previous: $previous);
+	}
+
+	private function failWithEnterCorruptedState(string $reason, TransactionPhaseException $previous): void {
+		try {
+			$this->enterCorruptedState($previous);
+		} catch (TransactionPhasePostInterruptedException $e) {
+			$this->fail('Transaction entered corrupted state (Reason: ' . $e->getMessage() . ') and was 
+					then interrupted by a callback.', $e);
+		}
+
+		$this->fail('TransactionManager state could be corrupted. Reason: ' . $reason,
+				previous: $previous);
+	}
+
+	/**
+	 * @throws TransactionPhasePostInterruptedException
+	 */
+	private function enterCorruptedState(TransactionPhaseException $e): void {
+		$this->phase = TransactionPhase::CORRUPTED_STATE;
+
+		$transaction = $this->rootTransaction;
+		foreach ($this->commitListeners as $commitListener) {
+			TransactionPhasePostInterruptedException::try('postCorruptedState',
+					fn () => $commitListener->postCorruptedState($transaction, $e));
+		}
+	}
+
+	/**
+	 * @throws TransactionPhasePostInterruptedException
+	 */
+	private function close(): void {
+		$transaction = $this->rootTransaction;
+
 		$this->rootTransaction = null;
 		$this->rollingBack = false;
+		$this->currentLevel = 0;
 		$this->readOnly = null;
 		$this->phase = TransactionPhase::CLOSED;
+
+		foreach ($this->commitListeners as $commitListener) {
+			TransactionPhasePostInterruptedException::try('postClose',
+					fn () => $commitListener->postClose($transaction));
+		}
+	}
+
+	private function reopen(): void {
+		IllegalStateException::assertTrue($this->phase === TransactionPhase::PREPARE_COMMIT
+				|| $this->phase === TransactionPhase::COMMIT
+				|| $this->phase === TransactionPhase::ROLLBACK);
+
+		$this->phase = TransactionPhase::OPEN;
+	}
+
+	private function cleanUpPrepare(): void {
 		$this->commitPreparationExtended = false;
 		$this->commitPreparationsNum = 0;
 		$this->pendingCommitPreparations = null;
 	}
-	
-	private function begin(Transaction $transaction) {
-		$this->rootTransaction = $transaction;
+
+	/**
+	 * @throws BeginFailedException
+	 */
+	private function begin(Transaction $transaction): void {
 		$this->phase = TransactionPhase::OPEN;
 
+		$this->begunTransactionalResources = [];
 		foreach ($this->transactionalResources as $resource) {
-			$resource->beginTransaction($transaction);
+			BeginFailedException::try(fn () => $resource->beginTransaction($transaction));
+			$this->begunTransactionalResources[] = $resource;
 		}
+	}
+
+	private function cleanUpBegin(): void {
+		$this->begunTransactionalResources = null;
 	}
 
 	/**
@@ -208,11 +369,9 @@ class TransactionManager extends ObjectAdapter {
 		return $this->commitPreparationsNum;
 	}
 
-	/**
-	 * @throws CommitPreparationFailedException
-	 */
 	private function prepareCommit(): void {
-		$this->tRef++;
+		IllegalStateException::assertTrue($this->phase === TransactionPhase::OPEN);
+
 		$this->phase = TransactionPhase::PREPARE_COMMIT;
 
 		$transaction = $this->rootTransaction;
@@ -239,64 +398,58 @@ class TransactionManager extends ObjectAdapter {
 		} while ($this->commitPreparationExtended);
 	}
 
+	/**
+	 * @throws CommitFailedException
+	 * @throws CommitRequestFailedException
+	 * @throws TransactionPhasePreInterruptedException
+	 * @throws TransactionPhasePostInterruptedException
+	 */
 	private function commit(): void {
+		IllegalStateException::assertTrue($this->phase === TransactionPhase::PREPARE_COMMIT);
+
+		$this->phase = TransactionPhase::COMMIT;
+
 		$transaction = $this->rootTransaction;
 
 		foreach ($this->commitListeners as $commitListener) {
-			$commitListener->preCommit($transaction);
+			TransactionPhasePreInterruptedException::try('preCommit',
+					fn () => $commitListener->preCommit($transaction));
 		}
 
-		$this->tRef++;
-		$this->phase = TransactionPhase::COMMIT;
-		
-		try {
-			foreach ($this->transactionalResources as $resource) {
-				$resource->commit($transaction);
-			}
-
-			$this->reset();
-		} catch (CommitFailedException $e) {
-			$this->reset();
-
-			$tsm = array();
-			foreach ($this->commitListeners as $commitListener) {
-				try {
-					$commitListener->commitFailed($transaction, $e);
-				} catch (\Throwable $t) {
-					$tsm[] = get_class($t) . ': ' . $t->getMessage();
-				}
-			}
-			
-			if (empty($tsm)) {
-				throw $e;
-			}
-			
-			throw new CommitFailedException('Commit failed with CommitListener exceptions: ' . implode(', ', $tsm), 
-					0, $e);
+		foreach ($this->transactionalResources as $resource) {
+			CommitRequestFailedException::try(fn () => $resource->requestCommit($transaction));
 		}
 
+		foreach ($this->transactionalResources as $resource) {
+			CommitFailedException::try(fn () => $resource->commit($transaction));
+		}
 		
 		foreach ($this->commitListeners as $commitListener) {
-			$commitListener->postCommit($transaction);
+			TransactionPhasePostInterruptedException::try('postCommit', fn () => $commitListener->postCommit($transaction));
 		}
 	}
 
-	private function rollBack() {
-		$this->tRef++;
+	/**
+	 * @throws RollbackFailedException
+	 * @throws TransactionPhasePostInterruptedException|TransactionPhasePreInterruptedException
+	 */
+	private function rollBack(): void {
 		$this->phase = TransactionPhase::ROLLBACK;
 
 		$transaction = $this->rootTransaction;
 
 		foreach ($this->commitListeners as $commitListener) {
-			$commitListener->preRollback($transaction);
+			TransactionPhasePreInterruptedException::try('preRollback',
+					fn () => $commitListener->preRollback($transaction));
 		}
 
-		foreach ($this->transactionalResources as $listener) {
-			$listener->rollBack($this->rootTransaction);
+		foreach ($this->begunTransactionalResources ?? $this->transactionalResources as $listener) {
+			RollbackFailedException::try(fn () => $listener->rollBack($this->rootTransaction));
 		}
 
 		foreach ($this->commitListeners as $commitListener) {
-			$commitListener->postRollback($transaction);
+			TransactionPhasePostInterruptedException::try('postRollback',
+					fn () => $commitListener->postRollback($transaction));
 		}
 	}
 
@@ -315,7 +468,7 @@ class TransactionManager extends ObjectAdapter {
 		return $this->transactionalResources;
 	}
 
-	public function registerResource(TransactionalResource $resource) {
+	public function registerResource(TransactionalResource $resource): void {
 		if (!in_array($this->phase, [TransactionPhase::CLOSED, TransactionPhase::OPEN, TransactionPhase::PREPARE_COMMIT])) {
 			throw new TransactionStateException('Can not register a new TransactionalResource in '
 					. EnumUtils::unitToBacked($this->phase) . ' phase.');
@@ -332,15 +485,15 @@ class TransactionManager extends ObjectAdapter {
 		}
 	}
 
-	public function unregisterResource(TransactionalResource $resource) {
+	public function unregisterResource(TransactionalResource $resource): void {
 		unset($this->transactionalResources[spl_object_hash($resource)]);
 	}
 	
-	public function registerCommitListener(CommitListener $commitListener) {
+	public function registerCommitListener(CommitListener $commitListener): void {
 		$this->commitListeners[spl_object_hash($commitListener)] = $commitListener;
 	}
 	
-	public function unregisterCommitListener(CommitListener $commitListener) {
+	public function unregisterCommitListener(CommitListener $commitListener): void {
 		unset($this->commitListeners[spl_object_hash($commitListener)]);
 	}
 }

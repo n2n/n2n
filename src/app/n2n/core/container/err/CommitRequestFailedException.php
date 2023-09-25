@@ -19,8 +19,19 @@
  * Bert Hofmänner.......: Idea, Frontend UI, Community Leader, Marketing
  * Thomas Günther.......: Developer, Hangar
  */
-namespace n2n\core\container;
+namespace n2n\core\container\err;
 
-class UnexpectedRollbackException extends \RuntimeException {
-	
+class CommitRequestFailedException extends TransactionPhaseException {
+	/**
+	 * @throws CommitRequestFailedException
+	 */
+	static function try(\Closure $closure): mixed {
+		try {
+			return $closure();
+		} catch (CommitRequestFailedException $e) {
+			throw $e;
+		} catch (\Throwable $t) {
+			throw new CommitRequestFailedException($t->getMessage(), previous: $t);
+		}
+	}
 }

@@ -63,12 +63,9 @@ use n2n\util\magic\MagicContext;
 use n2n\core\ext\N2nHttp;
 use n2n\core\module\Module;
 use n2n\core\ext\N2nMonitor;
+use n2n\core\N2nApplication;
 
 class AppN2nContext implements N2nContext, ShutdownListener {
-	private ModuleManager $moduleManager;
-	private AppCache $appCache;
-	private VarStore $varStore;
-	private AppConfig $appConfig;
 	private array $moduleConfigs = array();
 	private N2nLocale $n2nLocale;
 	private ?LookupManager $lookupManager = null;
@@ -83,12 +80,8 @@ class AppN2nContext implements N2nContext, ShutdownListener {
 
 	private bool $finalized = false;
 
-	public function __construct(private TransactionManager $transactionManager, ModuleManager $moduleManager, AppCache $appCache,
-			VarStore $varStore, AppConfig $appConfig, PhpVars $phpVars = null) {
-		$this->moduleManager = $moduleManager;
-		$this->appCache = $appCache;
-		$this->varStore = $varStore;
-		$this->appConfig = $appConfig;
+	public function __construct(private TransactionManager $transactionManager, private N2nApplication $n2nApplication,
+			PhpVars $phpVars = null) {
 		$this->n2nLocale = N2nLocale::getDefault();
 		$this->phpVars = $phpVars ?? PhpVars::fromEnv();
 
@@ -102,10 +95,14 @@ class AppN2nContext implements N2nContext, ShutdownListener {
 		return new N2nUtil($this);
 	}
 
+	function getN2nApplication(): N2nApplication {
+		return $this->n2nApplication;
+	}
+
 	function getAppConfig(): AppConfig {
 		$this->ensureNotFinalized();
 
-		return $this->appConfig;
+		return $this->n2nApplication->getAppConfig();
 	}
 
 	function getPhpVars(): PhpVars {
@@ -150,7 +147,7 @@ class AppN2nContext implements N2nContext, ShutdownListener {
 	public function getModuleManager(): ModuleManager {
 		$this->ensureNotFinalized();
 
-		return $this->moduleManager;
+		return $this->n2nApplication->getModuleManager();
 	}
 
 	/**
@@ -164,7 +161,7 @@ class AppN2nContext implements N2nContext, ShutdownListener {
 			return $this->moduleConfigs[$namespace];
 		}
 
-		$module = $this->moduleManager->getModuleByNs($namespace);
+		$module = $this->getModuleManager()->getModuleByNs($namespace);
 		if ($module->hasConfigDescriber()) {
 			return $this->moduleConfigs[$namespace] = $module->createConfigDescriber($this)->buildCustomConfig();
 		}
@@ -223,7 +220,7 @@ class AppN2nContext implements N2nContext, ShutdownListener {
 	public function getVarStore(): VarStore {
 		$this->ensureNotFinalized();
 
-		return $this->varStore;
+		return $this->n2nApplication->getVarStore();
 	}
 
 	/**
@@ -233,7 +230,7 @@ class AppN2nContext implements N2nContext, ShutdownListener {
 	public function getAppCache(): AppCache {
 		$this->ensureNotFinalized();
 
-		return $this->appCache;
+		return $this->n2nApplication->getAppCache();
 	}
 
 	/**
@@ -388,30 +385,30 @@ class AppN2nContext implements N2nContext, ShutdownListener {
 			case TransactionManager::class:
 				return $this->transactionManager;
 			case VarStore::class:
-				return $this->varStore;
+				return $this->getVarStore();
 			case AppCache::class:
 			case \n2n\core\container\AppCache::class:
-				return $this->appCache;
+				return $this->getAppCache();
 			case AppConfig::class:
-				return $this->appConfig;
+				return $this->getAppConfig();
 			case GeneralConfig::class:
-				return $this->appConfig->general();
+				return $this->getAppConfig()->general();
 			case WebConfig::class:
-				return $this->appConfig->web();
+				return $this->getAppConfig()->web();
 			case MailConfig::class:
-				return $this->appConfig->mail();
+				return $this->getAppConfig()->mail();
 			case IoConfig::class:
-				return $this->appConfig->io();
+				return $this->getAppConfig()->io();
 			case FilesConfig::class:
-				return $this->appConfig->files();
+				return $this->getAppConfig()->files();
 			case ErrorConfig::class:
-				return $this->appConfig->error();
+				return $this->getAppConfig()->error();
 			case DbConfig::class:
-				return $this->appConfig->db();
+				return $this->getAppConfig()->db();
 			case OrmConfig::class:
-				return $this->appConfig->orm();
+				return $this->getAppConfig()->orm();
 			case N2nLocaleConfig::class:
-				return $this->appConfig->locale();
+				return $this->getAppConfig()->locale();
 			case DynamicTextCollection::class:
 				if ($contextNamespace !== null) {
 					return $this->lookupDynamicTextCollection($id, $required, $contextNamespace);
@@ -440,7 +437,7 @@ class AppN2nContext implements N2nContext, ShutdownListener {
 	private function lookupDynamicTextCollection(string $id, bool $required, string $contextNamespace): ?DynamicTextCollection {
 		$module = null;
 		try {
-			$module = $this->moduleManager->getModuleOfTypeName($contextNamespace, $required);
+			$module = $this->getModuleManager()->getModuleOfTypeName($contextNamespace, $required);
 		} catch (UnknownModuleException $e) {
 			throw new MagicLookupFailedException('Could not determine module for DynamicTextCollection.', 0, $e);
 		}
@@ -452,7 +449,7 @@ class AppN2nContext implements N2nContext, ShutdownListener {
 
 	private function lookupModule(string $id, bool $required, string $contextNamespace): ?Module {
 		try {
-			return $this->moduleManager->getModuleOfTypeName($contextNamespace, $required);
+			return $this->getModuleManager()->getModuleOfTypeName($contextNamespace, $required);
 		} catch (UnknownModuleException $e) {
 			throw new MagicLookupFailedException('Could not determine module.', 0, $e);
 		}

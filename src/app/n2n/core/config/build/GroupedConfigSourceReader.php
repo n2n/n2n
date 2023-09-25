@@ -75,7 +75,7 @@ class GroupedConfigSourceReader {
 		
 			$groupName = trim($groupExpressionParts[0]);
 			$groupExtensionName = null;
-			
+
 			if (1 < count($groupNameParts = explode(self::GROUP_EXTENSION_SEPARATOR, $groupName, 2))) {
 				$groupName = trim($groupNameParts[0]);
 				$groupExtensionName = trim($groupNameParts[1]);
@@ -85,15 +85,15 @@ class GroupedConfigSourceReader {
 				throw new InvalidConfigurationException('Invalid group name \'' . $groupName 
 						. '\' given in ConfigSource: ' . $configSource);
 			}
-			
+
 			if ($this->extendableGroupNames !== null && $groupExtensionName !== null 
 					&& !in_array($groupName, $this->extendableGroupNames)) {
 				throw new InvalidConfigurationException('Group \'' . $groupName . '\' can not be extended. ConfigSource: ' 
 						. $configSource);
 			}
-			
+
 			if (!is_array($attrs)) continue;
-			
+
 			if ($this->stage === $stage || (!$this->stageExplicit && $stage === null)) {
 				$groupReader = null;
 				if ($groupExtensionName === null) {

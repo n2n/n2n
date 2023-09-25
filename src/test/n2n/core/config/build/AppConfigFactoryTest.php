@@ -67,6 +67,7 @@ class AppConfigFactoryTest extends TestCase {
 		$this->assertEquals(GeneralConfig::APPLICATION_NAME_DEFAULT, $appConfig->general()->getApplicationName());
 		$this->assertEquals(GeneralConfig::APPLICATION_REPLICATABLE_DEFAULT, $appConfig->general()->isApplicationReplicatable());
 
+		$this->assertEquals(WebConfig::PAYLOAD_CACHING_ENABLED_DEFAULT, $appConfig->web()->isPayloadCachingEnabled());
 		$this->assertEquals(WebConfig::RESPONSE_CACHING_ENABLED_DEFAULT, $appConfig->web()->isResponseCachingEnabled());
 		$this->assertEquals(WebConfig::RESPONSE_BROWSER_CACHING_ENABLED_DEFAULT, $appConfig->web()->isResponseBrowserCachingEnabled());
 		$this->assertEquals(WebConfig::RESPONSE_SEND_ETAG_ALLOWED_DEFAULT, $appConfig->web()->isResponseSendEtagAllowed());
@@ -117,6 +118,7 @@ class AppConfigFactoryTest extends TestCase {
 function testWeb() {
 		$appConfig = $this->createFromFsPath('web.app.ini');
 
+		$this->assertFalse($appConfig->web()->isPayloadCachingEnabled());
 		$this->assertFalse($appConfig->web()->isResponseCachingEnabled());
 		$this->assertFalse($appConfig->web()->isResponseBrowserCachingEnabled());
 		$this->assertFalse($appConfig->web()->isResponseSendEtagAllowed());
@@ -198,9 +200,12 @@ function testWeb() {
         $this->assertEquals('pass', $persistenceUnitConfig1->getPassword());
         $this->assertEquals('n2n\persistence\meta\impl\mysql\MysqlDialect', $persistenceUnitConfig1->getDialectClassName());
         $this->assertEquals('SERIALIZABLE', $persistenceUnitConfig1->getTransactionIsolationLevel());
+		$this->assertEquals(true, $persistenceUnitConfig1->isSslVerify());
+		$this->assertEquals(false, $persistenceUnitConfig1->isPersistent());
 
 		$this->assertEquals('path/to/ca.crt', $persistenceUnitConfig2->getSslCaCertificatePath());
 		$this->assertEquals(false, $persistenceUnitConfig2->isSslVerify());
+		$this->assertEquals(true, $persistenceUnitConfig2->isPersistent());
     }
 	function testOrm() {
 		$appConfig = $this->createFromFsPath('orm.app.ini');
@@ -270,4 +275,14 @@ function testWeb() {
 		$this->assertEquals('H:i:s O', $l10Format->getTimePatterns()['long']);
 		$this->assertEquals('H:i:s O e', $l10Format->getTimePatterns()['full']);
     }
+
+	function testFiles() {
+		$appConfig = $this->createFromFsPath('files.app.ini');
+
+		$this->assertEquals(FsPath::create(['public', 'hidemyassets']), $appConfig->files()->getAssetsDir());
+		$this->assertEquals(Url::create('hidemyassets'), $appConfig->files()->getAssetsUrl());
+		$this->assertEquals(FsPath::create(['public', 'hidemyfiles']), $appConfig->files()->getManagerPublicDir());
+		$this->assertEquals(Url::create('hidemyfiles'), $appConfig->files()->getManagerPublicUrl());
+		$this->assertEquals(FsPath::create(['hidemyprivatefiles']), $appConfig->files()->getManagerPrivateDir());
+	}
 }

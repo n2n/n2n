@@ -68,8 +68,8 @@ class AppConfigFactory {
 	
 	public function getGroupNames() {
 		return array(self::GROUP_GENERAL, self::GROUP_WEB, self::GROUP_ROUTING, self::GROUP_MAIL, self::GROUP_IO, 
-				self::GROUP_ERROR, self::GROUP_DATABASE, self::GROUP_ORM, self::GROUP_LOCALES, self::GROUP_L10N, 
-				self::GROUP_PSEUDO_L10N);
+				self::GROUP_FILES, self::GROUP_ERROR, self::GROUP_DATABASE, self::GROUP_ORM, self::GROUP_LOCALES,
+				self::GROUP_L10N, self::GROUP_PSEUDO_L10N);
 	}
 	
 	/**
@@ -77,7 +77,7 @@ class AppConfigFactory {
 	 * @param string $stage
 	 * @return \n2n\core\config\AppConfig
 	 */
-	public function create(CombinedConfigSource $combinedConfigSource, $stage, $stageExplizit = false) {
+	public function create(CombinedConfigSource $combinedConfigSource, string $stage, bool $stageExplizit = false) {
 		$reader = new GroupedConfigSourceReader($combinedConfigSource);
 		$reader->initialize($stage, $stageExplizit, self::getGroupNames(), array(self::GROUP_ROUTING));
 
@@ -117,6 +117,7 @@ class AppConfigFactory {
 				array_filter($groupReader->getScalarArray(self::EXTENSION_CLASS_NAMES_KEY)));
 	}
 	
+	const PAYLOAD_CACHING_ENABLED_KEY = 'payload.caching_enabled';
 	const RESPONSE_CACHING_ENABLED_KEY = 'response.caching_enabled';
 	const RESPONSE_BROWSER_CACHING_ENABLED_KEY = 'response.browser_caching_enabled';
 	const RESPONSE_SEND_ETAG_ALLOWED_KEY = 'response.send_etag';
@@ -144,6 +145,8 @@ class AppConfigFactory {
 	 */
 	private function createWebConfig(GroupReader $groupReader): WebConfig {
 		return new WebConfig(
+				$groupReader->getBool(self::PAYLOAD_CACHING_ENABLED_KEY , false,
+						WebConfig::PAYLOAD_CACHING_ENABLED_DEFAULT),
 				$groupReader->getBool(self::RESPONSE_CACHING_ENABLED_KEY, false,
 						WebConfig::RESPONSE_CACHING_ENABLED_DEFAULT),
 				$groupReader->getBool(self::RESPONSE_BROWSER_CACHING_ENABLED_KEY, false,
@@ -342,6 +345,7 @@ class AppConfigFactory {
 	const KEY_EXT_DIALECT_CLASS = '.dialect';
 	const KEY_EXT_SSl_VERIFY = '.ssl.verify';
 	const KEY_EXT_CA_CERTIFICATE_PATH = '.ssl.ca_certificate_path';
+	const KEY_EXT_PERSISTENT = '.persistent';
 
 	private function createDatabaseConfig(GroupReader $groupReader) {
 		$persistenceUnitConfigs = array();
@@ -354,7 +358,8 @@ class AppConfigFactory {
 							PersistenceUnitConfig::TIL_SERIALIZABLE),
 					$groupReader->getString($name . self::KEY_EXT_DIALECT_CLASS, true),
 					$groupReader->getBool($name . self::KEY_EXT_SSl_VERIFY, false, true),
-					$groupReader->getString($name . self::KEY_EXT_CA_CERTIFICATE_PATH, false));
+					$groupReader->getString($name . self::KEY_EXT_CA_CERTIFICATE_PATH, false),
+					$groupReader->getBool($name . self::KEY_EXT_PERSISTENT, false, false));
 		}
 				
 // 		$persistenceUnitConfigs[] = new PersistenceUnitConfig('default', 

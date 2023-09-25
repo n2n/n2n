@@ -8,5 +8,5 @@ interface N2nHttp {
 
 	function getLookupSession(): LookupSession;
 
-	function invokerControllers(): void;
+	function invokerControllers(bool $flush): void;
 }

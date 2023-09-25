@@ -11,12 +11,23 @@ class TransactionalResourceMock implements TransactionalResource {
 	public array $callMethods = [];
 	public array $callTransactions = [];
 
+	public \Closure|null $beginOnce = null;
 	public \Closure|null $prepareOnce = null;
+	public \Closure|null $requestCommitOnce = null;
 	public \Closure|null $commitOnce = null;
+	public \Closure|null $rollbackOnce = null;
 
 	public function beginTransaction(Transaction $transaction): void {
 		$this->callMethods[] = 'beginTransaction';
 		$this->callTransactions[] = $transaction;
+
+		if ($this->beginOnce === null) {
+			return;
+		}
+
+		$c = $this->beginOnce;
+		$this->beginOnce = null;
+		$c();
 	}
 
 	public function prepareCommit(Transaction $transaction): void {
@@ -29,6 +40,19 @@ class TransactionalResourceMock implements TransactionalResource {
 
 		$c = $this->prepareOnce;
 		$this->prepareOnce = null;
+		$c();
+	}
+
+	public function requestCommit(Transaction $transaction): void {
+		$this->callMethods[] = 'requestCommit';
+		$this->callTransactions[] = $transaction;
+
+		if ($this->requestCommitOnce === null) {
+			return;
+		}
+
+		$c = $this->requestCommitOnce;
+		$this->requestCommitOnce = null;
 		$c();
 	}
 
@@ -48,6 +72,14 @@ class TransactionalResourceMock implements TransactionalResource {
 	public function rollBack(Transaction $transaction): void {
 		$this->callMethods[] = 'rollBack';
 		$this->callTransactions[] = $transaction;
+
+		if ($this->rollbackOnce === null) {
+			return;
+		}
+
+		$c = $this->rollbackOnce;
+		$this->rollbackOnce = null;
+		$c();
 	}
 
 	function release(): void {
