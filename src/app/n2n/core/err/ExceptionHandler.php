@@ -98,6 +98,11 @@ class ExceptionHandler {
 		$this->prevError = TriggeredError::last();
 	}
 
+	function unregister(): void {
+		restore_error_handler();
+		restore_exception_handler();
+	}
+
 	function getPrevError() {
 		return $this->prevError;
 	}
@@ -208,6 +213,8 @@ class ExceptionHandler {
 		if ($this->isMemoryLimitExhaustedMessage($errstr)) {
 			// @todo find out if dangerous
 			//$this->stable = false;
+		} if ($this->isPacketsOutOfOrderWarning($errno, $errstr)) {
+			return true;
 		} else {
 			// @ --> error_reporting() returns reduced level
 			if (!$forceThrow && !($errno & error_reporting())) {
@@ -386,9 +393,18 @@ class ExceptionHandler {
 
 	const MEMORY_LIMIT_EXHAUSTED_ERROR_MSG = 'Allowed memory size of';
 
-	private function isMemoryLimitExhaustedMessage($message) {
-		return self::MEMORY_LIMIT_EXHAUSTED_ERROR_MSG == substr($message, 0,
-						strlen(self::MEMORY_LIMIT_EXHAUSTED_ERROR_MSG));
+	private function isMemoryLimitExhaustedMessage($message): bool {
+		return str_starts_with($message, self::MEMORY_LIMIT_EXHAUSTED_ERROR_MSG);
+	}
+
+	const PACKETS_OUT_OF_ORDER_WARNING_MSG = 'Packets out of order.';
+
+	/**
+	 * Can be removed when https://bugs.php.net/bug.php?id=81335 is fixed.
+	 */
+	private function isPacketsOutOfOrderWarning(int $errno, string $errstr): bool {
+		return ($errno === E_WARNING || $errno === E_USER_WARNING)
+				&& str_starts_with($errstr, self::PACKETS_OUT_OF_ORDER_WARNING_MSG);
 	}
 
 
