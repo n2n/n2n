@@ -141,7 +141,7 @@ class TransactionManager extends ObjectAdapter {
 	 * @return Transaction
 	 * @throws TransactionStateException if no transaction is open.
 	 */
-	public function getCurrentTransaction() { 
+	public function getCurrentTransaction(): ?Transaction {
 		if (false !== ($transaction = end($this->subTransactions))) {
 			return $transaction;
 		}
@@ -291,7 +291,7 @@ class TransactionManager extends ObjectAdapter {
 	/**
 	 * @throws TransactionPhasePostInterruptedException
 	 */
-	private function enterCorruptedState(TransactionPhaseException $e) {
+	private function enterCorruptedState(TransactionPhaseException $e): void {
 		$this->phase = TransactionPhase::CORRUPTED_STATE;
 
 		$transaction = $this->rootTransaction;
