@@ -27,6 +27,7 @@ class ExceptionHandlerTest extends TestCase {
 
 		try {
 			trigger_error('Packets out of order. Expected 1 received 0. Packet size=145', E_USER_WARNING);
+			trigger_error('PDO::__construct(): SSL: Broken pipe', E_USER_WARNING);
 			// no throwable => success
 			$this->assertTrue(true);
 		} finally {
