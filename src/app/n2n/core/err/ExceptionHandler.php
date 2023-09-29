@@ -408,6 +408,9 @@ class ExceptionHandler {
 				&& str_starts_with($errstr, self::PACKETS_OUT_OF_ORDER_WARNING_MSG);
 	}
 
+	/**
+	 * Occurres with PDO ATTR_PERSISTENT when connection was dropped.
+	 */
 	private function isPdoBrokenPipeWarning(int $errno, string $errstr): bool {
 		return ($errno === E_WARNING || $errno === E_USER_WARNING)
 				&& str_starts_with($errstr, self::PDO_BROKEN_PIPE_WARNING_MSG);
