@@ -213,7 +213,7 @@ class ExceptionHandler {
 		if ($this->isMemoryLimitExhaustedMessage($errstr)) {
 			// @todo find out if dangerous
 			//$this->stable = false;
-		} if ($this->isPacketsOutOfOrderWarning($errno, $errstr)) {
+		} if ($this->isPacketsOutOfOrderWarning($errno, $errstr) || $this->isPdoBrokenPipeWarning($errno, $errstr)) {
 			return true;
 		} else {
 			// @ --> error_reporting() returns reduced level
@@ -398,6 +398,7 @@ class ExceptionHandler {
 	}
 
 	const PACKETS_OUT_OF_ORDER_WARNING_MSG = 'Packets out of order.';
+	const PDO_BROKEN_PIPE_WARNING_MSG = 'PDO::__construct(): SSL: Broken pipe';
 
 	/**
 	 * Can be removed when https://bugs.php.net/bug.php?id=81335 is fixed.
@@ -407,6 +408,10 @@ class ExceptionHandler {
 				&& str_starts_with($errstr, self::PACKETS_OUT_OF_ORDER_WARNING_MSG);
 	}
 
+	private function isPdoBrokenPipeWarning(int $errno, string $errstr): bool {
+		return ($errno === E_WARNING || $errno === E_USER_WARNING)
+				&& str_starts_with($errstr, self::PDO_BROKEN_PIPE_WARNING_MSG);
+	}
 
 
 	/**
