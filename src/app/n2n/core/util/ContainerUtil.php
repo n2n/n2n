@@ -154,13 +154,20 @@ class ContainerUtil {
 		$this->prePrepare($closure);
 	}
 
+	/**
+	 * Callback of this kind will be called after all postPrepareAndExtend() callbacks.
+	 *
+	 * @param \Closure $callback
+	 * @param bool $extend
+	 * @return void
+	 */
 	function postPrepare(\Closure $callback, bool $extend = false): void {
 		$mmi = $this->createMmiFromClosure($callback);
 		$prepareListener = $this->createClosureCommitListener([TransactionPhase::COMMIT, TransactionPhase::ROLLBACK], $extend);
 
 		$prepareListener->setPostPrepareCallback(function () use ($prepareListener, $mmi, $extend) {
 			$tm = $this->getTransactionManager();
-			if ($tm->isCommitPreparationExtended()) {
+			if (!$extend && $tm->isCommitPreparationExtended()) {
 				return;
 			}
 

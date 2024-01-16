@@ -72,11 +72,23 @@ class ContainerUtilTest extends TestCase {
 	}
 
 	function testPostPrepareAfterExtend() {
+
+		$tr = new TransactionalResourceMock();
+		$this->transactionManager->registerResource($tr);
+
 		$firstPostPrepareCalled = false;
 		$secondPostPrepareCalled = false;
 		$postPrepareCalled = false;
 
 		$tx = $this->transactionManager->createTransaction();
+
+		$this->containerUtil->postPrepare(function () use (&$firstPostPrepareCalled, &$secondPostPrepareCalled, &$postPrepareCalled) {
+			$this->assertTrue($firstPostPrepareCalled);
+			$this->assertTrue($secondPostPrepareCalled);
+			$this->assertFalse($postPrepareCalled);
+			$postPrepareCalled = true;
+		});
+
 		$this->containerUtil->postPrepareAndExtend(function () use (&$firstPostPrepareCalled, &$secondPostPrepareCalled) {
 			$this->assertFalse($firstPostPrepareCalled);
 			$firstPostPrepareCalled = true;
@@ -87,18 +99,18 @@ class ContainerUtilTest extends TestCase {
 			});
 		});
 
-		$this->containerUtil->postPrepare(function () use (&$firstPostPrepareCalled, &$secondPostPrepareCalled, &$postPrepareCalled) {
-			$this->assertTrue($firstPostPrepareCalled);
-			$this->assertTrue($secondPostPrepareCalled);
-			$this->assertFalse($postPrepareCalled);
-			$postPrepareCalled = true;
-		});
 		$tx->commit();
-
 
 		$this->assertTrue($firstPostPrepareCalled);
 		$this->assertTrue($secondPostPrepareCalled);
 		$this->assertTrue($postPrepareCalled);
+
+		$this->assertEquals('beginTransaction', $tr->callMethods[0]);
+		$this->assertEquals('prepareCommit', $tr->callMethods[1]);
+		$this->assertEquals('prepareCommit', $tr->callMethods[2]);
+		$this->assertEquals('prepareCommit', $tr->callMethods[3]);
+		$this->assertEquals('requestCommit', $tr->callMethods[4]);
+		$this->assertEquals('commit', $tr->callMethods[5]);
 
 	}
 
