@@ -108,9 +108,8 @@ class ContainerUtilTest extends TestCase {
 		$this->assertEquals('beginTransaction', $tr->callMethods[0]);
 		$this->assertEquals('prepareCommit', $tr->callMethods[1]);
 		$this->assertEquals('prepareCommit', $tr->callMethods[2]);
-		$this->assertEquals('prepareCommit', $tr->callMethods[3]);
-		$this->assertEquals('requestCommit', $tr->callMethods[4]);
-		$this->assertEquals('commit', $tr->callMethods[5]);
+		$this->assertEquals('requestCommit', $tr->callMethods[3]);
+		$this->assertEquals('commit', $tr->callMethods[4]);
 
 	}
 

@@ -295,7 +295,7 @@ class TransactionManager extends ObjectAdapter {
 		$this->phase = TransactionPhase::CORRUPTED_STATE;
 
 		$transaction = $this->rootTransaction;
-		foreach ($this->commitListeners as $commitListener) {
+		while (null !== ($commitListener = $this->walkCommitListeners())) {
 			TransactionPhasePostInterruptedException::try('postCorruptedState',
 					fn () => $commitListener->postCorruptedState($transaction, $e));
 		}
@@ -313,7 +313,7 @@ class TransactionManager extends ObjectAdapter {
 		$this->readOnly = null;
 		$this->phase = TransactionPhase::CLOSED;
 
-		foreach ($this->commitListeners as $commitListener) {
+		while (null !== ($commitListener = $this->walkCommitListeners())) {
 			TransactionPhasePostInterruptedException::try('postClose',
 					fn () => $commitListener->postClose($transaction));
 		}
@@ -379,7 +379,7 @@ class TransactionManager extends ObjectAdapter {
 		$this->phase = TransactionPhase::PREPARE_COMMIT;
 
 		$transaction = $this->rootTransaction;
-		foreach ($this->commitListeners as $commitListener) {
+		while (null !== ($commitListener = $this->walkCommitListeners())) {
 			$commitListener->prePrepare($transaction);
 		}
 
@@ -396,7 +396,7 @@ class TransactionManager extends ObjectAdapter {
 			}
 
 			$transaction = $this->rootTransaction;
-			foreach ($this->commitListeners as $commitListener) {
+			while (null !== ($commitListener = $this->walkCommitListeners())) {
 				$commitListener->postPrepare($transaction);
 			}
 		} while ($this->commitPreparationExtended);
@@ -415,7 +415,7 @@ class TransactionManager extends ObjectAdapter {
 
 		$transaction = $this->rootTransaction;
 
-		foreach ($this->commitListeners as $commitListener) {
+		while (null !== ($commitListener = $this->walkCommitListeners())) {
 			TransactionPhasePreInterruptedException::try('preCommit',
 					fn () => $commitListener->preCommit($transaction));
 		}
@@ -428,7 +428,7 @@ class TransactionManager extends ObjectAdapter {
 			CommitFailedException::try(fn () => $resource->commit($transaction));
 		}
 
-		foreach ($this->commitListeners as $commitListener) {
+		while (null !== ($commitListener = $this->walkCommitListeners())) {
 			TransactionPhasePostInterruptedException::try('postCommit', fn () => $commitListener->postCommit($transaction));
 		}
 	}
@@ -442,7 +442,7 @@ class TransactionManager extends ObjectAdapter {
 
 		$transaction = $this->rootTransaction;
 
-		foreach ($this->commitListeners as $commitListener) {
+		while (null !== ($commitListener = $this->walkCommitListeners())) {
 			TransactionPhasePreInterruptedException::try('preRollback',
 					fn () => $commitListener->preRollback($transaction));
 		}
@@ -451,7 +451,7 @@ class TransactionManager extends ObjectAdapter {
 			RollbackFailedException::try(fn () => $listener->rollBack($this->rootTransaction));
 		}
 
-		foreach ($this->commitListeners as $commitListener) {
+		while (null !== ($commitListener = $this->walkCommitListeners())) {
 			TransactionPhasePostInterruptedException::try('postRollback',
 					fn () => $commitListener->postRollback($transaction));
 		}
@@ -499,9 +499,28 @@ class TransactionManager extends ObjectAdapter {
 		} else {
 			$this->commitListeners[spl_object_hash($commitListener)] = $commitListener;
 		}
+
+		$this->walkingCommitListenersIterator?->append($commitListener);
 	}
 
 	public function unregisterCommitListener(CommitListener $commitListener): void {
 		unset($this->commitListeners[spl_object_hash($commitListener)]);
+	}
+
+	private ?\ArrayIterator $walkingCommitListenersIterator = null;
+
+	private function walkCommitListeners(): ?CommitListener {
+		if ($this->walkingCommitListenersIterator === null) {
+			$this->walkingCommitListenersIterator = (new \ArrayObject($this->commitListeners))->getIterator();
+		}
+
+		if (!$this->walkingCommitListenersIterator->valid()) {
+			$this->walkingCommitListenersIterator = null;
+			return null;
+		}
+
+		$commitListener = $this->walkingCommitListenersIterator->current();
+		$this->walkingCommitListenersIterator->next();
+		return $commitListener;
 	}
 }
