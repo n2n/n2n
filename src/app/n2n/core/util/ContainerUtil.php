@@ -78,7 +78,7 @@ class ContainerUtil {
 	/**
 	 * @return ClosureCommitListener
 	 */
-	private function createClosureCommitListener(array $disallowedPhases = []): ClosureCommitListener {
+	private function createClosureCommitListener(array $disallowedPhases = [], bool $prioritize = false): ClosureCommitListener {
 		$tm = $this->getTransactionManager();
 		$tm->ensureTransactionOpen();
 
@@ -91,7 +91,7 @@ class ContainerUtil {
 			$tm->unregisterCommitListener($commitListener);
 		});
 
-		$tm->registerCommitListener($commitListener);
+		$tm->registerCommitListener($commitListener, $prioritize);
 
 		return $commitListener;
 	}
@@ -156,10 +156,14 @@ class ContainerUtil {
 
 	function postPrepare(\Closure $callback, bool $extend = false): void {
 		$mmi = $this->createMmiFromClosure($callback);
-		$prepareListener = $this->createClosureCommitListener([TransactionPhase::COMMIT, TransactionPhase::ROLLBACK]);
+		$prepareListener = $this->createClosureCommitListener([TransactionPhase::COMMIT, TransactionPhase::ROLLBACK], $extend);
 
 		$prepareListener->setPostPrepareCallback(function () use ($prepareListener, $mmi, $extend) {
 			$tm = $this->getTransactionManager();
+			if ($tm->isCommitPreparationExtended()) {
+				return;
+			}
+
 			$tm->unregisterCommitListener($prepareListener);
 			if ($extend) {
 				$tm->extendCommitPreparation();

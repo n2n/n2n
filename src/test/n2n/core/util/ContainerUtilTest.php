@@ -71,4 +71,35 @@ class ContainerUtilTest extends TestCase {
 		$this->assertEquals(2, $called);
 	}
 
+	function testPostPrepareAfterExtend() {
+		$firstPostPrepareCalled = false;
+		$secondPostPrepareCalled = false;
+		$postPrepareCalled = false;
+
+		$tx = $this->transactionManager->createTransaction();
+		$this->containerUtil->postPrepareAndExtend(function () use (&$firstPostPrepareCalled, &$secondPostPrepareCalled) {
+			$this->assertFalse($firstPostPrepareCalled);
+			$firstPostPrepareCalled = true;
+
+			$this->containerUtil->postPrepareAndExtend(function () use (&$secondPostPrepareCalled) {
+				$this->assertFalse($secondPostPrepareCalled);
+				$secondPostPrepareCalled = true;
+			});
+		});
+
+		$this->containerUtil->postPrepare(function () use (&$firstPostPrepareCalled, &$secondPostPrepareCalled, &$postPrepareCalled) {
+			$this->assertTrue($firstPostPrepareCalled);
+			$this->assertTrue($secondPostPrepareCalled);
+			$this->assertFalse($postPrepareCalled);
+			$postPrepareCalled = true;
+		});
+		$tx->commit();
+
+
+		$this->assertTrue($firstPostPrepareCalled);
+		$this->assertTrue($secondPostPrepareCalled);
+		$this->assertTrue($postPrepareCalled);
+
+	}
+
 }
