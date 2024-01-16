@@ -20,7 +20,7 @@
  * Thomas Günther.......: Developer, Hangar
  */
 namespace n2n\core\container;
-	  
+
 use n2n\reflection\ObjectAdapter;
 use n2n\util\EnumUtils;
 use n2n\util\ex\IllegalStateException;
@@ -44,7 +44,7 @@ class TransactionManager extends ObjectAdapter {
 	 */
 	private $commitListeners = array();
 	private $tRef = 1;
-	
+
 	private ?Transaction $rootTransaction = null;
 	private int $currentLevel = 0;
 	private ?bool $readOnly = null;
@@ -88,9 +88,9 @@ class TransactionManager extends ObjectAdapter {
 		return $transaction;
 	}
 
-	
+
 	/**
-	 * Returns true if there is an open transaction 
+	 * Returns true if there is an open transaction
 	 * @return bool
 	 */
 	public function hasOpenTransaction(): bool {
@@ -136,7 +136,7 @@ class TransactionManager extends ObjectAdapter {
 
 		return $this->rootTransaction;
 	}
-	
+
 	/**
 	 * @return Transaction
 	 * @throws TransactionStateException if no transaction is open.
@@ -145,7 +145,7 @@ class TransactionManager extends ObjectAdapter {
 		if (false !== ($transaction = end($this->subTransactions))) {
 			return $transaction;
 		}
-		
+
 		if ($this->rootTransaction !== null) {
 			return $this->rootTransaction;
 		}
@@ -161,7 +161,7 @@ class TransactionManager extends ObjectAdapter {
 		if ($this->tRef != $tRef || $level > $this->currentLevel) {
 			throw new TransactionStateException('Transaction is already closed.');
 		}
-		
+
 		if (!$commit) {
 			$this->rollingBack = true;
 		} else if ($this->rollingBack === true) {
@@ -173,11 +173,11 @@ class TransactionManager extends ObjectAdapter {
 			if ($level > $tlevel) {
 				continue;
 			}
-			
+
 			unset($this->subTransactions[$tlevel]);
 			$this->currentLevel = $level - 1;
 		}
-		
+
 		if (!empty($this->subTransactions) || $level !== 1) {
 			return;
 		}
@@ -350,6 +350,10 @@ class TransactionManager extends ObjectAdapter {
 		$this->begunTransactionalResources = null;
 	}
 
+	function isCommitPreparationExtended(): bool {
+		return $this->commitPreparationExtended;
+	}
+
 	/**
 	 * Starts the commit preparation phase for all transactional resources all over again.
 	 *
@@ -423,7 +427,7 @@ class TransactionManager extends ObjectAdapter {
 		foreach ($this->transactionalResources as $resource) {
 			CommitFailedException::try(fn () => $resource->commit($transaction));
 		}
-		
+
 		foreach ($this->commitListeners as $commitListener) {
 			TransactionPhasePostInterruptedException::try('postCommit', fn () => $commitListener->postCommit($transaction));
 		}
@@ -475,7 +479,7 @@ class TransactionManager extends ObjectAdapter {
 		}
 
 		$this->transactionalResources[spl_object_hash($resource)] = $resource;
-		
+
 		if ($this->hasOpenTransaction()) {
 			$resource->beginTransaction($this->rootTransaction);
 		}
@@ -488,13 +492,16 @@ class TransactionManager extends ObjectAdapter {
 	public function unregisterResource(TransactionalResource $resource): void {
 		unset($this->transactionalResources[spl_object_hash($resource)]);
 	}
-	
-	public function registerCommitListener(CommitListener $commitListener): void {
-		$this->commitListeners[spl_object_hash($commitListener)] = $commitListener;
+
+	public function registerCommitListener(CommitListener $commitListener, bool $prioritize = false): void {
+		if ($prioritize) {
+			$this->commitListeners = [spl_object_hash($commitListener) => $commitListener] + $this->commitListeners;
+		} else {
+			$this->commitListeners[spl_object_hash($commitListener)] = $commitListener;
+		}
 	}
-	
+
 	public function unregisterCommitListener(CommitListener $commitListener): void {
 		unset($this->commitListeners[spl_object_hash($commitListener)]);
 	}
 }
-
