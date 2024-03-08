@@ -378,6 +378,8 @@ class AppN2nContext implements N2nContext, ShutdownListener {
 				return $this;
 			case N2nUtil::class:
 				return $this->util();
+			case N2nApplication::class:
+				return $this->n2nApplication;
 			case LookupManager::class:
 				return $this->getLookupManager();
 			case N2nLocale::class:
