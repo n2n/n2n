@@ -30,9 +30,10 @@ class PersistenceUnitConfig {
 	const TIL_SERIALIZABLE = "SERIALIZABLE";
 	
 	public function __construct(private string $name, private string $dsnUri, private string $user, private ?string $password,
-			private string $transactionIsolationLevel, private string $dialectClassName,
-			private bool $sslVerify = true, private ?string $sslCaCertificatePath = null, private bool $persistent = false) {
-		ArgUtils::valEnum($this->transactionIsolationLevel, self::getTransactionIsolationLevels());
+			private string $readWriteTransactionIsolationLevel, private string $dialectClassName, private bool $sslVerify = true,
+			private ?string $sslCaCertificatePath = null, private bool $persistent = false, private ?string $readOnlyTransactionIsolationLevel = null) {
+		ArgUtils::valEnum($this->readWriteTransactionIsolationLevel, self::getTransactionIsolationLevels());
+		ArgUtils::valEnum($this->readOnlyTransactionIsolationLevel, self::getTransactionIsolationLevels(), nullAllowed: true);
 	}
 	
 	public function getName() {
@@ -50,9 +51,20 @@ class PersistenceUnitConfig {
 	public function getPassword() {
 		return $this->password;
 	}
-	
+
+	/**
+	 * @deprecated default use readWriteTransactionIsolationLevel
+	 */
 	public function getTransactionIsolationLevel() {
-		return $this->transactionIsolationLevel;
+		return $this->readWriteTransactionIsolationLevel;
+	}
+
+	public function getReadWriteTransactionIsolationLevel() {
+		return $this->readWriteTransactionIsolationLevel;
+	}
+
+	public function getReadOnlyTransactionIsolationLevel() {
+		return $this->readOnlyTransactionIsolationLevel;
 	}
 	
 	public function getDialectClassName() {
