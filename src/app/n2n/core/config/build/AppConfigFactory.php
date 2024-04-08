@@ -338,8 +338,8 @@ class AppConfigFactory {
 				$groupReader->getFloat(self::MONITOR_SLOW_QUERY_TIME_KEY, false));
 	}
 		
-	const KEY_EXT_READ_WRITE = '.readWrite';
-	const KEY_EXT_READ_ONLY = '.readOnly';
+	const KEY_EXT_READ_WRITE = '.read_write';
+	const KEY_EXT_READ_ONLY = '.read_only';
 	const KEY_EXT_DSN_URI = '.dsn_uri';
 	const KEY_EXT_USER = '.user';
 	const KEY_EXT_PASSWORD = '.password';
@@ -364,7 +364,8 @@ class AppConfigFactory {
 					$groupReader->getString($name . self::KEY_EXT_CA_CERTIFICATE_PATH, false),
 					$groupReader->getBool($name . self::KEY_EXT_PERSISTENT, false, false),
 					$groupReader->getString($name . self::KEY_EXT_READ_ONLY . self::KEY_EXT_TRANSACTION_ISOLATION_LEVEL,
-							false, null));
+							false, null) ?? $groupReader->getString($name . self::KEY_EXT_TRANSACTION_ISOLATION_LEVEL, false,
+					PersistenceUnitConfig::TIL_REPEATABLE_READ));
 		}
 				
 // 		$persistenceUnitConfigs[] = new PersistenceUnitConfig('default', 

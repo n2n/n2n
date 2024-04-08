@@ -31,9 +31,9 @@ class PersistenceUnitConfig {
 	
 	public function __construct(private string $name, private string $dsnUri, private string $user, private ?string $password,
 			private string $readWriteTransactionIsolationLevel, private string $dialectClassName, private bool $sslVerify = true,
-			private ?string $sslCaCertificatePath = null, private bool $persistent = false, private ?string $readOnlyTransactionIsolationLevel = null) {
+			private ?string $sslCaCertificatePath = null, private bool $persistent = false, private string $readOnlyTransactionIsolationLevel = PersistenceUnitConfig::TIL_REPEATABLE_READ) {
 		ArgUtils::valEnum($this->readWriteTransactionIsolationLevel, self::getTransactionIsolationLevels());
-		ArgUtils::valEnum($this->readOnlyTransactionIsolationLevel, self::getTransactionIsolationLevels(), nullAllowed: true);
+		ArgUtils::valEnum($this->readOnlyTransactionIsolationLevel, self::getTransactionIsolationLevels());
 	}
 	
 	public function getName() {
