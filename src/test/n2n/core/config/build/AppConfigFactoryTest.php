@@ -84,10 +84,10 @@ class AppConfigFactoryTest extends TestCase {
 		$this->assertEquals(SmtpConfig::SECURITY_MODE_DEFAULT, $appConfig->mail()->getDefaultSmtpConfig()->getSecurityMode());
 		$this->assertEquals(SmtpConfig::SMTP_AUTHENTICATION_REQUIRED_DEFAULT, $appConfig->mail()->getDefaultSmtpConfig()->doAuthenticate());
 
-		$this->assertEquals(IoConfig::PUBLIC_DIR_PERMISSION_DEFAULT, $appConfig->io()->getPublicDirPermission());
-		$this->assertEquals(IoConfig::PUBLIC_FILE_PERMISSION_DEFAULT, $appConfig->io()->getPublicFilePermission());
-		$this->assertEquals(IoConfig::PRIVATE_DIR_PERMISSION_DEFAULT, $appConfig->io()->getPrivateDirPermission());
-		$this->assertEquals(IoConfig::PRIVATE_FILE_PERMISSION_DEFAULT, $appConfig->io()->getPrivateFilePermission());
+		$this->assertEquals(null, $appConfig->io()->getPublicDirPermission());
+		$this->assertEquals(null, $appConfig->io()->getPublicFilePermission());
+		$this->assertEquals(null, $appConfig->io()->getPrivateDirPermission());
+		$this->assertEquals(null, $appConfig->io()->getPrivateFilePermission());
 
 		$this->assertEquals(ErrorConfig::STRICT_ATTITUDE_DEFAULT, $appConfig->error()->isStrictAttitudeEnabled());
 		$this->assertEquals(ErrorConfig::STARTUP_DETECT_ERRORS_DEFAULT, $appConfig->error()->isDetectStartupErrorsEnabled());

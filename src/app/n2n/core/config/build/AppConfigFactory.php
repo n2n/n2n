@@ -278,10 +278,10 @@ class AppConfigFactory {
 	
 	private function createIoConfig(GroupReader $groupReader) {
 		return new IoConfig(
-				$groupReader->getString(self::PUBLIC_DIR_PERMISSION_KEY, false, IoConfig::PUBLIC_DIR_PERMISSION_DEFAULT),
-				$groupReader->getString(self::PUBLIC_FILE_PERMISSION_KEY, false, IoConfig::PUBLIC_FILE_PERMISSION_DEFAULT),
-				$groupReader->getString(self::PRIVATE_DIR_PERMISSION_KEY, false, IoConfig::PRIVATE_DIR_PERMISSION_DEFAULT),
-				$groupReader->getString(self::PRIVATE_FILE_PERMISSION_KEY, false, IoConfig::PRIVATE_FILE_PERMISSION_DEFAULT));
+				$groupReader->getString(self::PUBLIC_DIR_PERMISSION_KEY, false),
+				$groupReader->getString(self::PUBLIC_FILE_PERMISSION_KEY, false),
+				$groupReader->getString(self::PRIVATE_DIR_PERMISSION_KEY, false),
+				$groupReader->getString(self::PRIVATE_FILE_PERMISSION_KEY, false));
 	}
 
 	const ASSETS_DIR_KEY = 'assets.dir';
