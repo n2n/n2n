@@ -29,7 +29,7 @@ use n2n\util\ex\IllegalStateException;
 // @todo accept for same thread
 /**
  * provides thread safety
- *
+ * @deprecated use n2n-concurrency
  */
 class Sync {
 	const FILE_SUFFIX = '.lock';
