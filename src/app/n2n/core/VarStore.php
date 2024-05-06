@@ -127,14 +127,11 @@ class VarStore {
 			$this->validatePathPart($directoryName);
 			$dirPath .= DIRECTORY_SEPARATOR . $directoryName;
 		}
-		
+
 		$path = new FsPath($dirPath);
 		if ($path->isDir()) return $path;
-		
+
 		if ($create) {
-			if ($this->dirPerm === null) {
-				throw new IllegalStateException('Dir perm not defined for VarStore. Could not create directory: ' . $path);
-			}
 			$path->mkdirs($this->dirPerm);
 			return $path;
 		}
