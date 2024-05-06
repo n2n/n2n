@@ -386,6 +386,16 @@ class TransactionManagerTest extends TestCase {
 		$this->assertEquals('release', $tr->callMethods[4]);
 		$this->assertCount(1, $rr->callMethods);
 		$this->assertEquals('release', $rr->callMethods[0]);
+
+		$tm->unregisterResource($tr);
+		$tm->unregisterResource($rr);
+
+		$tx = $tm->createTransaction();
+		$tx->commit();
+
+		$this->assertEquals('release', $tr->callMethods[4]);
+		$this->assertEquals('release', $rr->callMethods[0]);
+
 	}
 
 }

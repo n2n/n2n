@@ -501,7 +501,7 @@ class TransactionManager extends ObjectAdapter {
 		}
 	}
 
-	public function unregisterResource(TransactionalResource $resource): void {
+	public function unregisterResource(TransactionalResource|ReleasableResource $resource): void {
 		$objHash = spl_object_hash($resource);
 		unset($this->transactionalResources[$objHash]);
 		unset($this->releasableResources[$objHash]);
