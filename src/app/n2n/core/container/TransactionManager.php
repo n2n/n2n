@@ -36,7 +36,11 @@ class TransactionManager extends ObjectAdapter {
 	/**
 	 * @var TransactionalResource[]
 	 */
-	private $transactionalResources = array();
+	private array $transactionalResources = array();
+	/**
+	 * @var ReleasableResource[]
+	 */
+	private array $releasableResources = array();
 
 	private ?array $begunTransactionalResources = null;
 	/**
@@ -460,7 +464,7 @@ class TransactionManager extends ObjectAdapter {
 	function releaseResources(): void {
 		$this->ensureNoTransactionOpen();
 
-		foreach ($this->transactionalResources as $resource) {
+		foreach ($this->releasableResources as $resource) {
 			$resource->release();
 		}
 	}
@@ -472,13 +476,21 @@ class TransactionManager extends ObjectAdapter {
 		return $this->transactionalResources;
 	}
 
-	public function registerResource(TransactionalResource $resource): void {
+	public function registerResource(TransactionalResource|ReleasableResource $resource): void {
 		if (!in_array($this->phase, [TransactionPhase::CLOSED, TransactionPhase::OPEN, TransactionPhase::PREPARE_COMMIT])) {
 			throw new TransactionStateException('Can not register a new TransactionalResource in '
 					. EnumUtils::unitToBacked($this->phase) . ' phase.');
 		}
 
-		$this->transactionalResources[spl_object_hash($resource)] = $resource;
+		$objHash = spl_object_hash($resource);
+		$this->releasableResources[$objHash] = $resource;
+
+		if (!($resource instanceof TransactionalResource)) {
+			return;
+		}
+
+		$this->transactionalResources[$objHash] = $resource;
+
 
 		if ($this->hasOpenTransaction()) {
 			$resource->beginTransaction($this->rootTransaction);
@@ -490,7 +502,9 @@ class TransactionManager extends ObjectAdapter {
 	}
 
 	public function unregisterResource(TransactionalResource $resource): void {
-		unset($this->transactionalResources[spl_object_hash($resource)]);
+		$objHash = spl_object_hash($resource);
+		unset($this->transactionalResources[$objHash]);
+		unset($this->releasableResources[$objHash]);
 	}
 
 	public function registerCommitListener(CommitListener $commitListener, bool $prioritize = false): void {

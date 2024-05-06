@@ -31,6 +31,7 @@ use n2n\core\container\err\RollbackFailedException;
 use n2n\core\container\err\TransactionStateException;
 use n2n\core\container\err\UnexpectedRollbackException;
 use n2n\core\container\mock\CommitListenerMock;
+use n2n\core\container\mock\ReleasableResourceMock;
 
 class TransactionManagerTest extends TestCase {
 
@@ -362,6 +363,29 @@ class TransactionManagerTest extends TestCase {
 			$this->assertEquals('beginTransaction', $tr->callMethods[0]);
 			$this->assertEquals('prepareCommit', $tr->callMethods[1]);
 		}
+	}
+
+	public function testRelease(): void {
+
+		$tr = new TransactionalResourceMock();
+		$rr = new ReleasableResourceMock();
+
+		$tm = new TransactionManager();
+		$tm->registerResource($tr);
+		$tm->registerResource($rr);
+
+		$tx = $tm->createTransaction();
+		$tx->commit();
+
+		$this->assertCount(4, $tr->callMethods);
+		$this->assertCount(0, $rr->callMethods);
+
+		$tm->releaseResources();
+
+		$this->assertCount(5, $tr->callMethods);
+		$this->assertEquals('release', $tr->callMethods[4]);
+		$this->assertCount(1, $rr->callMethods);
+		$this->assertEquals('release', $rr->callMethods[0]);
 	}
 
 }

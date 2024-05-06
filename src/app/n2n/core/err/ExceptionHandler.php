@@ -42,6 +42,7 @@ use n2n\web\http\Method;
 use n2n\util\uri\Url;
 use n2n\util\uri\Authority;
 use n2n\util\uri\Query;
+use n2n\util\ex\err\TriggeredError;
 
 // define('N2N_EXCEPTION_HANDLING_PHP_SEVERITIES', E_ALL | E_STRICT);
 // define('N2N_EXCEPTION_HANDLING_PHP_STRICT_ATTITUTE_SEVERITIES', E_STRICT | E_WARNING | E_NOTICE | E_CORE_WARNING | E_USER_WARNING | E_USER_NOTICE | E_DEPRECATED);
@@ -1063,109 +1064,3 @@ class LoggingFailedException extends \RuntimeException {
 // class PHPFatalErrorException extends PHPErrorException {
 
 // }
-
-abstract class TriggeredError extends \Error {
-	public function __construct(string $message, int $code = null, string $fileFsPath = null,
-			int $line = null, \Throwable $previous = null) {
-		parent::__construct($message, $code ?? 0, $previous);
-
-
-		$this->file = $fileFsPath;
-		$this->line = $line;
-	}
-
-	/**
-	 * @return boolean
-	 */
-	function isBadRequest() {
-		return self::isPrevBadRequestMessage($this->message);
-	}
-
-	/**
-	 * @param int $type
-	 * @param string $errstr
-	 * @param string $file
-	 * @param int $line
-	 * @return TriggeredError
-	 */
-	static function create(int $type, string $errstr, string $errfile, int $errline): TriggeredError {
-		switch($type) {
-			case E_ERROR:
-			case E_USER_ERROR:
-			case E_COMPILE_ERROR:
-			case E_CORE_ERROR:
-				return new FatalError($errstr, $type, $errfile, $errline);
-			case E_WARNING:
-			case E_USER_WARNING:
-			case E_COMPILE_WARNING:
-			case E_CORE_WARNING:
-				return new WarningError($errstr, $type, $errfile, $errline);
-			case E_NOTICE:
-			case E_USER_NOTICE:
-				return new NoticeError($errstr, $type,$errfile, $errline);
-			case E_RECOVERABLE_ERROR:
-				return new RecoverableError($errstr, $type, $errfile, $errline);
-			case E_STRICT:
-				return new StrictError($errstr, $type, $errfile, $errline);
-			case E_PARSE:
-				return new ParseError($errstr, $type, $errfile, $errline);
-			case E_DEPRECATED:
-			case E_USER_DEPRECATED:
-				return new DeprecatedError($errstr, $type, $errfile, $errline);
-			default:
-				return new FatalError($errstr, $type, $errfile, $errline);
-		}
-	}
-
-	// 	Warning: POST Content-Length of 60582676 bytes exceeds the limit of 8388608 bytes in Unknown on line 0
-	const POST_LENGTH_ERROR_MSG_PREFIX = 'POST Content-Length';
-	// 	Warning: Maximum number of allowable file uploads has been exceeded in Unknown on line 0
-	const UPLOAD_NUM_ERROR_MSG_PREFIX = 'Maximum number';
-	// Warning: Unknown: Input variables exceeded 2. To increase the limit change max_input_vars in php.ini. in Unknown on line 0
-	const INPUT_VARS_NUM_ERROR_MSG_PREFIX = 'Unknown: Input variables exceeded';
-
-	private static function isPrevBadRequestMessage($message) {
-		return self::POST_LENGTH_ERROR_MSG_PREFIX == substr($message, 0, strlen(self::POST_LENGTH_ERROR_MSG_PREFIX))
-				|| self::UPLOAD_NUM_ERROR_MSG_PREFIX == substr($message, 0, strlen(self::UPLOAD_NUM_ERROR_MSG_PREFIX))
-				|| self::INPUT_VARS_NUM_ERROR_MSG_PREFIX == substr($message, 0, strlen(self::INPUT_VARS_NUM_ERROR_MSG_PREFIX));
-	}
-
-	static function last() {
-		$lastErrData = error_get_last();
-
-		if ($lastErrData === null) {
-			return null;
-		}
-
-		return self::create($lastErrData['type'], $lastErrData['message'],
-				$lastErrData['file'], $lastErrData['line']);
-	}
-}
-
-class WarningError extends TriggeredError {
-
-}
-
-class NoticeError extends TriggeredError {
-
-}
-
-class RecoverableError extends TriggeredError {
-
-}
-
-class FatalError extends TriggeredError {
-
-}
-
-class StrictError extends TriggeredError {
-
-}
-
-class ParseError extends TriggeredError {
-
-}
-
-class DeprecatedError extends TriggeredError {
-
-}

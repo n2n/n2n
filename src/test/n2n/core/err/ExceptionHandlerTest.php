@@ -3,6 +3,7 @@
 namespace n2n\core\err;
 
 use PHPUnit\Framework\TestCase;
+use n2n\util\ex\err\impl\FatalError;
 
 class ExceptionHandlerTest extends TestCase {
 

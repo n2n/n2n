@@ -33,7 +33,7 @@ use n2n\core\container\err\RollbackFailedException;
  * N2N adds additional prepare phase in which participants can settle the commit between them. This phase happens
  * in advance of the commit request (or voting) phase.
  */
-interface TransactionalResource {
+interface TransactionalResource extends ReleasableResource {
 	/**
 	 * @param Transaction $transaction
 	 */
@@ -76,11 +76,4 @@ interface TransactionalResource {
 	 */
 	public function rollBack(Transaction $transaction): void;
 
-	/**
-	 * Notifies the TransactionalResource of a coming possible longer idle time. If the TransactionalResource uses a
-	 * database connection for example it can be closed and reopened when it will be next used.
-	 * @return void
-	 * @throws IllegalStateException if a transaction is open.
-	 */
-	function release(): void;
 }
