@@ -492,7 +492,9 @@ class ExceptionHandler {
 				$defLogPath = $defLogBasePath . $ext . self::LOG_FILE_EXTENSION;
 				try {
 					IoUtils::putContents($defLogPath, $detailMessage);
-					IoUtils::chmod($defLogPath, $this->logDetailFilePerm);
+					if ($this->logDetailFilePerm !== null) {
+						IoUtils::chmod($defLogPath, $this->logDetailFilePerm);
+					}
 				} catch (\Exception $e) {
 					$logE = $this->createLoggingFailedException($e);;
 					$this->pendingLogException[spl_object_hash($logE)] = $logE;
