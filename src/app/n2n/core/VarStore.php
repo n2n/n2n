@@ -150,10 +150,6 @@ class VarStore {
 		if ($filePath->isFile()) return $filePath;
 		
 		if ($createFile) {
-			if ($this->filePerm === null) {
-				throw new IllegalStateException('File perm not defined for VarStore. Could not create file: ' . $filePath);
-			}
-			
 			$filePath->createFile($this->filePerm);
 			return $filePath;
 		}
