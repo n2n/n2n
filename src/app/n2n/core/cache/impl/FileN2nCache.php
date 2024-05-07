@@ -90,7 +90,7 @@ class FileAppCache implements AppCache {
 	private $dirPerm;
 	private $filePerm;
 	
-	public function __construct(private FsPath $dirFsPath, private FsPath $sharedDirFsPath, string $dirPerm, string $filePerm) {
+	public function __construct(private FsPath $dirFsPath, private FsPath $sharedDirFsPath, ?string $dirPerm, ?string $filePerm) {
 		$this->dirPerm = $dirPerm;
 		$this->filePerm = $filePerm;
 	}
@@ -111,8 +111,10 @@ class FileAppCache implements AppCache {
 		$dirFsPath = $this->determineDirFsPath($shared)->ext(VarStore::namespaceToDirName($namespace));
 		if (!$dirFsPath->isDir()) {
 			$dirFsPath->mkdirs($this->dirPerm);
-			// chmod after mkdirs because of possible umask restrictions.
-			$dirFsPath->chmod($this->dirPerm);
+			if ($this->dirPerm !== null) {
+				// chmod after mkdirs because of possible umask restrictions.
+				$dirFsPath->chmod($this->dirPerm);
+			}
 		}
 		
 		return new FileCacheStore($dirFsPath, $this->dirPerm, $this->filePerm);
