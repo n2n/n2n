@@ -74,10 +74,10 @@ class AppConfigFactory {
 	
 	/**
 	 * @param CombinedConfigSource $combinedConfigSource
-	 * @param string $stage
+	 * @param string|null $stage
 	 * @return \n2n\core\config\AppConfig
 	 */
-	public function create(CombinedConfigSource $combinedConfigSource, string $stage, bool $stageExplizit = false) {
+	public function create(CombinedConfigSource $combinedConfigSource, ?string $stage, bool $stageExplizit = false) {
 		$reader = new GroupedConfigSourceReader($combinedConfigSource);
 		$reader->initialize($stage, $stageExplizit, self::getGroupNames(), array(self::GROUP_ROUTING));
 
