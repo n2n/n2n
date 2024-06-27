@@ -789,7 +789,7 @@ class ExceptionHandler {
 				. '<h1>Fatal Error occurred</h1>' . "\r\n";
 
 		if (!N2N::isDevelopmentModeOn()) {
-			echo '<p>Webmaster was informed. Please try later again.</p>' . "\r\n";
+			echo '<p>Webmaster was informed. Please try again later.</p>' . "\r\n";
 		} else {
 			$i = 0;
 			foreach ($exceptions as $e) {
