@@ -37,6 +37,7 @@
 		"n2n/n2n-log4php" : "~7.4",
 		"n2n/n2n-reflection" : "~7.4",
 		"n2n/n2n-util" : "~7.4",
+		"n2n/n2n-cache" : "~7.4",
         "ext-mbstring": "*"
     },
 	"autoload" : {
