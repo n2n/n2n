@@ -21,7 +21,7 @@
  */
 namespace n2n\core\cache\impl;
 
-use n2n\util\cache\CacheStore;
+use n2n\cache\CacheStore;
 use n2n\core\cache\N2nCache;
 use n2n\core\VarStore;
 use n2n\core\config\AppConfig;

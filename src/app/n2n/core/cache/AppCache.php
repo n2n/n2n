@@ -21,7 +21,7 @@
  */
 namespace n2n\core\cache;
 
-use n2n\util\cache\CacheStore;
+use n2n\cache\CacheStore;
 
 interface AppCache extends \n2n\core\container\AppCache {
 	/**

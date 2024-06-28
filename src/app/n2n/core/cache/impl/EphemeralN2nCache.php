@@ -21,16 +21,12 @@
  */
 namespace n2n\core\cache\impl;
 
-use InvalidArgumentException;
 use n2n\core\config\AppConfig;
-use n2n\util\io\IoUtils;
 use n2n\core\cache\AppCache;
-use n2n\util\io\fs\FsPath;
-use n2n\util\cache\CacheStore;
-use n2n\util\cache\impl\FileCacheStore;
+use n2n\cache\CacheStore;
 use n2n\core\cache\N2nCache;
 use n2n\core\VarStore;
-use n2n\util\cache\impl\EphemeralCacheStore;
+use n2n\cache\impl\ephemeral\EphemeralCacheStore;
 
 class EphemeralN2nCache implements N2nCache {
 

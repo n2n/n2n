@@ -23,7 +23,7 @@ namespace n2n\core\cache;
 
 use n2n\core\config\AppConfig;
 use n2n\core\container\N2nContext;
-use n2n\util\cache\CacheStore;
+use n2n\cache\CacheStore;
 use n2n\core\VarStore;
 
 interface N2nCache {
