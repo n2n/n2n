@@ -54,11 +54,11 @@ class Transaction {
 		return $this->transactionalContext->isLevelOpen($this->level, $this->tcRef);
 	}
 
-	public function commit() {
+	public function commit(): void {
 		$this->transactionalContext->closeLevel($this->level, $this->tcRef, true);
 	}
 
-	public function rollBack() {
+	public function rollBack(): void {
 		$this->transactionalContext->closeLevel($this->level, $this->tcRef, false);
 	}
 }

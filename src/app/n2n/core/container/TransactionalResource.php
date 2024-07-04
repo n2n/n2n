@@ -25,6 +25,7 @@ use n2n\util\ex\IllegalStateException;
 use n2n\core\container\err\CommitFailedException;
 use n2n\core\container\err\CommitRequestFailedException;
 use n2n\core\container\err\RollbackFailedException;
+use n2n\core\container\err\CommitPreparationFailedException;
 
 /**
  * Each TransactionalResource represents a participant in the two phase commit protocol
@@ -48,7 +49,7 @@ interface TransactionalResource extends ReleasableResource {
 	 *
 	 * @param Transaction $transaction
 	 * @return void
-	 * @throws \Throwable causes the abort of the commit but the transaction will remain open.
+	 * @throws CommitPreparationFailedException|\Throwable causes the abort of the commit but the transaction will remain open.
 	 */
 	public function prepareCommit(Transaction $transaction): void;
 	

@@ -200,4 +200,27 @@ class ContainerUtil {
 			$mmi->invoke();
 		});
 	}
+
+	/**
+	 * Will call the closure inside a transaction. If a deadlock happens the closure will be called again in a
+	 * new transaction.
+	 *
+	 * @param \Closure $closure
+	 * @param int $tries
+	 * @param \Closure|null $deadlockHandler
+	 * @param bool $readOnly
+	 * @return mixed
+	 */
+	function execIsolated(\Closure $closure, int $tries = 3, \Closure $deadlockHandler = null,
+			bool $readOnly = false): mixed {
+		$deadlockMmi = null;
+		if ($deadlockHandler !== null) {
+			$deadlockMmi = $this->createMmiFromClosure($deadlockHandler);
+		}
+
+		$restartableTransaction = new IsolatedProcedure($this->getTransactionManager(),
+				$this->createMmiFromClosure($closure), $deadlockMmi);
+		$restartableTransaction->setTries($tries);
+		return $restartableTransaction->exec($readOnly);
+	}
 }

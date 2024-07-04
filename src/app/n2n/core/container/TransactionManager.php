@@ -31,6 +31,9 @@ use n2n\core\container\err\TransactionStateException;
 use n2n\core\container\err\UnexpectedRollbackException;
 use n2n\core\container\err\TransactionPhaseException;
 use n2n\core\container\err\BeginFailedException;
+use n2n\core\container\err\CommitPreparationFailedException;
+use n2n\core\container\err\TransactionPhasePostInterruptedException;
+use n2n\core\container\err\TransactionPhasePreInterruptedException;
 
 class TransactionManager extends ObjectAdapter {
 	/**
@@ -104,8 +107,6 @@ class TransactionManager extends ObjectAdapter {
 	function getPhase(): TransactionPhase {
 		return $this->phase;
 	}
-
-
 
 	/**
 	 * Returns true if there is an open read only transaction.
@@ -217,6 +218,8 @@ class TransactionManager extends ObjectAdapter {
 	private function endByCommit(): void {
 		try {
 			$this->prepareCommit();
+		} catch (CommitPreparationFailedException $e) {
+			$this->fail('Commit preparation failed.', $e);
 		} finally {
 			$this->cleanUpPrepare();
 		}
@@ -269,15 +272,15 @@ class TransactionManager extends ObjectAdapter {
 	}
 
 
-	private function fail(string $message, \Throwable $previous): void {
-		throw new TransactionStateException($message, previous: $previous);
+	private function fail(string $message, TransactionPhaseException $previous): void {
+		throw new TransactionStateException($message, phaseException: $previous);
 	}
 
-	private function failWithReopen(string $reason, \Throwable $previous): void {
+	private function failWithReopen(string $reason, TransactionPhaseException $previous): void {
 		$this->reopen();
 
 		throw new TransactionStateException('Transaction unexpectedly reopened. Reason: ' . $reason,
-				previous: $previous);
+				phaseException: $previous);
 	}
 
 	private function failWithEnterCorruptedState(string $reason, TransactionPhaseException $previous): void {

@@ -22,5 +22,14 @@
 namespace n2n\core\container\err;
 
 class TransactionStateException extends \RuntimeException {
-	
+
+
+	function __construct(string $message = null, int $code = null,
+			private readonly ?TransactionPhaseException $phaseException = null) {
+		parent::__construct($message ?? '', $code ?? 0, $phaseException);
+	}
+
+	function isDeadlock(): bool {
+		return $this->phaseException?->isDeadlock() ?? false;
+	}
 }

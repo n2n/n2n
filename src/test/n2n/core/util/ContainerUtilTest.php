@@ -7,6 +7,8 @@ use n2n\core\container\N2nContext;
 use n2n\core\container\TransactionManager;
 use n2n\core\container\mock\TransactionalResourceMock;
 use n2n\core\container\TransactionPhase;
+use n2n\core\container\err\CommitPreparationFailedException;
+use n2n\core\container\err\TransactionalProcessFailedException;
 
 class ContainerUtilTest extends TestCase {
 
@@ -111,6 +113,104 @@ class ContainerUtilTest extends TestCase {
 		$this->assertEquals('requestCommit', $tr->callMethods[3]);
 		$this->assertEquals('commit', $tr->callMethods[4]);
 
+	}
+
+	function testExecIsolatedSuccess(): void {
+		$tr = new TransactionalResourceMock();
+		$this->transactionManager->registerResource($tr);
+
+		$callsNum = 0;
+		$this->containerUtil->execIsolated(
+				function () use (&$callsNum) {
+					$callsNum++;
+				}, 3);
+
+		$this->assertEquals(1, $callsNum);
+		$this->assertCount(4, $tr->callMethods);
+	}
+
+	function testExecIsolatedSuccessOnThird(): void {
+		$tr = new TransactionalResourceMock();
+		$this->transactionManager->registerResource($tr);
+
+		$callsNum = 0;
+		$this->containerUtil->execIsolated(
+				function () use (&$callsNum, $tr) {
+					$callsNum++;
+					$this->assertTrue($this->transactionManager->hasOpenTransaction());
+					$this->assertTrue($this->transactionManager->isReadyOnly());
+					if ($callsNum < 3) {
+						$tr->prepareOnce = fn () => throw new CommitPreparationFailedException(deadlock: true);
+					}
+				}, 3, fn () => $this->fail('should not be called'), true);
+
+		$this->assertEquals(3, $callsNum);
+		$this->assertCount(10, $tr->callMethods);
+		$this->assertEquals('beginTransaction', $tr->callMethods[0]);
+		$this->assertEquals('prepareCommit', $tr->callMethods[1]);
+		$this->assertEquals('rollBack', $tr->callMethods[2]);
+		$this->assertEquals('beginTransaction', $tr->callMethods[3]);
+		$this->assertEquals('prepareCommit', $tr->callMethods[4]);
+		$this->assertEquals('rollBack', $tr->callMethods[5]);
+		$this->assertEquals('beginTransaction', $tr->callMethods[6]);
+		$this->assertEquals('prepareCommit', $tr->callMethods[7]);
+		$this->assertEquals('requestCommit', $tr->callMethods[8]);
+		$this->assertEquals('commit', $tr->callMethods[9]);
+	}
+
+	function testExecIsolatedTransactionFail(): void {
+		$tr = new TransactionalResourceMock();
+		$this->transactionManager->registerResource($tr);
+
+		$callsNum = 0;
+		try {
+			$this->containerUtil->execIsolated(
+					function() use (&$callsNum, $tr) {
+						$callsNum++;
+						$this->assertTrue($this->transactionManager->hasOpenTransaction());
+						$this->assertFalse($this->transactionManager->isReadyOnly());
+						$tr->prepareOnce = fn() => throw new CommitPreparationFailedException(deadlock: true);
+					}, 3);
+			$this->fail('exception expected');
+		} catch (TransactionalProcessFailedException $e) {
+		}
+
+		$this->assertEquals(3, $callsNum);
+		$this->assertCount(9, $tr->callMethods);
+		$this->assertEquals('beginTransaction', $tr->callMethods[0]);
+		$this->assertEquals('prepareCommit', $tr->callMethods[1]);
+		$this->assertEquals('rollBack', $tr->callMethods[2]);
+		$this->assertEquals('beginTransaction', $tr->callMethods[3]);
+		$this->assertEquals('prepareCommit', $tr->callMethods[4]);
+		$this->assertEquals('rollBack', $tr->callMethods[5]);
+		$this->assertEquals('beginTransaction', $tr->callMethods[6]);
+		$this->assertEquals('prepareCommit', $tr->callMethods[7]);
+		$this->assertEquals('rollBack', $tr->callMethods[8]);
+	}
+
+	function testSExecIsolatedFailWithDeadlockHandle(): void {
+		$tr = new TransactionalResourceMock();
+		$this->transactionManager->registerResource($tr);
+
+		$callsNum = 0;
+		$handleCallsNum = 0;
+		$this->containerUtil->execIsolated(
+				function() use (&$callsNum, $tr) {
+					$callsNum++;
+					$tr->prepareOnce = fn() => throw new CommitPreparationFailedException(deadlock: true);
+				}, 2, function () use (&$handleCallsNum) {
+					$handleCallsNum++;
+				});
+
+		$this->assertEquals(2, $callsNum);
+		$this->assertCount(6, $tr->callMethods);
+		$this->assertEquals('beginTransaction', $tr->callMethods[0]);
+		$this->assertEquals('prepareCommit', $tr->callMethods[1]);
+		$this->assertEquals('rollBack', $tr->callMethods[2]);
+		$this->assertEquals('beginTransaction', $tr->callMethods[3]);
+		$this->assertEquals('prepareCommit', $tr->callMethods[4]);
+		$this->assertEquals('rollBack', $tr->callMethods[5]);;
+		$this->assertEquals(1, $handleCallsNum);
 	}
 
 }

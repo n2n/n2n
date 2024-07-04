@@ -1,8 +1,8 @@
 <?php
 
-namespace n2n\core\container;
+namespace n2n\core\container\err;
 
-class TransactionPhasePostInterruptedException extends \Exception {
+class TransactionPhasePostInterruptedException extends TransactionPhaseException {
 	/**
 	 * @throws TransactionPhasePostInterruptedException
 	 */
