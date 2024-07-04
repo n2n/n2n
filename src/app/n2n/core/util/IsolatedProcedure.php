@@ -49,6 +49,7 @@ class IsolatedProcedure {
 				}
 
 				$tx->rollBack();
+				IllegalStateException::assertTrue(!$this->tm->hasOpenTransaction());
 
 				if ($i >= $this->tries) {
 					if ($this->deadlockHandler === null) {
@@ -58,8 +59,6 @@ class IsolatedProcedure {
 
 					return $this->deadlockHandler->invoke();
 				}
-
-				IllegalStateException::assertTrue(!$this->tm->hasOpenTransaction());
 			}
 		}
 	}
