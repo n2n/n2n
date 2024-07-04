@@ -31,7 +31,7 @@ class IsolatedProcedure {
 
 	function exec(bool $readOnly = false): mixed {
 		if ($this->tm->hasOpenTransaction()) {
-			throw new IllegalStateException('RestartableTransaction must not be executed inside an already open '
+			throw new IllegalStateException('IsolatedProcedure must not be executed inside an already open '
 					. ' transaction so it can create and possible recreate a root transaction.');
 		}
 
@@ -53,7 +53,7 @@ class IsolatedProcedure {
 
 				if ($i >= $this->tries) {
 					if ($this->deadlockHandler === null) {
-						throw new TransactionalProcessFailedException('RestartableTransaction was aborted after '
+						throw new TransactionalProcessFailedException('IsolatedProcedure was aborted after '
 								. $this->tries . ' attempts which all ended in deadlocks.', previous: $e);
 					}
 
