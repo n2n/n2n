@@ -62,6 +62,9 @@ class TransactionManager extends ObjectAdapter {
 
 	private bool $commitPreparationExtended = false;
 	private int $commitPreparationsNum = 0;
+	/**
+	 * @var TransactionalResource[]|null
+	 */
 	private ?array $pendingCommitPreparations = null;
 
 	public function createTransaction($readOnly = false): Transaction {
