@@ -6,7 +6,6 @@ use PHPUnit\Framework\TestCase;
 use n2n\core\container\N2nContext;
 use n2n\core\container\TransactionManager;
 use n2n\core\container\mock\TransactionalResourceMock;
-use n2n\core\container\TransactionPhase;
 use n2n\core\container\err\CommitPreparationFailedException;
 use n2n\core\container\err\TransactionalProcessFailedException;
 

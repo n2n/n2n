@@ -6,8 +6,8 @@ use n2n\core\container\TransactionManager;
 use n2n\util\ex\IllegalStateException;
 use n2n\reflection\magic\MagicMethodInvoker;
 use n2n\util\type\ArgUtils;
-use n2n\core\container\err\TransactionStateException;
 use n2n\core\container\err\TransactionalProcessFailedException;
+use n2n\core\container\TransactionExecutionException;
 
 class IsolatedProcedure {
 
@@ -35,31 +35,33 @@ class IsolatedProcedure {
 					. ' transaction so it can create and possible recreate a root transaction.');
 		}
 
-
-		for ($i = 1; true; $i++) {
+		for ($i = 1; $i <= $this->tries; $i++) {
 			$tx = $this->tm->createTransaction($readOnly);
 			try {
-				$r = $this->transactionalProcessInvoker->invoke();
+				/**
+				 * @return mixed
+				 * @throws TransactionExecutionException
+				 */
+				$r = (fn () => $this->transactionalProcessInvoker->invoke())();
 				$tx->commit();
 
 				return $r;
-			} catch (TransactionStateException $e) {
+			} catch (TransactionExecutionException $e) {
 				if (!$e->isDeadlock()) {
-					throw $e;
+					throw new TransactionalProcessFailedException(
+							'IsolatedProcedure threw an exception: ' . $e->getMessage(), previous: $e);
 				}
 
 				$tx->rollBack();
 				IllegalStateException::assertTrue(!$this->tm->hasOpenTransaction());
-
-				if ($i >= $this->tries) {
-					if ($this->deadlockHandler === null) {
-						throw new TransactionalProcessFailedException('IsolatedProcedure was aborted after '
-								. $this->tries . ' attempts which all ended in deadlocks.', previous: $e);
-					}
-
-					return $this->deadlockHandler->invoke();
-				}
 			}
 		}
+
+		if ($this->deadlockHandler === null) {
+			throw new TransactionalProcessFailedException('IsolatedProcedure was aborted after '
+					. $this->tries . ' attempts which all ended in deadlocks.', previous: $e);
+		}
+
+		return $this->deadlockHandler->invoke();
 	}
 }

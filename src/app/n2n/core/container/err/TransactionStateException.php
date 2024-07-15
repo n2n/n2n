@@ -21,7 +21,9 @@
  */
 namespace n2n\core\container\err;
 
-class TransactionStateException extends \RuntimeException {
+use n2n\core\container\TransactionExecutionException;
+
+class TransactionStateException extends \RuntimeException implements TransactionExecutionException {
 
 
 	function __construct(string $message = null, int $code = null,
