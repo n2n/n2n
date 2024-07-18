@@ -23,7 +23,7 @@ namespace n2n\core\config;
 
 class ErrorConfig {
 	const ERROR_VIEW_DEFAULT_KEY_SUFFIX = 'default';
-    const STRICT_ATTITUDE_DEFAULT = true;
+    const STRICT_ATTITUDE_DEFAULT = false;
     const STARTUP_DETECT_ERRORS_DEFAULT = true;
     const STARTUP_DETECT_BAD_REQUESTS_DEFAULT = true;
     const LOG_SAVE_DETAIL_INFO_DEFAULT = true;

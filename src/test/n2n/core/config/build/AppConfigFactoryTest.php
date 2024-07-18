@@ -184,7 +184,7 @@ class AppConfigFactoryTest extends TestCase {
 	function testError() {
 		$appConfig = $this->createFromFsPath('error.app.ini');
 
-		$this->assertFalse($appConfig->error()->isStrictAttitudeEnabled());
+		$this->assertTrue($appConfig->error()->isStrictAttitudeEnabled());
 		$this->assertFalse($appConfig->error()->isDetectStartupErrorsEnabled());
 		$this->assertFalse($appConfig->error()->isStartupDetectBadRequestsEnabled());
 		$this->assertFalse($appConfig->error()->isLogSaveDetailInfoEnabled());
