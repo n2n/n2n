@@ -12,13 +12,13 @@ use n2n\core\container\impl\PhpVars;
 use n2n\context\config\SimpleLookupSession;
 use n2n\context\LookupManager;
 use n2n\core\cache\AppCache;
+use n2n\util\magic\MagicContext;
 
 class N2nApplication {
 	private array $n2nExtensions = [];
 
 	function __construct(private VarStore $varStore, private ModuleManager $moduleManager,
 			private AppCache $appCache, private AppConfig $appConfig, private ?FsPath $publicFsPath) {
-
 	}
 
 	function getVarStore(): VarStore {
@@ -43,6 +43,21 @@ class N2nApplication {
 
 	function registerN2nExtension(N2nExtension $n2nExtension): void {
 		$this->n2nExtensions[spl_object_hash($n2nExtension)] = $n2nExtension;
+	}
+
+	/**
+	 * @template T
+	 * @param class-string<T> $className
+	 * @return T|null
+	 */
+	function getN2nExtensionByClassName(string $className): ?N2nExtension {
+		foreach ($this->n2nExtensions as $n2nExtension) {
+			if ($n2nExtension instanceof $className) {
+				return $n2nExtension;
+			}
+		}
+
+		return null;
 	}
 
 	function createN2nContext(TransactionManager $transactionManager = null): AppN2nContext {

@@ -276,7 +276,6 @@ class N2N {
 		self::$n2nApplication = new N2nApplication($varStore, $moduleManager, $n2nCache->getAppCache(), $appConfig, $publicDirFsPath);
 		self::initExtensions(self::$n2nApplication);
 
-
 		return self::$n2nApplication;
 	}
 
@@ -292,11 +291,12 @@ class N2N {
 	public static function initialize(string $publicDirPath, string $varDirPath, 
 			N2nCache $n2nCache = null, ModuleFactory $moduleFactory = null, bool $enableExceptionHandler = true,
 			LogMailer $logMailer = null): void {
-		self::setup($publicDirPath, $varDirPath, $n2nCache, $moduleFactory, $enableExceptionHandler, $logMailer);
+		if (self::$n2nApplication === null) {
+			self::setup($publicDirPath, $varDirPath, $n2nCache, $moduleFactory, $enableExceptionHandler, $logMailer);
+		}
 		
 		self::$n2nContext = self::$n2nApplication->createN2nContext();
 //		self::registerShutdownListener(self::$n2nContext);
-
 
 		self::$initialized = true;
 		
