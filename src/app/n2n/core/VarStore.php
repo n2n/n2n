@@ -30,6 +30,7 @@ use n2n\util\type\ArgUtils;
 use n2n\util\type\TypeUtils;
 use InvalidArgumentException;
 use n2n\util\io\fs\FileOperationException;
+use n2n\util\ex\ExUtils;
 
 class VarStore {
 	const CATEGORY_ETC = 'etc';
@@ -45,12 +46,12 @@ class VarStore {
 	private $filePerm;
 	
 	private $moduleOverwrittenPaths = array();
-		
+
 	/**
-	 * 
+	 *
 	 * @param string $varPath
-	 * @param string $dirPerm
-	 * @param string $filePerm
+	 * @param string|null $dirPerm
+	 * @param string|null $filePerm
 	 */
 	public function __construct(string $varPath, ?string $dirPerm, ?string $filePerm) {
 		$this->varPath = $varPath;
@@ -62,7 +63,7 @@ class VarStore {
 		$this->dirPerm = $dirPerm;
 	}
 	
-	public function getDirPerm() {
+	public function getDirPerm(): ?string {
 		return $this->dirPerm;
 	}
 	
@@ -70,11 +71,11 @@ class VarStore {
 		$this->filePerm = $filePerm;
 	}
 	
-	public function getFilePerm() {
+	public function getFilePerm(): ?string {
 		return $this->filePerm;
 	}
 	
-	public function overwritePath(string $category, string $moduleNamespace, string $path) {
+	public function overwritePath(string $category, string $moduleNamespace, string $path): void {
 		ArgUtils::valEnum($category, self::getCategories(), null, false, 'category');
 		
 		if (!isset($this->moduleOverwrittenPaths[$category])) {
@@ -84,7 +85,7 @@ class VarStore {
 		$this->moduleOverwrittenPaths[$category][$moduleNamespace] = $path;
 	}
 	
-	private function validatePathPart($pathPart) {
+	private function validatePathPart($pathPart): void {
 		if (!IoUtils::hasSpecialChars($pathPart)) return;
 		
 		throw new InvalidArgumentException('Path part contains invalid chars: ' . $pathPart);
@@ -99,7 +100,6 @@ class VarStore {
 	 * @param bool $required
 	 * @param bool $shared
 	 * @return FsPath
-	 * @throws FileOperationException
 	 */
 	public function requestDirFsPath(string $category, string $moduleNamespace = null, string $directoryName = null,
 			bool $create = true, bool $required = true, bool $shared = false): FsPath {
@@ -132,7 +132,7 @@ class VarStore {
 		if ($path->isDir()) return $path;
 
 		if ($create) {
-			$path->mkdirs($this->dirPerm);
+			ExUtils::try(fn () => $path->mkdirs($this->dirPerm));
 			return $path;
 		}
 		
@@ -142,7 +142,7 @@ class VarStore {
 	}
 	
 	public function requestFileFsPath($category, $module, $folderName, $fileName, $createFolder = false,
-			$createFile = false, $required = true, bool $shared = false) {
+			$createFile = false, $required = true, bool $shared = false): FsPath {
 		$dirPath = $this->requestDirFsPath($category, $module, $folderName, $createFolder || $createFile, $required, $shared);
 		
 		$this->validatePathPart($fileName);

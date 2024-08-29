@@ -27,6 +27,7 @@ use n2n\cache\CacheStore;
 use n2n\core\cache\N2nCache;
 use n2n\core\VarStore;
 use n2n\cache\impl\ephemeral\EphemeralCacheStore;
+use n2n\core\container\impl\AppN2nContext;
 
 class EphemeralN2nCache implements N2nCache {
 
@@ -45,5 +46,9 @@ class EphemeralN2nCache implements N2nCache {
 
 	public function getAppCache(): AppCache {
 		return $this->appCache ?? $this->appCache = new EphemeralAppCache();
+	}
+
+	function applyToN2nContext(AppN2nContext $n2nContext): void {
+		$n2nContext->setAppCache($this->getAppCache());
 	}
 }

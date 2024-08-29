@@ -33,6 +33,7 @@ use n2n\core\VarStore;
 use n2n\core\N2N;
 use n2n\core\container\N2nContext;
 use n2n\core\container\impl\AppN2nContext;
+use n2n\util\io\fs\FileOperationException;
 
 class FileN2nCache implements N2nCache {
 	const STARTUP_CACHE_DIR = 'startupcache';
@@ -71,15 +72,15 @@ class FileN2nCache implements N2nCache {
 //	public function n2nContextInitialized(N2nContext $n2nContext) {
 //	}
 	
-	public function requestCacheStore($module, $componentName) {
-		if (!strlen($componentName) || !IoUtils::hasStrictSpecialChars($componentName)) {
-			throw new InvalidArgumentException('Component name is empty or contains strict special chars: ' . $componentName);
-		}
-		
-		return new FileCacheStore($this->varStore->requestDirFsPath(VarStore::CATEGORY_TMP, $module,
-						$componentName), $this->dirPerm, $this->filePerm);
-	}
-	
+//	public function requestCacheStore($module, $componentName) {
+//		if (!strlen($componentName) || !IoUtils::hasStrictSpecialChars($componentName)) {
+//			throw new InvalidArgumentException('Component name is empty or contains strict special chars: ' . $componentName);
+//		}
+//
+//		return new FileCacheStore($this->varStore->requestDirFsPath(VarStore::CATEGORY_TMP, $module,
+//						$componentName), $this->dirPerm, $this->filePerm);
+//	}
+
 	public function applyToN2nContext(AppN2nContext $n2nContext): void {
 		$n2nContext->setAppCache(new FileAppCache(
 				$this->varStore->requestDirFsPath(VarStore::CATEGORY_TMP, N2N::NS, self::APP_CACHE_DIR),

@@ -24,6 +24,7 @@ namespace n2n\core\cache;
 use n2n\cache\CacheStore;
 
 interface AppCache extends \n2n\core\container\AppCache {
+
 	/**
 	 * @param string $namespace or type name of a related package or type
 	 * @param bool $shared true if this cache must be shared between replicas of this application in containerized
