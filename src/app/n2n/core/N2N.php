@@ -294,13 +294,23 @@ class N2N {
 	public static function initialize(string $publicDirPath, string $varDirPath, 
 			N2nCache $n2nCache = null, ModuleFactory $moduleFactory = null, bool $enableExceptionHandler = true,
 			LogMailer $logMailer = null): void {
-		if (self::$n2nApplication === null) {
-			self::setup($publicDirPath, $varDirPath, $n2nCache, $moduleFactory, $enableExceptionHandler, $logMailer);
+		if (self::$n2nApplication !== null) {
+			throw new IllegalStateException('N2nApplication already initialized. Call N2N::initializeWithN2nContext() instead.');
 		}
+
+		self::setup($publicDirPath, $varDirPath, $n2nCache, $moduleFactory, $enableExceptionHandler, $logMailer);
 		
-		self::$n2nContext = self::$n2nApplication->createN2nContext();
+		self::initializeWithN2nContext(self::$n2nApplication->createN2nContext());
 //		self::registerShutdownListener(self::$n2nContext);
 
+	}
+
+	public static function initializeWithN2nContext(AppN2nContext $n2nContext): void {
+		if (self::$n2nApplication === null) {
+			throw new IllegalStateException('No N2nApplication was set up.');
+		}
+
+		self::$n2nContext = $n2nContext;
 		self::$initialized = true;
 
 		self::$exceptionHandler?->checkForStartupErrors();
