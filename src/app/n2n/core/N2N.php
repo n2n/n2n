@@ -276,6 +276,8 @@ class N2N {
 		self::$n2nApplication = new N2nApplication($varStore, $moduleManager, $n2nCache->getAppCache(), $appConfig, $publicDirFsPath);
 		self::initExtensions(self::$n2nApplication);
 
+		self::initLogging(self::$n2nApplication);
+
 		return self::$n2nApplication;
 	}
 
@@ -299,9 +301,6 @@ class N2N {
 //		self::registerShutdownListener(self::$n2nContext);
 
 		self::$initialized = true;
-		
-		// @todo move up so exception will be grouped earlier.
-		self::initLogging(self::$n2nApplication);
 
 		self::$exceptionHandler?->checkForStartupErrors();
 	}
