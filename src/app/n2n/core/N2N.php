@@ -273,7 +273,8 @@ class N2N {
 
 		Sync::init($varStore->requestDirFsPath(VarStore::CATEGORY_TMP, self::NS, self::SYNC_DIR));
 
-		self::$n2nApplication = new N2nApplication($varStore, $moduleManager, $n2nCache->getAppCache(), $appConfig, $publicDirFsPath);
+		self::$n2nApplication = new N2nApplication($varStore, $moduleManager, $n2nCache,
+				$appConfig, $publicDirFsPath);
 		self::initExtensions(self::$n2nApplication);
 
 		self::initLogging(self::$n2nApplication);

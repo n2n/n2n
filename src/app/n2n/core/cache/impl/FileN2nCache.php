@@ -31,6 +31,8 @@ use n2n\cache\impl\fs\FileCacheStore;
 use n2n\core\cache\N2nCache;
 use n2n\core\VarStore;
 use n2n\core\N2N;
+use n2n\core\container\N2nContext;
+use n2n\core\container\impl\AppN2nContext;
 
 class FileN2nCache implements N2nCache {
 	const STARTUP_CACHE_DIR = 'startupcache';
@@ -78,54 +80,10 @@ class FileN2nCache implements N2nCache {
 						$componentName), $this->dirPerm, $this->filePerm);
 	}
 	
-	public function getAppCache(): AppCache {
-		return new FileAppCache(
+	public function applyToN2nContext(AppN2nContext $n2nContext): void {
+		$n2nContext->setAppCache(new FileAppCache(
 				$this->varStore->requestDirFsPath(VarStore::CATEGORY_TMP, N2N::NS, self::APP_CACHE_DIR),
 				$this->varStore->requestDirFsPath(VarStore::CATEGORY_TMP, N2N::NS, self::APP_CACHE_DIR, shared: true),
-				$this->dirPerm, $this->filePerm);
-	}
-}
-
-class FileAppCache implements AppCache {
-	private $dirPerm;
-	private $filePerm;
-	
-	public function __construct(private FsPath $dirFsPath, private FsPath $sharedDirFsPath, ?string $dirPerm, ?string $filePerm) {
-		$this->dirPerm = $dirPerm;
-		$this->filePerm = $filePerm;
-	}
-
-	private function determineDirFsPath(bool $shared): FsPath {
-		if (!$shared) {
-			return $this->dirFsPath;
-		}
-
-		return $this->sharedDirFsPath;
-	}
-
-	/**
-	 * {@inheritDoc}
-	 * @see \n2n\core\cache\AppCache::lookupCacheStore($namespace)
-	 */
-	public function lookupCacheStore(string $namespace, bool $shared = true): CacheStore {
-		$dirFsPath = $this->determineDirFsPath($shared)->ext(VarStore::namespaceToDirName($namespace));
-		if (!$dirFsPath->isDir()) {
-			$dirFsPath->mkdirs($this->dirPerm);
-			if ($this->dirPerm !== null) {
-				// chmod after mkdirs because of possible umask restrictions.
-				$dirFsPath->chmod($this->dirPerm);
-			}
-		}
-		
-		return new FileCacheStore($dirFsPath, $this->dirPerm, $this->filePerm);
-	}
-
-	/**
-	 * {@inheritDoc}
-	 * @see \n2n\core\cache\AppCache::clear()
-	 */
-	public function clear(): void {
-		$this->dirFsPath->delete();
-		$this->sharedDirFsPath->delete();
+				$this->dirPerm, $this->filePerm));
 	}
 }

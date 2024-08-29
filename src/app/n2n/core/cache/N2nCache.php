@@ -26,7 +26,7 @@ use n2n\core\container\N2nContext;
 use n2n\cache\CacheStore;
 use n2n\core\VarStore;
 
-interface N2nCache {
+interface N2nCache extends AppCacheSupplier {
 	/**
 	 * @param VarStore $varStore
 	 */
@@ -46,9 +46,5 @@ interface N2nCache {
 	 * @param N2nContext $n2nContext
 	 */
 //	public function n2nContextInitialized(N2nContext $n2nContext);
-	
-	/**
-	 * @return AppCache
-	 */
-	public function getAppCache(): AppCache;
+
 }

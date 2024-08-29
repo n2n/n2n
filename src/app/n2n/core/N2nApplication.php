@@ -13,12 +13,13 @@ use n2n\context\config\SimpleLookupSession;
 use n2n\context\LookupManager;
 use n2n\core\cache\AppCache;
 use n2n\util\magic\MagicContext;
+use n2n\core\cache\AppCacheSupplier;
 
 class N2nApplication {
 	private array $n2nExtensions = [];
 
 	function __construct(private VarStore $varStore, private ModuleManager $moduleManager,
-			private AppCache $appCache, private AppConfig $appConfig, private ?FsPath $publicFsPath) {
+			private AppCacheSupplier $appCacheSupplier, private AppConfig $appConfig, private ?FsPath $publicFsPath) {
 	}
 
 	function getVarStore(): VarStore {
@@ -68,10 +69,13 @@ class N2nApplication {
 			$n2nExtension->applyToN2nContext($n2nContext);
 		}
 
+		$this->appCacheSupplier->applyToN2nContext($n2nContext);
+
 		$lookupSession = $n2nContext->getHttp()?->getLookupSession() ?? new SimpleLookupSession();
 		$lookupManager = new LookupManager($lookupSession, $this->appCache->lookupCacheStore(LookupManager::class, true),
 				$n2nContext);
 		$n2nContext->setLookupManager($lookupManager);
+
 
 		return $n2nContext;
 	}

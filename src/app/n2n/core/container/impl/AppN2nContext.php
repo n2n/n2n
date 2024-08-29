@@ -63,6 +63,7 @@ class AppN2nContext implements N2nContext, ShutdownListener {
 	private array $moduleConfigs = array();
 	private N2nLocale $n2nLocale;
 	private ?LookupManager $lookupManager = null;
+	private ?AppCache $appCache = null;
 	private array $injectedObjects = [];
 
 	private \SplObjectStorage $addOnContexts;
@@ -163,6 +164,28 @@ class AppN2nContext implements N2nContext, ShutdownListener {
 		return $this->moduleConfigs[$namespace] = null;
 	}
 
+	/**
+	 * @param AppCache $appCache
+	 */
+	public function setAppCache(AppCache $appCache): void {
+		$this->ensureNotFinalized();
+
+		$this->appCache = $appCache;
+	}
+
+	/**
+	 * @return AppCache
+	 */
+	public function getAppCache(): AppCache {
+		$this->ensureNotFinalized();
+
+		if ($this->appCache !== null) {
+			return $this->appCache;
+		}
+
+		throw new IllegalStateException('No AppCache defined.');
+	}
+
 	function setHttp(?N2nHttp $http): void {
 		$this->ensureNotFinalized();
 
@@ -187,7 +210,7 @@ class AppN2nContext implements N2nContext, ShutdownListener {
 		return $this->monitor;
 	}
 
-	function setMonitor(?N2nMonitor $monitor) {
+	function setMonitor(?N2nMonitor $monitor): void {
 		$this->ensureNotFinalized();
 
 		$this->monitor = $monitor;
@@ -217,15 +240,6 @@ class AppN2nContext implements N2nContext, ShutdownListener {
 		return $this->n2nApplication->getVarStore();
 	}
 
-	/**
-	 * {@inheritDoc}
-	 * @see \n2n\core\container\N2nContext::getAppCache()
-	 */
-	public function getAppCache(): AppCache {
-		$this->ensureNotFinalized();
-
-		return $this->n2nApplication->getAppCache();
-	}
 
 	/**
 	 * @return N2nLocale
@@ -240,13 +254,13 @@ class AppN2nContext implements N2nContext, ShutdownListener {
 	 * {@inheritDoc}
 	 * @see \n2n\core\container\N2nContext::setN2nLocale($n2nLocale)
 	 */
-	public function setN2nLocale(N2nLocale $n2nLocale) {
+	public function setN2nLocale(N2nLocale $n2nLocale): void {
 		$this->ensureNotFinalized();
 
 		$this->n2nLocale = $n2nLocale;
 	}
 
-	function addAddonContext(AddOnContext $addOnContext) {
+	function addAddonContext(AddOnContext $addOnContext): void {
 		$this->ensureNotFinalized();
 
 		$this->addOnContexts->attach($addOnContext);
@@ -258,7 +272,7 @@ class AppN2nContext implements N2nContext, ShutdownListener {
 		return iterator_to_array($this->addOnContexts);
 	}
 
-	function removeAddonContext(AddOnContext $addOnContext) {
+	function removeAddonContext(AddOnContext $addOnContext): void {
 		$this->ensureNotFinalized();
 
 		$this->addOnContexts->detach($addOnContext);
