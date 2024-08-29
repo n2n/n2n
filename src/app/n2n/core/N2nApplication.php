@@ -34,10 +34,6 @@ class N2nApplication {
 		return $this->appConfig;
 	}
 
-	function getAppCache(): AppCache {
-		return $this->appCache;
-	}
-
 	function getPublicFsPath(): ?FsPath {
 		return $this->publicFsPath;
 	}
@@ -72,7 +68,8 @@ class N2nApplication {
 		$this->appCacheSupplier->applyToN2nContext($n2nContext);
 
 		$lookupSession = $n2nContext->getHttp()?->getLookupSession() ?? new SimpleLookupSession();
-		$lookupManager = new LookupManager($lookupSession, $this->appCache->lookupCacheStore(LookupManager::class, true),
+		$lookupManager = new LookupManager($lookupSession,
+				$n2nContext->getAppCache()->lookupCacheStore(LookupManager::class, true),
 				$n2nContext);
 		$n2nContext->setLookupManager($lookupManager);
 
