@@ -26,21 +26,8 @@ use n2n\core\container\N2nContext;
 use n2n\cache\CacheStore;
 use n2n\core\VarStore;
 
-interface N2nCache extends AppCacheSupplier {
-	/**
-	 * @param VarStore $varStore
-	 */
-	public function varStoreInitialized(VarStore $varStore): void;
-	
-	/**
-	 * @return null|CacheStore
-	 */
-	public function getStartupCacheStore(): ?CacheStore;
-	
-	/**
-	 * @param AppConfig $appConfig
-	 */
-	public function appConfigInitialized(AppConfig $appConfig): void;
+interface N2NCache extends StartupCacheSupplier, AppCacheSupplier {
+
 	
 	/**
 	 * @param N2nContext $n2nContext

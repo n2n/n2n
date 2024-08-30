@@ -28,14 +28,15 @@ use n2n\core\cache\AppCache;
 use n2n\util\io\fs\FsPath;
 use n2n\cache\CacheStore;
 use n2n\cache\impl\fs\FileCacheStore;
-use n2n\core\cache\N2nCache;
+use n2n\core\cache\N2NCache;
 use n2n\core\VarStore;
 use n2n\core\N2N;
 use n2n\core\container\N2nContext;
 use n2n\core\container\impl\AppN2nContext;
 use n2n\util\io\fs\FileOperationException;
+use n2n\cache\impl\CacheStorePools;
 
-class FileN2nCache implements N2nCache {
+class FileN2nCache implements N2NCache {
 	const STARTUP_CACHE_DIR = 'startupcache';
 	const APP_CACHE_DIR = 'appcache';
 	
@@ -46,7 +47,7 @@ class FileN2nCache implements N2nCache {
 	
 	/**
 	 * {@inheritDoc}
-	 * @see \n2n\core\cache\N2nCache::varStoreInitialized()
+	 * @see \n2n\core\cache\N2NCache::varStoreInitialized()
 	 */
 	public function varStoreInitialized(VarStore $varStore): void {
 		$this->varStore = $varStore;
@@ -56,7 +57,7 @@ class FileN2nCache implements N2nCache {
 	
 	/**
 	 * {@inheritDoc}
-	 * @see \n2n\core\cache\N2nCache::getStartupCacheStore()
+	 * @see \n2n\core\cache\N2NCache::getStartupCacheStore()
 	 */
 	public function getStartupCacheStore(): ?CacheStore {
 		return $this->startupCacheStore;
@@ -82,9 +83,12 @@ class FileN2nCache implements N2nCache {
 //	}
 
 	public function applyToN2nContext(AppN2nContext $n2nContext): void {
-		$n2nContext->setAppCache(new FileAppCache(
-				$this->varStore->requestDirFsPath(VarStore::CATEGORY_TMP, N2N::NS, self::APP_CACHE_DIR),
-				$this->varStore->requestDirFsPath(VarStore::CATEGORY_TMP, N2N::NS, self::APP_CACHE_DIR, shared: true),
-				$this->dirPerm, $this->filePerm));
+		$n2nContext->setAppCache(new CombinedAppCache(
+				CacheStorePools::file(
+						$this->varStore->requestDirFsPath(VarStore::CATEGORY_TMP, N2N::NS, self::APP_CACHE_DIR),
+						$this->dirPerm, $this->filePerm),
+				CacheStorePools::file(
+						$this->varStore->requestDirFsPath(VarStore::CATEGORY_TMP, N2N::NS, self::APP_CACHE_DIR, shared: true),
+						$this->dirPerm, $this->filePerm)));
 	}
 }

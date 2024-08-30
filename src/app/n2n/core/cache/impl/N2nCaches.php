@@ -2,6 +2,9 @@
 
 namespace n2n\core\cache\impl;
 
+use n2n\core\cache\StartupCacheSupplier;
+use n2n\core\cache\AppCacheSupplier;
+
 class N2nCaches {
 
 	static function file(): FileN2nCache {
@@ -14,5 +17,10 @@ class N2nCaches {
 
 	static function null(): NullN2nCache {
 		return new NullN2nCache();
+	}
+
+	static function combined(StartupCacheSupplier $startupCacheSupplier,
+			AppCacheSupplier|\Closure $appCacheSupplierOrClosure): CombinedN2nCache {
+		return new CombinedN2nCache($startupCacheSupplier, $appCacheSupplierOrClosure);
 	}
 }

@@ -50,7 +50,7 @@ use n2n\core\err\LogMailer;
 use n2n\core\container\impl\PhpVars;
 use n2n\core\ext\N2nExtension;
 use n2n\config\InvalidConfigurationException;
-use n2n\core\cache\N2nCache;
+use n2n\core\cache\N2NCache;
 use n2n\core\container\N2nContext;
 use n2n\util\ex\IllegalStateException;
 use n2n\core\cache\impl\N2nCaches;
@@ -80,7 +80,7 @@ class N2N {
 	protected $combinedConfigSource;
 	protected ModuleManager $moduleManager;
 	protected AppConfig $appConfig;
-	protected N2nCache $n2nCache;
+	protected N2NCache $n2nCache;
 
 	/**
 	 * @var N2nExtension[] $n2nExtensions
@@ -123,11 +123,11 @@ class N2N {
 
 	/**
 	 *
-	 * @param N2nCache $n2nCache
+	 * @param N2NCache $n2nCache
 	 * @param VarStore $varStore
 	 * @return AppConfig
 	 */
-	private static function initConfiguration(CombinedConfigSource $combinedConfigSource, N2nCache $n2nCache,
+	private static function initConfiguration(CombinedConfigSource $combinedConfigSource, N2NCache $n2nCache,
 			VarStore $varStore, FsPath $publicDirPath): AppConfig {
 		$n2nCache->varStoreInitialized($varStore);
 
@@ -160,7 +160,7 @@ class N2N {
 		return $appConfig;
 	}
 
-	private static function applyConfiguration(AppConfig $appConfig, N2nCache $n2nCache, VarStore $varStore): void {
+	private static function applyConfiguration(AppConfig $appConfig, N2NCache $n2nCache, VarStore $varStore): void {
 		$errorConfig = $appConfig->error();
 		self::$exceptionHandler?->setStrictAttitude($errorConfig->isStrictAttitudeEnabled());
 		self::$exceptionHandler?->setDetectStartupErrorsEnabled($errorConfig->isDetectStartupErrorsEnabled());
@@ -249,7 +249,7 @@ class N2N {
 
 	
 	public static function setup(string $publicDirPath, string $varDirPath,
-			N2nCache $n2nCache = null, ModuleFactory $moduleFactory = null, bool $enableExceptionHandler = true,
+			N2NCache $n2nCache = null, ModuleFactory $moduleFactory = null, bool $enableExceptionHandler = true,
 			LogMailer $logMailer = null): N2nApplication {
 
 		// ignore if deprecated FileN2nCache from old projects
@@ -292,7 +292,7 @@ class N2N {
 	}
 
 	public static function initialize(string $publicDirPath, string $varDirPath, 
-			N2nCache $n2nCache = null, ModuleFactory $moduleFactory = null, bool $enableExceptionHandler = true,
+			N2NCache $n2nCache = null, ModuleFactory $moduleFactory = null, bool $enableExceptionHandler = true,
 			LogMailer $logMailer = null): void {
 		if (self::$n2nApplication !== null) {
 			throw new IllegalStateException('N2nApplication already initialized. Call N2N::initializeWithN2nContext() instead.');

@@ -73,7 +73,6 @@ class N2nApplication {
 				$n2nContext);
 		$n2nContext->setLookupManager($lookupManager);
 
-
 		return $n2nContext;
 	}
 }

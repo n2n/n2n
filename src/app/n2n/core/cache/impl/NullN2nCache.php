@@ -22,13 +22,13 @@
 namespace n2n\core\cache\impl;
 
 use n2n\cache\CacheStore;
-use n2n\core\cache\N2nCache;
+use n2n\core\cache\N2NCache;
 use n2n\core\VarStore;
 use n2n\core\config\AppConfig;
 use n2n\core\cache\AppCache;
 use n2n\core\container\impl\AppN2nContext;
 
-class NullN2nCache implements N2nCache {
+class NullN2nCache implements N2NCache {
 
 	public function varStoreInitialized(VarStore $varStore): void {
 	}
