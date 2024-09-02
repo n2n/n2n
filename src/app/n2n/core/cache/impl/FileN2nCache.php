@@ -38,7 +38,6 @@ use n2n\cache\impl\CacheStorePools;
 
 class FileN2nCache implements N2NCache {
 	const STARTUP_CACHE_DIR = 'startupcache';
-	const APP_CACHE_DIR = 'appcache';
 	
 	private VarStore $varStore;
 	private $startupCacheStore;
@@ -83,12 +82,6 @@ class FileN2nCache implements N2NCache {
 //	}
 
 	public function applyToN2nContext(AppN2nContext $n2nContext): void {
-		$n2nContext->setAppCache(new CombinedAppCache(
-				CacheStorePools::file(
-						$this->varStore->requestDirFsPath(VarStore::CATEGORY_TMP, N2N::NS, self::APP_CACHE_DIR),
-						$this->dirPerm, $this->filePerm),
-				CacheStorePools::file(
-						$this->varStore->requestDirFsPath(VarStore::CATEGORY_TMP, N2N::NS, self::APP_CACHE_DIR, shared: true),
-						$this->dirPerm, $this->filePerm)));
+		$n2nContext->setAppCache(AppCaches::varStore($n2nContext->getVarStore()));
 	}
 }

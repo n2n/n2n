@@ -18,7 +18,6 @@ class CombinedN2nCache implements N2NCache {
 
 	function __construct(private StartupCacheSupplier $startupCacheSupplier,
 			private AppCacheSupplier|\Closure $appCacheSupplierOrClosure) {
-
 	}
 
 	public function varStoreInitialized(VarStore $varStore): void {
@@ -32,7 +31,6 @@ class CombinedN2nCache implements N2NCache {
 	public function appConfigInitialized(AppConfig $appConfig): void {
 		$this->startupCacheSupplier->appConfigInitialized($appConfig);
 	}
-
 
 	function applyToN2nContext(AppN2nContext $n2nContext): void {
 		if ($this->appCacheSupplierOrClosure instanceof AppCacheSupplier) {
