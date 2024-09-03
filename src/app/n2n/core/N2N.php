@@ -260,7 +260,7 @@ class N2N {
 		}
 
 		$publicDirFsPath = new FsPath(IoUtils::realpath($publicDirPath));
-		$n2nCache = $n2nCache ?? (N2N::isTestStageOn() ? N2nCaches::null() : N2nCaches::file());
+		$n2nCache = $n2nCache ?? (N2N::isTestStageOn() ? N2nCaches::ephemeral() : N2nCaches::file());
 		$varStore = new VarStore(new FsPath(IoUtils::realpath($varDirPath)), null, null);
 		$combinedConfigSource = new CombinedConfigSource();
 		$moduleManager = self::initModules($moduleFactory ?? new EtcModuleFactory(), $varStore, $combinedConfigSource);
