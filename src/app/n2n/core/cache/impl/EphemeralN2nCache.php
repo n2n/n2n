@@ -34,7 +34,8 @@ use n2n\cache\impl\CacheStorePools;
 class EphemeralN2nCache implements N2NCache {
 
 	private ?CacheStore $startupCacheStore = null;
-	private ?AppCache $appCache = null;
+	private CacheStorePool $localCacheStorePool;
+	private CacheStorePool $sharedCacheStorePool;
 
 	public function varStoreInitialized(VarStore $varStore): void {
 	}
@@ -47,10 +48,10 @@ class EphemeralN2nCache implements N2NCache {
 	}
 
 	function getLocalAppCacheStorePool(AppN2nContext $n2nContext): CacheStorePool {
-		return CacheStorePools::ephemeral();
+		return $this->localCacheStorePool ?? $this->localCacheStorePool = CacheStorePools::ephemeral();
 	}
 
 	function getSharedAppCacheStorePool(AppN2nContext $n2nContext): CacheStorePool {
-		return CacheStorePools::ephemeral();
+		return $this->sharedCacheStorePool ?? $this->sharedCacheStorePool = CacheStorePools::ephemeral();
 	}
 }
