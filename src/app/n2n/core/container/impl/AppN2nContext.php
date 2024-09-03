@@ -493,14 +493,22 @@ class AppN2nContext implements N2nContext, ShutdownListener {
 	function finalize(): void {
 		$this->ensureNotFinalized();
 
-		$this->finalized = true;
+		try {
+			$this->finalizeCallbacks->rewind();
+			while ($this->finalizeCallbacks->valid()) {
+				$this->finalizeCallbacks->current()($this);
+				$this->finalizeCallbacks->next();
+			}
+			unset($this->finalizeCallbacks);
 
-		$this->finalizeCallbacks->rewind();
-		while ($this->finalizeCallbacks->valid()) {
-			$this->finalizeCallbacks->current()($this);
-			$this->finalizeCallbacks->next();
+			if ($this->lookupManager !== null) {
+				$this->lookupManager->flush();
+				$this->lookupManager->clear();
+				$this->lookupManager = null;
+			}
+		} finally {
+			$this->finalized = true;
 		}
-		unset($this->finalizeCallbacks);
 
 		$this->addOnContexts->rewind();
 		while ($this->addOnContexts->valid()) {
@@ -509,11 +517,7 @@ class AppN2nContext implements N2nContext, ShutdownListener {
 		}
 		unset($this->addOnContexts);
 
-		if ($this->lookupManager !== null) {
-			$this->lookupManager->flush();
-			$this->lookupManager->clear();
-			$this->lookupManager = null;
-		}
+
 	}
 
 	function onShutdown(): void {
