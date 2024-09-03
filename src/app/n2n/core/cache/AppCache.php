@@ -32,8 +32,8 @@ class AppCache implements \n2n\core\container\AppCache {
 	}
 
 	public function getLocalCacheStorePool(): CacheStorePool {
-		IllegalStateException::assertTrue($this->sharedCacheStorePool !== null,
-				'SharedCacheStorePool not yet initialized.');
+		IllegalStateException::assertTrue($this->localCacheStorePool !== null,
+				'LocalCacheStorePool not yet initialized.');
 
 		return $this->localCacheStorePool;
 	}
