@@ -27,6 +27,9 @@ use n2n\core\VarStore;
 use n2n\core\config\AppConfig;
 use n2n\core\cache\AppCache;
 use n2n\core\container\impl\AppN2nContext;
+use n2n\cache\CacheStorePool;
+use n2n\cache\impl\ephemeral\EphemeralCacheStore;
+use n2n\cache\impl\CacheStorePools;
 
 class NullN2nCache implements N2NCache {
 
@@ -40,8 +43,11 @@ class NullN2nCache implements N2NCache {
 	public function appConfigInitialized(AppConfig $appConfig): void {
 	}
 
+	function getLocalAppCacheStorePool(AppN2nContext $n2nContext): CacheStorePool {
+		return CacheStorePools::null();
+	}
 
-	function applyToN2nContext(AppN2nContext $n2nContext): void {
-		$n2nContext->setAppCache(new NullAppCache());
+	function getSharedAppCacheStorePool(AppN2nContext $n2nContext): CacheStorePool {
+		return CacheStorePools::null();
 	}
 }

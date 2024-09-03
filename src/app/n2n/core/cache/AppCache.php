@@ -22,8 +22,37 @@
 namespace n2n\core\cache;
 
 use n2n\cache\CacheStore;
+use n2n\cache\CacheStorePool;
+use n2n\util\ex\IllegalStateException;
 
-interface AppCache extends \n2n\core\container\AppCache {
+class AppCache implements \n2n\core\container\AppCache {
+
+	function __construct(private ?CacheStorePool $localCacheStorePool,
+			private ?CacheStorePool $sharedCacheStorePool) {
+	}
+
+	public function getLocalCacheStorePool(): CacheStorePool {
+		IllegalStateException::assertTrue($this->sharedCacheStorePool !== null,
+				'SharedCacheStorePool not yet initialized.');
+
+		return $this->localCacheStorePool;
+	}
+
+	public function setLocalCacheStorePool(?CacheStorePool $localCacheStorePool): AppCache {
+		$this->localCacheStorePool = $localCacheStorePool;
+		return $this;
+	}
+
+	public function getSharedCacheStorePool(): CacheStorePool {
+		IllegalStateException::assertTrue($this->sharedCacheStorePool !== null,
+				'SharedCacheStorePool not yet initialized.');
+		return $this->sharedCacheStorePool;
+	}
+
+	public function setSharedCacheStorePool(?CacheStorePool $sharedCacheStorePool): AppCache {
+		$this->sharedCacheStorePool = $sharedCacheStorePool;
+		return $this;
+	}
 
 	/**
 	 * @param string $namespace or type name of a related package or type
@@ -31,10 +60,17 @@ interface AppCache extends \n2n\core\container\AppCache {
 	 * 		deployments. If not use false for better performance.
 	 * @return CacheStore
 	 */
-	public function lookupCacheStore(string $namespace, bool $shared = true): CacheStore;
+	public function lookupCacheStore(string $namespace, bool $shared = true): CacheStore {
+		$cacheStorePool = $shared ? $this->getSharedCacheStorePool() : $this->getLocalCacheStorePool();
+
+		return $cacheStorePool->lookupCacheStore($namespace);
+	}
 
 	/**
 	 * Clear the cache of every cache store belonging to this {@see AppCache} instance.
 	 */
-	public function clear(): void;
+	public function clear(): void {
+		$this->getLocalCacheStorePool()->clear();
+		$this->getSharedCacheStorePool()->clear();
+	}
 }

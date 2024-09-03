@@ -63,7 +63,7 @@ class AppN2nContext implements N2nContext, ShutdownListener {
 	private array $moduleConfigs = array();
 	private N2nLocale $n2nLocale;
 	private ?LookupManager $lookupManager = null;
-	private ?AppCache $appCache = null;
+	private AppCache $appCache;
 	private array $injectedObjects = [];
 
 	private \SplObjectStorage $addOnContexts;
@@ -79,6 +79,8 @@ class AppN2nContext implements N2nContext, ShutdownListener {
 			PhpVars $phpVars = null) {
 		$this->n2nLocale = N2nLocale::getDefault();
 		$this->phpVars = $phpVars ?? PhpVars::fromEnv();
+
+		$this->appCache = new AppCache(null, null);
 
 		$this->addOnContexts = new \SplObjectStorage();
 		$this->finalizeCallbacks = new \SplObjectStorage();

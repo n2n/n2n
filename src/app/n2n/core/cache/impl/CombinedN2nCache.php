@@ -12,12 +12,13 @@ use n2n\core\cache\AppCacheSupplier;
 use n2n\util\magic\impl\MagicMethodInvoker;
 use n2n\core\cache\AppCache;
 use n2n\util\type\TypeConstraints;
+use n2n\cache\CacheStorePool;
 
 class CombinedN2nCache implements N2NCache {
 
-
-	function __construct(private StartupCacheSupplier $startupCacheSupplier,
-			private AppCacheSupplier|\Closure $appCacheSupplierOrClosure) {
+	function __construct(private readonly StartupCacheSupplier $startupCacheSupplier,
+			private readonly \Closure $localAppCacheStorePoolClosure,
+			private readonly \Closure $sharedAppCacheStorePoolClosure) {
 	}
 
 	public function varStoreInitialized(VarStore $varStore): void {
@@ -32,16 +33,18 @@ class CombinedN2nCache implements N2NCache {
 		$this->startupCacheSupplier->appConfigInitialized($appConfig);
 	}
 
-	function applyToN2nContext(AppN2nContext $n2nContext): void {
-		if ($this->appCacheSupplierOrClosure instanceof AppCacheSupplier) {
-			$this->appCacheSupplierOrClosure->applyToN2nContext($n2nContext);
-			return;
-		}
-
+	function getLocalAppCacheStorePool(AppN2nContext $n2nContext): CacheStorePool {
 		$mmi = new MagicMethodInvoker($n2nContext);
-		$mmi->setClosure($this->appCacheSupplierOrClosure);
-		$mmi->setReturnTypeConstraint(TypeConstraints::type(AppCache::class));
-		$n2nContext->setAppCache($mmi->invoke());
+		$mmi->setClosure($this->localAppCacheStorePoolClosure);
+		$mmi->setReturnTypeConstraint(TypeConstraints::type(CacheStorePool::class));
+		return $mmi->invoke();
+	}
+
+	function getSharedAppCacheStorePool(AppN2nContext $n2nContext): CacheStorePool {
+		$mmi = new MagicMethodInvoker($n2nContext);
+		$mmi->setClosure($this->sharedAppCacheStorePoolClosure);
+		$mmi->setReturnTypeConstraint(TypeConstraints::type(CacheStorePool::class));
+		return $mmi->invoke();
 	}
 
 }

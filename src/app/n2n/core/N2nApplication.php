@@ -65,7 +65,9 @@ class N2nApplication {
 			$n2nExtension->applyToN2nContext($n2nContext);
 		}
 
-		$this->appCacheSupplier->applyToN2nContext($n2nContext);
+		$appCache = $n2nContext->getAppCache();
+		$appCache->setLocalCacheStorePool($this->appCacheSupplier->getLocalAppCacheStorePool($n2nContext));
+		$appCache->setSharedCacheStorePool($this->appCacheSupplier->getSharedAppCacheStorePool($n2nContext));
 
 		$lookupSession = $n2nContext->getHttp()?->getLookupSession() ?? new SimpleLookupSession();
 		$lookupManager = new LookupManager($lookupSession,

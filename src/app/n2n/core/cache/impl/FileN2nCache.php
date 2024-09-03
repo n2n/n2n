@@ -35,6 +35,7 @@ use n2n\core\container\N2nContext;
 use n2n\core\container\impl\AppN2nContext;
 use n2n\util\io\fs\FileOperationException;
 use n2n\cache\impl\CacheStorePools;
+use n2n\cache\CacheStorePool;
 
 class FileN2nCache implements N2NCache {
 	const STARTUP_CACHE_DIR = 'startupcache';
@@ -81,7 +82,11 @@ class FileN2nCache implements N2NCache {
 //						$componentName), $this->dirPerm, $this->filePerm);
 //	}
 
-	public function applyToN2nContext(AppN2nContext $n2nContext): void {
-		$n2nContext->setAppCache(AppCaches::varStore($n2nContext->getVarStore()));
+	function getLocalAppCacheStorePool(AppN2nContext $n2nContext): CacheStorePool {
+		return N2nCacheStorePools::varStore($n2nContext->getVarStore(), false);
+	}
+
+	function getSharedAppCacheStorePool(AppN2nContext $n2nContext): CacheStorePool {
+		return N2nCacheStorePools::varStore($n2nContext->getVarStore(), true);
 	}
 }

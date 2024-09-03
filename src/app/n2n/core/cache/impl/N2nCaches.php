@@ -20,7 +20,7 @@ class N2nCaches {
 	}
 
 	static function combined(StartupCacheSupplier $startupCacheSupplier,
-			AppCacheSupplier|\Closure $appCacheSupplierOrClosure): CombinedN2nCache {
-		return new CombinedN2nCache($startupCacheSupplier, $appCacheSupplierOrClosure);
+			\Closure $localAppCacheStorePoolClosure, \Closure $sharedAppCacheStorePoolClosure): CombinedN2nCache {
+		return new CombinedN2nCache($startupCacheSupplier, $localAppCacheStorePoolClosure, $sharedAppCacheStorePoolClosure);
 	}
 }

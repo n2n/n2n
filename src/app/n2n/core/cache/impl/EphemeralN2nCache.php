@@ -28,6 +28,8 @@ use n2n\core\cache\N2NCache;
 use n2n\core\VarStore;
 use n2n\cache\impl\ephemeral\EphemeralCacheStore;
 use n2n\core\container\impl\AppN2nContext;
+use n2n\cache\CacheStorePool;
+use n2n\cache\impl\CacheStorePools;
 
 class EphemeralN2nCache implements N2NCache {
 
@@ -44,11 +46,11 @@ class EphemeralN2nCache implements N2NCache {
 	public function appConfigInitialized(AppConfig $appConfig): void {
 	}
 
-	public function getAppCache(): AppCache {
-		return $this->appCache ?? $this->appCache = new EphemeralAppCache();
+	function getLocalAppCacheStorePool(AppN2nContext $n2nContext): CacheStorePool {
+		return CacheStorePools::ephemeral();
 	}
 
-	function applyToN2nContext(AppN2nContext $n2nContext): void {
-		$n2nContext->setAppCache($this->getAppCache());
+	function getSharedAppCacheStorePool(AppN2nContext $n2nContext): CacheStorePool {
+		return CacheStorePools::ephemeral();
 	}
 }

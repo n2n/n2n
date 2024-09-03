@@ -88,12 +88,7 @@ class N2N {
 	protected array $n2nExtensions = [];
 	
 	private static $initialized = false;
-	/**
-	 * 
-	 * @param string $publicDirPath
-	 * @param string $varDirPath
-	 * @param array $moduleDirPaths
-	 */
+
 	private function __construct(FsPath $publicDirPath, FsPath $varDirPath) {
 		$this->publicDirPath = $publicDirPath;
 
