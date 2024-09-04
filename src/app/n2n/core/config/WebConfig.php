@@ -24,6 +24,7 @@ namespace n2n\core\config;
 use n2n\util\type\ArgUtils;
 use n2n\l10n\N2nLocale;
 use n2n\util\crypt\EncryptionDescriptor;
+use n2n\core\config\web\SessionSaveMode;
 
 class WebConfig {
 	const PAYLOAD_CACHING_ENABLED_DEFAULT = true;
@@ -35,6 +36,7 @@ class WebConfig {
 	const RESPONSE_CONTENT_SECURITY_POLICY_ENABLED_DEFAULT = false;
 	const VIEW_CACHING_ENABLED_DEFAULT = true;
 	const DISPATCH_TARGET_CRYPT_ALGORITHM_DEFAULT = EncryptionDescriptor::ALGORITHM_AES_256_CTR;
+	const SESSION_SAVE_MODE_DEFAULT = SessionSaveMode::FILESYSTEM;
 
 	/**
 	 * @param bool $payloadCachingEnabled
@@ -50,6 +52,7 @@ class WebConfig {
 	 * @param string|null $dispatchTargetCryptAlgorithm
 	 * @param N2nLocale[] $aliasN2nLocales
 	 * @param bool $responseContentSecurityPolicyEnabled
+	 * @param SessionSaveMode $sessionSaveMode
 	 */
 	public function __construct(private bool $payloadCachingEnabled = self::PAYLOAD_CACHING_ENABLED_DEFAULT,
 			private bool $responseCachingEnabled = self::RESPONSE_CACHING_ENABLED_DEFAULT,
@@ -63,7 +66,8 @@ class WebConfig {
 			private array $dispatchPropertyProviderClassNames = [],
 			private ?string $dispatchTargetCryptAlgorithm = self::DISPATCH_TARGET_CRYPT_ALGORITHM_DEFAULT,
 			private array $aliasN2nLocales = [],
-			private bool $responseContentSecurityPolicyEnabled = self::RESPONSE_CONTENT_SECURITY_POLICY_ENABLED_DEFAULT) {
+			private bool $responseContentSecurityPolicyEnabled = self::RESPONSE_CONTENT_SECURITY_POLICY_ENABLED_DEFAULT,
+			private SessionSaveMode $sessionSaveMode = self::SESSION_SAVE_MODE_DEFAULT) {
 
 		ArgUtils::valArray($this->aliasN2nLocales, N2nLocale::class);
 	}
@@ -179,5 +183,9 @@ class WebConfig {
 	 */
 	public function getAllN2nLocales() {
 		return $this->legacyRoutingConfig->getAllN2nLocales();
+	}
+
+	public function getSessionSaveMode(): SessionSaveMode {
+		return $this->sessionSaveMode;
 	}
 }

@@ -45,6 +45,7 @@ use n2n\l10n\L10nFormat;
 use n2n\core\config\RoutingConfig;
 use n2n\core\config\routing\RoutingRule;
 use n2n\core\config\routing\ControllerDef;
+use n2n\core\config\web\SessionSaveMode;
 
 class AppConfigFactory {
 	const GROUP_GENERAL = 'general';
@@ -138,6 +139,8 @@ class AppConfigFactory {
 	
 	const RESPONSE_HEADERS_KEY = 'response_headers';
 
+	const SESSION_SAVE_MODE_KEY = 'session.save_mode';
+
 
 	/**
 	 * @param GroupReader $groupReader
@@ -168,7 +171,9 @@ class AppConfigFactory {
 						: null),
 				$groupReader->getN2nLocaleKeyArray(self::LOCALE_ALIASES_KEY),
 				$groupReader->getBool(self::RESPONSE_CONTENT_SECURITY_POLICY_ENABLED_KEY, false,
-						WebConfig::RESPONSE_CONTENT_SECURITY_POLICY_ENABLED_DEFAULT));
+						WebConfig::RESPONSE_CONTENT_SECURITY_POLICY_ENABLED_DEFAULT),
+				$groupReader->getEnum(self::SESSION_SAVE_MODE_KEY, SessionSaveMode::cases(), false,
+						WebConfig::SESSION_SAVE_MODE_DEFAULT));
 	}
 
 	const CONTROLLERS_KEY = 'controllers';

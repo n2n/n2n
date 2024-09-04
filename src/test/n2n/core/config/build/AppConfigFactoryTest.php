@@ -42,6 +42,7 @@ use n2n\util\crypt\EncryptionDescriptor;
 use n2n\l10n\N2nLocale;
 use n2n\l10n\L10nConfig;
 use n2n\core\config\PersistenceUnitConfig;
+use n2n\core\config\web\SessionSaveMode;
 
 class AppConfigFactoryTest extends TestCase {
 
@@ -78,6 +79,7 @@ class AppConfigFactoryTest extends TestCase {
 		$this->assertEquals(WebConfig::RESPONSE_CONTENT_SECURITY_POLICY_ENABLED_DEFAULT, $appConfig->web()->isResponseContentSecurityPolicyEnabled());
 		$this->assertEquals(WebConfig::VIEW_CACHING_ENABLED_DEFAULT, $appConfig->web()->isViewCachingEnabled());
 		$this->assertEquals(EncryptionDescriptor::ALGORITHM_AES_256_CTR, $appConfig->web()->getDispatchTargetCryptAlgorithm());
+		$this->assertEquals(WebConfig::SESSION_SAVE_MODE_DEFAULT, $appConfig->web()->getSessionSaveMode());
 
 		$this->assertEquals(MailConfig::MAIL_SENDING_ENABLED_DEFAULT, $appConfig->mail()->isSendingMailEnabled());
 		$this->assertEquals(SmtpConfig::PORT_DEFAULT, $appConfig->mail()->getDefaultSmtpConfig()->getPort());
@@ -130,6 +132,7 @@ class AppConfigFactoryTest extends TestCase {
 		$this->assertTrue($appConfig->web()->isResponseContentSecurityPolicyEnabled());
 		$this->assertFalse($appConfig->web()->isViewCachingEnabled());
 		$this->assertEmpty($appConfig->web()->getDispatchTargetCryptAlgorithm());
+		$this->assertEquals(SessionSaveMode::APPCACHE, $appConfig->web()->getSessionSaveMode());
 	}
 
 	function testRouting() {
