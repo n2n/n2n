@@ -39,7 +39,7 @@ class AppCache implements \n2n\core\container\AppCache {
 		return $this->localCacheStorePool;
 	}
 
-	public function setLocalCacheStorePool(?CacheStorePool $localCacheStorePool): AppCache {
+	public function setLocalCacheStorePool(CacheStorePool $localCacheStorePool): AppCache {
 		$this->localCacheStorePool = $localCacheStorePool;
 		return $this;
 	}
@@ -50,7 +50,7 @@ class AppCache implements \n2n\core\container\AppCache {
 		return $this->sharedCacheStorePool;
 	}
 
-	public function setSharedCacheStorePool(?CacheStorePool $sharedCacheStorePool): AppCache {
+	public function setSharedCacheStorePool(CacheStorePool $sharedCacheStorePool): AppCache {
 		$this->sharedCacheStorePool = $sharedCacheStorePool;
 		return $this;
 	}
