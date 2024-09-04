@@ -24,6 +24,7 @@ namespace n2n\core\cache;
 use n2n\cache\CacheStore;
 use n2n\cache\CacheStorePool;
 use n2n\util\ex\IllegalStateException;
+use n2n\cache\CacheItem;
 
 class AppCache implements \n2n\core\container\AppCache {
 
@@ -61,8 +62,12 @@ class AppCache implements \n2n\core\container\AppCache {
 	 * @return CacheStore
 	 */
 	public function lookupCacheStore(string $namespace, bool $shared = true): CacheStore {
-		$cacheStorePool = $shared ? $this->getSharedCacheStorePool() : $this->getLocalCacheStorePool();
+		if (($shared && !isset($this->sharedCacheStorePool))
+				|| (!$shared && !isset($this->localCacheStorePool))) {
+			return new LazyAppCacheStore($this, $namespace, $shared);
+		}
 
+		$cacheStorePool = $shared ? $this->sharedCacheStorePool : $this->localCacheStorePool;
 		return $cacheStorePool->lookupCacheStore($namespace);
 	}
 
