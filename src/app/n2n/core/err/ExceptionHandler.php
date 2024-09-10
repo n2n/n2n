@@ -43,6 +43,7 @@ use n2n\util\uri\Url;
 use n2n\util\uri\Authority;
 use n2n\util\uri\Query;
 use n2n\util\ex\err\TriggeredError;
+use Throwable;
 
 // define('N2N_EXCEPTION_HANDLING_PHP_SEVERITIES', E_ALL | E_STRICT);
 // define('N2N_EXCEPTION_HANDLING_PHP_STRICT_ATTITUTE_SEVERITIES', E_STRICT | E_WARNING | E_NOTICE | E_CORE_WARNING | E_USER_WARNING | E_USER_NOTICE | E_DEPRECATED);
@@ -246,7 +247,8 @@ class ExceptionHandler {
 
 		return $throwable;
 	}
-	/**
+
+		/**
 	 * Will be registered as php exception_handler while ExceptionHandler initialization
 	 * @see http://php.net/manual/de/function.set-exception-handler.php
 	 *
@@ -254,17 +256,30 @@ class ExceptionHandler {
 	 * @param bool $dispatchException if true response will be reseted and an exception
 	 * 		view will be shown
 	 */
-	public function handleThrowable(\Throwable $throwable, $logException = true, $dispatchException = true) {
-		$throwable = $this->checkForTypeLoaderThrowable($throwable);
+	public function handleThrowable(\Throwable $t, $logException = true, $dispatchException = true) {
+		$throwable = $this->checkForTypeLoaderThrowable($t);
+
+		$render = true;
+		$throwables = [$t];
+		if ($t instanceof DispatchedException) {
+			$render = !$t->isAlreadyRendered();
+			$throwables = $t->getThrowables();
+		}
 
 		if ($logException) {
-			$this->performLog($throwable);
+			foreach ($throwables as $throwable) {
+				$this->performLog($throwable);
+			}
 		}
 		if ($dispatchException) {
-			$this->dispatchException($throwable);
+			foreach ($throwables as $throwable) {
+				$this->dispatchException($throwable);
+			}
 		}
 		$this->checkForPendingLogExceptions();
-		$this->renderException();
+		if ($render) {
+			$this->renderException();
+		}
 	}
 
 	public function checkForStartupErrors() {
@@ -725,7 +740,7 @@ class ExceptionHandler {
 	 * @param \Throwable $t
 	 */
 	private function dispatchException(\Throwable $t): void {
-		if ($t instanceof ExceptionHandlingFailedException) {
+		if ($t instanceof DispatchedException) {
 			foreach ($t->getThrowables() as $throwable) {
 				$this->dispatchException($throwable);
 			}
@@ -827,51 +842,51 @@ class ExceptionHandler {
 
 		print "error occurred";
 	}
-	/**
-	 * Sends a nice detailed view to the Response
-	 *
-	 * @param \Exception $e
-	 */
-	private function renderBeautifulExceptionView(\Throwable $e) {
-		$request = N2N::getCurrentRequest();
-		$response = N2N::getCurrentResponse();
-		$status = Response::STATUS_500_INTERNAL_SERVER_ERROR;
-
-		$throwableModel = null;
-// 		if ($e instanceof StatusException && isset($viewName)) {
-// 			$throwableModel = new ThrowableModel($e, null);
-// 		} else {
-		$throwableModel = new ThrowableModel($e);
-		if ($response->isBuffering()) {
-			$this->pendingOutputs[] = $response->fetchBufferedOutput(true);
-		}
-		$that = $this;
-		$throwableModel->setOutputCallback(function () use ($that) {
-			$output = implode('', $this->pendingOutputs);
-			$this->pendingOutputs = array();
-			return $output;
-		});
-// 		}
-
-
-		$viewName = N2N::getAppConfig()->error()->getErrorViewName($status);
-
-		if ($viewName === null) {
-			if (!N2N::isDevelopmentModeOn()) {
-				$viewName = self::DEFAULT_500_LIVE_VIEW;
-			} else {
-				$viewName = self::DEFAULT_500_DEV_VIEW;
-			}
-		}
-
-		$view = N2N::getN2nContext()->lookup(ViewFactory::class)->create($viewName, array('throwableModel' => $throwableModel));
-		$view->setControllerContext(new ControllerContext($request->getCmdPath(), $request->getCmdContextPath()));
-
-		$response->reset();
-		$response->setStatus($status);
-		$response->send($view);
-		$response->flush();
-	}
+//	/**
+//	 * Sends a nice detailed view to the Response
+//	 *
+//	 * @param \Exception $e
+//	 */
+//	private function renderBeautifulExceptionView(\Throwable $e) {
+//		$request = N2N::getCurrentRequest();
+//		$response = N2N::getCurrentResponse();
+//		$status = Response::STATUS_500_INTERNAL_SERVER_ERROR;
+//
+//		$throwableModel = null;
+//// 		if ($e instanceof StatusException && isset($viewName)) {
+//// 			$throwableModel = new ThrowableModel($e, null);
+//// 		} else {
+//		$throwableModel = new ThrowableModel($e);
+//		if ($response->isBuffering()) {
+//			$this->pendingOutputs[] = $response->fetchBufferedOutput(true);
+//		}
+//		$that = $this;
+//		$throwableModel->setOutputCallback(function () use ($that) {
+//			$output = implode('', $this->pendingOutputs);
+//			$this->pendingOutputs = array();
+//			return $output;
+//		});
+//// 		}
+//
+//
+//		$viewName = N2N::getAppConfig()->error()->getErrorViewName($status);
+//
+//		if ($viewName === null) {
+//			if (!N2N::isDevelopmentModeOn()) {
+//				$viewName = self::DEFAULT_500_LIVE_VIEW;
+//			} else {
+//				$viewName = self::DEFAULT_500_DEV_VIEW;
+//			}
+//		}
+//
+//		$view = N2N::getN2nContext()->lookup(ViewFactory::class)->create($viewName, array('throwableModel' => $throwableModel));
+//		$view->setControllerContext(new ControllerContext($request->getCmdPath(), $request->getCmdContextPath()));
+//
+//		$response->reset();
+//		$response->setStatus($status);
+//		$response->send($view);
+//		$response->flush();
+//	}
 	/**
 	 * Create html description of an exception for fatal error view if development
 	 * is enabled.

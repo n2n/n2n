@@ -72,4 +72,6 @@ interface N2nContext extends MagicContext {
 	function getHttp(): ?N2nHttp;
 
 	function getMonitor(): ?N2nMonitor;
+
+	function dispatchThrowable(\Throwable $throwable): void;
 }

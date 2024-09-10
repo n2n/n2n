@@ -9,4 +9,6 @@ interface N2nHttp {
 	function getLookupSession(): LookupSession;
 
 	function invokerControllers(bool $flush): bool;
+
+	function renderThrowable(\Throwable $t): bool;
 }

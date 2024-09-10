@@ -58,6 +58,8 @@ use n2n\core\ext\N2nHttp;
 use n2n\core\module\Module;
 use n2n\core\ext\N2nMonitor;
 use n2n\core\N2nApplication;
+use n2n\core\err\DispatchedException;
+use Throwable;
 
 class AppN2nContext implements N2nContext, ShutdownListener {
 	private array $moduleConfigs = array();
@@ -467,6 +469,17 @@ class AppN2nContext implements N2nContext, ShutdownListener {
 		}
 	}
 
+	function dispatchThrowable(\Throwable $throwable): void {
+		$dispatchedE = new DispatchedException($throwable);
+		try {
+			$dispatchedE->setAlreadyRendered($this->http?->renderThrowable($throwable) ?? false);
+		} catch (Throwable $e) {
+			$dispatchedE->addThrowable($e);
+		}
+
+		throw $dispatchedE;
+	}
+
 
 	function onFinalize(\Closure $callback): void {
 		$this->ensureNotFinalized();
@@ -490,22 +503,31 @@ class AppN2nContext implements N2nContext, ShutdownListener {
 		throw new IllegalStateException('N2nContext already finalized.');
 	}
 
+	private function preFinalize(): void {
+
+		$this->finalizeCallbacks->rewind();
+		while ($this->finalizeCallbacks->valid()) {
+			$this->finalizeCallbacks->current()($this);
+			$this->finalizeCallbacks->next();
+		}
+		unset($this->finalizeCallbacks);
+
+		if ($this->lookupManager !== null) {
+			$this->lookupManager->flush();
+			$this->lookupManager->clear();
+			$this->lookupManager = null;
+		}
+
+	}
+
 	function finalize(): void {
 		$this->ensureNotFinalized();
 
 		try {
-			$this->finalizeCallbacks->rewind();
-			while ($this->finalizeCallbacks->valid()) {
-				$this->finalizeCallbacks->current()($this);
-				$this->finalizeCallbacks->next();
-			}
-			unset($this->finalizeCallbacks);
-
-			if ($this->lookupManager !== null) {
-				$this->lookupManager->flush();
-				$this->lookupManager->clear();
-				$this->lookupManager = null;
-			}
+			$this->preFinalize();
+		} catch (\Throwable $e) {
+			$this->dispatchThrowable($e);
+			return;
 		} finally {
 			$this->finalized = true;
 		}
@@ -516,8 +538,6 @@ class AppN2nContext implements N2nContext, ShutdownListener {
 			$this->addOnContexts->next();
 		}
 		unset($this->addOnContexts);
-
-
 	}
 
 	function onShutdown(): void {
