@@ -57,8 +57,6 @@ class ExceptionHandler {
 	const STRICT_ATTITUTE_PHP_SEVERITIES = E_STRICT | E_WARNING | E_NOTICE | E_CORE_WARNING | E_USER_WARNING | E_USER_NOTICE | E_DEPRECATED;
 
 	const LOG_FILE_EXTENSION = '.log';
-	const DEFAULT_500_DEV_VIEW = 'n2n\core\view\errorpages\500Dev.html';
-	const DEFAULT_500_LIVE_VIEW = 'n2n\core\view\errorpages\500Live.html';
 
 	private $developmentMode;
 
@@ -726,7 +724,14 @@ class ExceptionHandler {
 	 *
 	 * @param \Throwable $t
 	 */
-	private function dispatchException(\Throwable $t) {
+	private function dispatchException(\Throwable $t): void {
+		if ($t instanceof ExceptionHandlingFailedException) {
+			foreach ($t->getThrowables() as $throwable) {
+				$this->dispatchException($throwable);
+			}
+			$t = $t->getExceptionHandlingException();
+		}
+
 		array_unshift($this->dispatchingThrowables, $t);
 	}
 
@@ -739,8 +744,8 @@ class ExceptionHandler {
 
 		$t = $this->dispatchingThrowables[0];
 
-		if (!N2N::isInitialized() || 2 < $numDispatchingThrowables || (2 == $numDispatchingThrowables
-						&& !($this->dispatchingThrowables[1] instanceof StatusException)) || !$this->stable) {
+//		if (!N2N::isInitialized() || 2 < $numDispatchingThrowables || (2 == $numDispatchingThrowables
+//						&& !($this->dispatchingThrowables[1] instanceof StatusException)) || !$this->stable) {
 			if (!isset($_SERVER['HTTP_HOST'])) {
 				$this->renderExceptionConsoleInfo($t);
 				return;
@@ -748,18 +753,18 @@ class ExceptionHandler {
 
 			$this->renderFatalExceptionsHtmlInfo($this->dispatchingThrowables);
 			return;
-		}
-
-		if (!N2N::isHttpContextAvailable()) {
-			$this->renderExceptionConsoleInfo($t);
-			return;
-		}
-
-		try {
-			$this->renderBeautifulExceptionView($t);
-		} catch (\Throwable $t) {
-			$this->handleThrowable($t);
-		}
+//		}
+//
+//		if (!N2N::isHttpContextAvailable()) {
+//			$this->renderExceptionConsoleInfo($t);
+//			return;
+//		}
+//
+//		try {
+//			$this->renderBeautifulExceptionView($t);
+//		} catch (\Throwable $t) {
+//			$this->handleThrowable($t);
+//		}
 	}
 
 	/**
