@@ -112,10 +112,18 @@ class TransactionManager extends ObjectAdapter {
 	}
 
 	/**
+	 * @deprecated spelling mistake (use {@link self::isReadOnly()}).
+	 * @return bool|null
+	 */
+	public function isReadyOnly(): ?bool {
+		return $this->isReadOnly();
+	}
+
+	/**
 	 * Returns true if there is an open read only transaction.
 	 * @return bool|null true or false if a transaction is open, otherwise null.
 	 */
-	public function isReadyOnly(): ?bool {
+	public function isReadOnly(): ?bool {
 		return $this->readOnly;
 	}
 
