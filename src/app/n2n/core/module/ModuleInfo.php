@@ -36,7 +36,7 @@ class ModuleInfo {
 		return $this->name;
 	}
 
-	public function setName(string $name = null) {
+	public function setName(?string $name = null) {
 		$this->name = $name;
 	}
 
@@ -44,7 +44,7 @@ class ModuleInfo {
 		return $this->author;
 	}
 
-	public function setAuthor(string $author = null) {
+	public function setAuthor(?string $author = null) {
 		$this->author = $author;
 	}
 
@@ -52,7 +52,7 @@ class ModuleInfo {
 		return $this->website;
 	}
 
-	public function setWebsite(string $website = null) {
+	public function setWebsite(?string $website = null) {
 		$this->website = $website;
 	}
 
@@ -60,7 +60,7 @@ class ModuleInfo {
 		return $this->license;
 	}
 
-	public function setLicense(string $license = null) {
+	public function setLicense(?string $license = null) {
 		$this->license = $license;
 	}
 
@@ -68,7 +68,7 @@ class ModuleInfo {
 		return $this->version;
 	}
 
-	public function setVersion(string $version = null) {
+	public function setVersion(?string $version = null) {
 		$this->version = $version;
 	}
 
@@ -85,7 +85,7 @@ class ModuleInfo {
 		return $this->configDescriberClassName;
 	}
 
-	public function setConfigDescriberClassName(string $configDescriberClassName = null) {
+	public function setConfigDescriberClassName(?string $configDescriberClassName = null) {
 		$this->configDescriberClassName = $configDescriberClassName;
 	}
 }

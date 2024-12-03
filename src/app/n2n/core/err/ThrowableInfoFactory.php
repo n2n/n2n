@@ -70,7 +70,7 @@ class ThrowableInfoFactory {
 	 * @param string $filePath
 	 * @param string $lineNo
 	 */
-	public static function findCallPos(\Throwable $t, string &$filePath = null, int &$lineNo = null) {
+	public static function findCallPos(\Throwable $t, ?string &$filePath = null, ?int &$lineNo = null) {
 		if (!($t instanceof \TypeError || $t instanceof  WarningError || $t instanceof  RecoverableError)) {
 			return;
 		}
@@ -143,8 +143,8 @@ class ThrowableInfoFactory {
 		}
 	}
 	
-	public static function createCodeInfo(string $fileName, int $line = null, int $startLineNo = null, 
-			int $endLineNo = null, string $message = null) {
+	public static function createCodeInfo(string $fileName, ?int $line = null, ?int $startLineNo = null,
+			?int $endLineNo = null, ?string $message = null) {
 		if ($line == 0) {
 			$line = null;
 			if ($startLineNo === null) $startLineNo = 1;

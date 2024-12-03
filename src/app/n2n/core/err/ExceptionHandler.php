@@ -45,8 +45,8 @@ require_once 'ThrowableInfoFactory.php';
  * @author Andreas von Burg
  */
 class ExceptionHandler {
-	const HANDLED_PHP_SEVERITIES = E_ALL | E_STRICT;
-	const STRICT_ATTITUTE_PHP_SEVERITIES = E_STRICT | E_WARNING | E_NOTICE | E_CORE_WARNING | E_USER_WARNING | E_USER_NOTICE | E_DEPRECATED;
+	const HANDLED_PHP_SEVERITIES = E_ALL/* | E_STRICT*/;
+	const STRICT_ATTITUTE_PHP_SEVERITIES = /*E_STRICT | */E_WARNING | E_NOTICE | E_CORE_WARNING | E_USER_WARNING | E_USER_NOTICE | E_DEPRECATED;
 
 	const LOG_FILE_EXTENSION = '.log';
 
@@ -700,7 +700,7 @@ class ExceptionHandler {
 		return $protocol . '://' . $hostName . $requestUrl;
 	}
 
-	private function createLogArrayStr($title, array $arr, array $allowedPrefixes = null) {
+	private function createLogArrayStr($title, array $arr, ?array $allowedPrefixes = null) {
 		$debugContent = PHP_EOL . $title . PHP_EOL
 				. str_repeat('-', mb_strlen($title)) . PHP_EOL;
 

@@ -57,7 +57,7 @@ class N2nApplication {
 		return null;
 	}
 
-	function createN2nContext(TransactionManager $transactionManager = null, PhpVars $phpVars = null): AppN2nContext {
+	function createN2nContext(?TransactionManager $transactionManager = null, ?PhpVars $phpVars = null): AppN2nContext {
 		$n2nContext = new AppN2nContext($transactionManager ?? new TransactionManager(),
 				$this, $phpVars ?? PhpVars::fromEnv());
 

@@ -73,7 +73,7 @@ class ThrowableModel {
 		return array_values($documentIds);
 	}
 	
-	public function setOutputCallback(\Closure $outputCallback = null) {
+	public function setOutputCallback(?\Closure $outputCallback = null) {
 		$this->outputCallback = $outputCallback;
 	}
 	

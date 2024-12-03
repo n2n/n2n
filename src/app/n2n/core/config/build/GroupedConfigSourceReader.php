@@ -43,7 +43,7 @@ class GroupedConfigSourceReader {
 		$this->combinedConfigSource = $combinedConfigSource;
 	}
 	
-	public function initialize(string $stage = null, bool $stageExplicit = false, array $allowedGroupNames = null, array $extendableGroupNames = null) {
+	public function initialize(?string $stage = null, bool $stageExplicit = false, ?array $allowedGroupNames = null, ?array $extendableGroupNames = null) {
 		$this->stage = $stage;
 		$this->stageExplicit = $stageExplicit;
 		$this->allowedGroupNames = $allowedGroupNames;

@@ -18,12 +18,12 @@ class LazyAppCacheStore implements CacheStore {
 				?? $this->decoratedCache = $this->appCache->lookupCacheStore($this->namespace, $this->shared);
 	}
 
-	public function store(string $name, array $characteristics, mixed $data, \DateInterval $ttl = null,
-			\DateTimeInterface $now = null): void {
+	public function store(string $name, array $characteristics, mixed $data, ?\DateInterval $ttl = null,
+			?\DateTimeInterface $now = null): void {
 		$this->cacheStore()->store($name, $characteristics, $data, $ttl, $now);
 	}
 
-	public function get(string $name, array $characteristics, \DateTimeInterface $now = null): ?CacheItem {
+	public function get(string $name, array $characteristics, ?\DateTimeInterface $now = null): ?CacheItem {
 		return $this->cacheStore()->get($name, $characteristics, $now);
 	}
 
@@ -31,15 +31,15 @@ class LazyAppCacheStore implements CacheStore {
 		$this->cacheStore()->remove($name, $characteristics);
 	}
 
-	public function findAll(string $name, array $characteristicNeedles = null, \DateTimeInterface $now = null): array {
+	public function findAll(string $name, ?array $characteristicNeedles = null, ?\DateTimeInterface $now = null): array {
 		return $this->cacheStore()->findAll($name, $characteristicNeedles, $now);
 	}
 
-	public function removeAll(?string $name, array $characteristicNeedles = null): void {
+	public function removeAll(?string $name, ?array $characteristicNeedles = null): void {
 		$this->cacheStore()->removeAll($name, $characteristicNeedles);
 	}
 
-	public function garbageCollect(\DateInterval $maxLifetime = null, \DateTimeInterface $now = null): void {
+	public function garbageCollect(?\DateInterval $maxLifetime = null, ?\DateTimeInterface $now = null): void {
 		$this->cacheStore()->garbageCollect($maxLifetime, $now);
 	}
 

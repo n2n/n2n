@@ -464,7 +464,7 @@ class AppConfigFactory {
 	
 	const DEFAULT_LEVEL_SEPARATOR = '.';
 	
-	private function extractPathParts(GroupReader $groupReader, string $prefix = null): array {
+	private function extractPathParts(GroupReader $groupReader, ?string $prefix = null): array {
 		$names = array();
 		foreach ($groupReader->getNames() as $key) {
 			if ($prefix !== null) {

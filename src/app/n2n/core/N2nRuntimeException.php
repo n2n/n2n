@@ -26,7 +26,7 @@ use n2n\util\ex\Documentable;
 class N2nRuntimeException extends \RuntimeException implements Documentable {
 	private $documentId;
 	
-	public function __construct(?string $message, $documentId = null, \Throwable $previous = null, int $code = null) {
+	public function __construct(?string $message, $documentId = null, ?\Throwable $previous = null, ?int $code = null) {
 		parent::__construct((string) $message, (int) $code, $previous);
 		$this->documentId = $documentId;
 	}

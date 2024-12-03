@@ -33,7 +33,7 @@ class ThrowableInfo {
 	private $boundValues = array();
 	private $documentId = null;
 	
-	public function __construct(string $navTitle, string $title, string $filePath = null, int $lineNo = null, 
+	public function __construct(string $navTitle, string $title, ?string $filePath = null, ?int $lineNo = null,
 			string $stackTraceString) {
 		$this->navTitle = $navTitle;
 		$this->title = $title;	
@@ -54,7 +54,7 @@ class ThrowableInfo {
 		return $this->message;
 	}
 	
-	public function setMessage(string $message = null) {
+	public function setMessage(?string $message = null) {
 		$this->message = $message;
 	}
 	
@@ -89,7 +89,7 @@ class ThrowableInfo {
 		return $this->statementString;
 	}
 	
-	public function setStatementString(string $statementString = null) {
+	public function setStatementString(?string $statementString = null) {
 		$this->statementString = $statementString;
 	}
 	
@@ -105,7 +105,7 @@ class ThrowableInfo {
 		return $this->documentId;
 	}
 
-	public function setDocumentId(string $documentId = null) {
+	public function setDocumentId(?string $documentId = null) {
 		$this->documentId = $documentId;
 	}
 

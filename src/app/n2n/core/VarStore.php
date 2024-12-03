@@ -101,7 +101,7 @@ class VarStore {
 	 * @param bool $shared
 	 * @return FsPath
 	 */
-	public function requestDirFsPath(string $category, string $moduleNamespace = null, string $directoryName = null,
+	public function requestDirFsPath(string $category, ?string $moduleNamespace = null, ?string $directoryName = null,
 			bool $create = true, bool $required = true, bool $shared = false): FsPath {
 		if (!in_array($category, self::getCategories())) {
 			throw new InvalidArgumentException('Invalid var category \'' . $category . '\'. Available categories: '

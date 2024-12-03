@@ -24,7 +24,7 @@ namespace n2n\core\container\err;
 class CommitPreparationFailedException extends TransactionPhaseException {
 
 
-	function __construct(string $message = null, int $code = null, ?\Throwable $previous = null,
+	function __construct(?string $message = null, ?int $code = null, ?\Throwable $previous = null,
 			private bool $deadlock = false) {
 		parent::__construct($message ?? '', $code ?? 0, $previous);
 	}

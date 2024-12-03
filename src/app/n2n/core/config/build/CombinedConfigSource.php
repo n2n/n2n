@@ -30,11 +30,11 @@ class CombinedConfigSource implements ConfigSource {
 	private $mainConfigSource;
 	private $additionalConfigSources = array();
 	
-	public function __construct(ConfigSource $mainConfigSource = null) {
+	public function __construct(?ConfigSource $mainConfigSource = null) {
 		$this->mainConfigSource = $mainConfigSource;
 	}
 	
-	public function setMain(ConfigSource $mainConfigSource = null) {
+	public function setMain(?ConfigSource $mainConfigSource = null) {
 		$this->mainConfigSource = $mainConfigSource;
 	}
 	
@@ -83,7 +83,7 @@ class CombinedConfigSource implements ConfigSource {
 		return DataMerger::merge($this->mainConfigSource->readArray(), $additionalData, true);
 	}
 	
-	private function merge(array $data, array $data2, array $path = null) {
+	private function merge(array $data, array $data2, ?array $path = null) {
 		foreach ($data2 as $key => $value) {
 			$newPath = $path;
 			if ($newPath !== null) $newPath[] = $key;
@@ -173,7 +173,7 @@ class DataMerger {
 	 * @throws ConfigurationConflictException
 	 * @return array
 	 */
-	private static function rmerge(array $data, array $data2, array $path = null) {
+	private static function rmerge(array $data, array $data2, ?array $path = null) {
 		foreach ($data2 as $key => $value) {
 			$newPath = $path;
 			if ($newPath !== null) $newPath[] = $key;

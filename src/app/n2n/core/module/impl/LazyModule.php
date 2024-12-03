@@ -57,8 +57,8 @@ class LazyModule implements Module {
 	 * @param string $namespace
 	 * @param string $path
 	 */
-	public function __construct($namespace, ConfigSource $appConfigSource = null, 
-			WritableConfigSource $moduleConfigSource = null) {
+	public function __construct($namespace, ?ConfigSource $appConfigSource = null,
+			?WritableConfigSource $moduleConfigSource = null) {
 		$this->namespace = $namespace;
 		$this->appConfigSource = $appConfigSource;
 		$this->moduleConfigSource = $moduleConfigSource;

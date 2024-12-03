@@ -27,6 +27,6 @@ interface AddOnContext {
 	 * @throws MagicObjectUnavailableException only if $required is true, object was not found and the object of the
 	 * 		passed id belongs to this AddOnContext but it somehow not available.
 	 */
-	function lookupMagicObject(string $id, bool $required = true, string $contextNamespace = null): mixed;
+	function lookupMagicObject(string $id, bool $required = true, ?string $contextNamespace = null): mixed;
 
 }

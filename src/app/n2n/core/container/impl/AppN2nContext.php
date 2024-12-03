@@ -78,7 +78,7 @@ class AppN2nContext implements N2nContext, ShutdownListener {
 	private bool $finalized = false;
 
 	public function __construct(private TransactionManager $transactionManager, private N2nApplication $n2nApplication,
-			PhpVars $phpVars = null) {
+			?PhpVars $phpVars = null) {
 		$this->n2nLocale = N2nLocale::getDefault();
 		$this->phpVars = $phpVars ?? PhpVars::fromEnv();
 
@@ -367,7 +367,7 @@ class AppN2nContext implements N2nContext, ShutdownListener {
 	 * {@inheritDoc}
 	 * @see \n2n\util\magic\MagicContext::lookup()
 	 */
-	public function lookup(string|\ReflectionClass $id, bool $required = true, string $contextNamespace = null): mixed {
+	public function lookup(string|\ReflectionClass $id, bool $required = true, ?string $contextNamespace = null): mixed {
 		$this->ensureNotFinalized();
 
 		if ($id instanceof \ReflectionClass) {
@@ -554,7 +554,7 @@ class AppN2nContext implements N2nContext, ShutdownListener {
 // 		MagicUtils::init($object, $this);
 // 	}
 
-//	function copy(LookupSession $lookupSession = null,
+//	function copy(?LookupSession $lookupSession = null,
 //			CacheStore $applicationCacheStore = null, bool $keepTransactionContext = true): AppN2nContext {
 //		$transactionManager = null;
 //		if ($keepTransactionContext) {

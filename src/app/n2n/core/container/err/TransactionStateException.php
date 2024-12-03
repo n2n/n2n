@@ -26,7 +26,7 @@ use n2n\core\container\TransactionExecutionException;
 class TransactionStateException extends \RuntimeException implements TransactionExecutionException {
 
 
-	function __construct(string $message = null, int $code = null,
+	function __construct(?string $message = null, ?int $code = null,
 			private readonly ?TransactionPhaseException $phaseException = null) {
 		parent::__construct($message ?? '', $code ?? 0, $phaseException);
 	}

@@ -211,7 +211,7 @@ class ContainerUtil {
 	 * @param bool $readOnly
 	 * @return mixed
 	 */
-	function execIsolated(\Closure $closure, int $tries = 3, \Closure $deadlockHandler = null,
+	function execIsolated(\Closure $closure, int $tries = 3, ?\Closure $deadlockHandler = null,
 			bool $readOnly = false): mixed {
 		$deadlockMmi = null;
 		if ($deadlockHandler !== null) {

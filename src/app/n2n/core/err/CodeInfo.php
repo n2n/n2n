@@ -31,7 +31,7 @@ class CodeInfo {
 	private $endLineNo;
 	private $snippetLines = array();
 
-	public function __construct(string $filePath, int $lineNo = null, string $description = null) {
+	public function __construct(string $filePath, ?int $lineNo = null, ?string $description = null) {
 		$this->filePath = $filePath;
 		$this->lineNo = $lineNo;
 		$this->description = $description;		
@@ -57,7 +57,7 @@ class CodeInfo {
 		return $this->startLineNo;
 	}
 	
-	public function setStartLineNo(int $startLine = null) { 
+	public function setStartLineNo(?int $startLine = null) {
 		$this->startLineNo = $startLine;
 	}
 	
@@ -65,7 +65,7 @@ class CodeInfo {
 		return $this->endLineNo;
 	}
 	
-	public function setEndLineNo(int $endLineNo = null) {
+	public function setEndLineNo(?int $endLineNo = null) {
 		$this->endLineNo = $endLineNo;
 	}
 	

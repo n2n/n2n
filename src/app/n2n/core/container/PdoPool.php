@@ -61,7 +61,7 @@ class PdoPool {
 		return $this->decoratedPdoPool->getTransactionManager();
 	}
 
-	public function setMagicContext(MagicContext $magicContext = null) {
+	public function setMagicContext(?MagicContext $magicContext = null) {
 		$this->decoratedEmPool->setMagicContext($magicContext);
 	}
 	/**
@@ -80,7 +80,7 @@ class PdoPool {
 	 * @param string $persistenceUnitName
 	 * @return \n2n\persistence\Pdo
 	 */
-	public function getPdo(string $persistenceUnitName = null) {
+	public function getPdo(?string $persistenceUnitName = null) {
 		return $this->decoratedPdoPool->getPdo($persistenceUnitName);
 	}
 

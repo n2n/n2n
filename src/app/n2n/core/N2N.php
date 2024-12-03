@@ -244,8 +244,8 @@ class N2N {
 
 	
 	public static function setup(string $publicDirPath, string $varDirPath,
-			N2NCache $n2nCache = null, ModuleFactory $moduleFactory = null, bool $enableExceptionHandler = true,
-			LogMailer $logMailer = null): N2nApplication {
+			?N2NCache $n2nCache = null, ?ModuleFactory $moduleFactory = null, bool $enableExceptionHandler = true,
+			?LogMailer $logMailer = null): N2nApplication {
 
 		// ignore if deprecated FileN2nCache from old projects
 		if ($n2nCache instanceof FileN2nCache) {
@@ -287,8 +287,8 @@ class N2N {
 	}
 
 	public static function initialize(string $publicDirPath, string $varDirPath, 
-			N2NCache $n2nCache = null, ModuleFactory $moduleFactory = null, bool $enableExceptionHandler = true,
-			LogMailer $logMailer = null): void {
+			?N2NCache $n2nCache = null, ?ModuleFactory $moduleFactory = null, bool $enableExceptionHandler = true,
+			?LogMailer $logMailer = null): void {
 		if (self::$n2nApplication !== null) {
 			throw new IllegalStateException('N2nApplication already initialized. Call N2N::initializeWithN2nContext() instead.');
 		}
@@ -680,7 +680,7 @@ class N2N {
 		self::$n2nContext->getHttp()?->invokerControllers(true);
 	}
 	
-//	public static function invokerControllers(string $subsystemName = null, Path $cmdPath = null) {
+//	public static function invokerControllers(?string $subsystemName = null, ?Path $cmdPath = null) {
 //		$n2nContext = self::$n2nContext;
 //		$httpContext = $n2nContext->getHttpContext();
 //		$request = $httpContext->getRequest();

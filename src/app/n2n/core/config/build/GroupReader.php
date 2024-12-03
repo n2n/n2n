@@ -36,7 +36,7 @@ class GroupReader {
 	private $mainAttributesDefs = array();
 	private $additionalAttributesDefs = array();
 
-	public function __construct(string $groupName, string $stage = null, string $configSourceName) {
+	public function __construct(string $groupName, ?string $stage = null, string $configSourceName) {
 		$this->groupName = $groupName;
 		$this->stage = $stage;
 		$this->configSourceName = $configSourceName;
@@ -96,7 +96,7 @@ class GroupReader {
 				. 'in config source: ' . $this->configSourceName);
 	}
 
-	private function replaceCheck(string $name, AttributesDef $current = null, AttributesDef $new): bool {
+	private function replaceCheck(string $name, ?AttributesDef $current = null, AttributesDef $new): bool {
 		if (!$new->getAttributes()->contains($name)) return false;
 
 		if ($current === null || (!$current->isStageRestricted() && $new->isStageRestricted())) {
@@ -204,7 +204,7 @@ class GroupReader {
 		return $defaultValue;
 	}
 
-	public function getFloat(string $attributeName, bool $mandatory, float $defaultValue = null) {
+	public function getFloat(string $attributeName, bool $mandatory, ?float $defaultValue = null) {
 		if (null !== ($def = $this->findAttributesDef($attributeName, $mandatory))) {
 			try {
 				return $def->getAttributes()->reqNumeric($attributeName);
