@@ -36,7 +36,7 @@ class GroupReader {
 	private $mainAttributesDefs = array();
 	private $additionalAttributesDefs = array();
 
-	public function __construct(string $groupName, ?string $stage = null, string $configSourceName) {
+	public function __construct(string $groupName, ?string $stage, string $configSourceName) {
 		$this->groupName = $groupName;
 		$this->stage = $stage;
 		$this->configSourceName = $configSourceName;
