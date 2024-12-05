@@ -96,7 +96,7 @@ class GroupReader {
 				. 'in config source: ' . $this->configSourceName);
 	}
 
-	private function replaceCheck(string $name, ?AttributesDef $current = null, AttributesDef $new): bool {
+	private function replaceCheck(string $name, ?AttributesDef $current, AttributesDef $new): bool {
 		if (!$new->getAttributes()->contains($name)) return false;
 
 		if ($current === null || (!$current->isStageRestricted() && $new->isStageRestricted())) {
