@@ -33,7 +33,7 @@ class ThrowableInfo {
 	private $boundValues = array();
 	private $documentId = null;
 	
-	public function __construct(string $navTitle, string $title, ?string $filePath = null, ?int $lineNo = null,
+	public function __construct(string $navTitle, string $title, ?string $filePath, ?int $lineNo,
 			string $stackTraceString) {
 		$this->navTitle = $navTitle;
 		$this->title = $title;	
