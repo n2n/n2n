@@ -94,7 +94,7 @@ class ExceptionHandler {
 		restore_exception_handler();
 	}
 
-	function getPrevError() {
+	function getPrevError(): ?TriggeredError {
 		return $this->prevError;
 	}
 
