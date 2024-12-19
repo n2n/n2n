@@ -40,7 +40,7 @@ class FilesConfig {
             Url|string $assetsUrl = self::ASSETS_URL_DEFAULT,
             FsPath|string $managerPublicDir = self::MANAGER_PUBLIC_DIR_DEFAULT,
             Url|string $managerPublicUrl = self::MANAGER_PUBLIC_URL_DEFAULT,
-			FsPath|string $managerPrivateDir = null) {
+			FsPath|string|null $managerPrivateDir = null) {
 
 		$this->assetsDir = FsPath::create($assetsDir);
 		$this->assetsUrl = Url::create($assetsUrl);
