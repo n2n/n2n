@@ -32,6 +32,7 @@ use n2n\core\container\err\TransactionStateException;
 use n2n\core\container\err\UnexpectedRollbackException;
 use n2n\core\container\mock\CommitListenerMock;
 use n2n\core\container\mock\ReleasableResourceMock;
+use n2n\core\container\err\CommitPreparationFailedException;
 
 class TransactionManagerTest extends TestCase {
 
@@ -293,8 +294,9 @@ class TransactionManagerTest extends TestCase {
 		try {
 			$tx->commit();
 			$this->fail('exception expected.');
-		} catch (IllegalStateException $e) {
-			$this->assertTrue(StringUtils::contains('prepare fail mock ex', $e->getMessage()));
+		} catch (TransactionStateException $e) {
+			$this->assertTrue(StringUtils::contains('prepare fail mock ex', $e->getPrevious()->getMessage()));
+			$this->assertInstanceOf(CommitPreparationFailedException::class, $e->getPrevious());
 		}
 
 		$this->assertTrue($tx->isOpen());

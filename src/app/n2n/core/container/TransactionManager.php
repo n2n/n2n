@@ -230,7 +230,7 @@ class TransactionManager extends ObjectAdapter {
 	private function endByCommit(): void {
 		try {
 			$this->prepareCommit();
-		} catch (CommitPreparationFailedException|\Throwable $e) {
+		} catch (CommitPreparationFailedException $e) {
 			$this->fail('Commit preparation failed.', $e);
 		} finally {
 			$this->cleanUpPrepare();
@@ -393,7 +393,6 @@ class TransactionManager extends ObjectAdapter {
 	}
 
 	/**
-	 * @throws Throwable
 	 * @throws CommitPreparationFailedException
 	 */
 	private function prepareCommit(): void {
@@ -412,7 +411,14 @@ class TransactionManager extends ObjectAdapter {
 			$this->commitPreparationsNum++;
 
 			while (null !== ($resource = array_shift($this->pendingCommitPreparations))) {
-				$resource->prepareCommit($this->rootTransaction);
+				try {
+					$resource->prepareCommit($this->rootTransaction);
+				} catch (CommitPreparationFailedException $e) {
+					throw $e;
+				} catch (Throwable $e) {
+					throw new CommitPreparationFailedException($e->getMessage(), previous: $e);
+				}
+
 				if ($this->commitPreparationExtended) {
 					break;
 				}
