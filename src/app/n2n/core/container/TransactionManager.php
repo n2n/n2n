@@ -34,6 +34,7 @@ use n2n\core\container\err\BeginFailedException;
 use n2n\core\container\err\CommitPreparationFailedException;
 use n2n\core\container\err\TransactionPhasePostInterruptedException;
 use n2n\core\container\err\TransactionPhasePreInterruptedException;
+use Throwable;
 
 class TransactionManager extends ObjectAdapter {
 	/**
@@ -229,7 +230,7 @@ class TransactionManager extends ObjectAdapter {
 	private function endByCommit(): void {
 		try {
 			$this->prepareCommit();
-		} catch (CommitPreparationFailedException $e) {
+		} catch (CommitPreparationFailedException|\Throwable $e) {
 			$this->fail('Commit preparation failed.', $e);
 		} finally {
 			$this->cleanUpPrepare();
@@ -391,6 +392,10 @@ class TransactionManager extends ObjectAdapter {
 		return $this->commitPreparationsNum;
 	}
 
+	/**
+	 * @throws Throwable
+	 * @throws CommitPreparationFailedException
+	 */
 	private function prepareCommit(): void {
 		IllegalStateException::assertTrue($this->phase === TransactionPhase::OPEN);
 
