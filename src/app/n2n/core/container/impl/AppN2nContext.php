@@ -60,6 +60,7 @@ use n2n\core\ext\N2nMonitor;
 use n2n\core\N2nApplication;
 use n2n\core\err\DispatchedException;
 use Throwable;
+use n2n\util\EnumUtils;
 
 class AppN2nContext implements N2nContext, ShutdownListener {
 	private array $moduleConfigs = array();
@@ -75,7 +76,7 @@ class AppN2nContext implements N2nContext, ShutdownListener {
 	private ?N2nMonitor $monitor = null;
 	private readonly PhpVars $phpVars;
 
-	private bool $finalized = false;
+	private AppN2nContextState $state = AppN2nContextState::OPEN;
 
 	public function __construct(private TransactionManager $transactionManager, private N2nApplication $n2nApplication,
 			?PhpVars $phpVars = null) {
@@ -492,7 +493,11 @@ class AppN2nContext implements N2nContext, ShutdownListener {
 	}
 
 	function isFinalized(): bool {
-		return $this->finalized;
+		return $this->state === AppN2nContextState::FINALIZED;
+	}
+
+	function isFinalizing(): bool {
+		return $this->state === AppN2nContextState::FINALIZING;
 	}
 
 	function ensureNotFinalized(): void {
@@ -503,8 +508,15 @@ class AppN2nContext implements N2nContext, ShutdownListener {
 		throw new IllegalStateException('N2nContext already finalized.');
 	}
 
-	private function preFinalize(): void {
+	function ensureOpen(): void {
+		if ($this->state === AppN2nContextState::OPEN) {
+			return;
+		}
 
+		throw new IllegalStateException('N2nContext already ' . EnumUtils::unitToName($this->state) . '.');
+	}
+
+	private function preFinalize(): void {
 		$this->finalizeCallbacks->rewind();
 		while ($this->finalizeCallbacks->valid()) {
 			$this->finalizeCallbacks->current()($this);
@@ -517,21 +529,24 @@ class AppN2nContext implements N2nContext, ShutdownListener {
 			$this->lookupManager->clear();
 			$this->lookupManager = null;
 		}
-
 	}
 
 	function finalize(): void {
-		$this->ensureNotFinalized();
+		$this->ensureOpen();
 
+		$this->state = AppN2nContextState::FINALIZING;
 		try {
 			$this->preFinalize();
+			$this->finalizeAddOnContexts();
 		} catch (\Throwable $e) {
 			$this->dispatchThrowable($e);
 			return;
 		} finally {
-			$this->finalized = true;
+			$this->state = AppN2nContextState::FINALIZED;
 		}
+	}
 
+	private function finalizeAddOnContexts(): void {
 		$this->addOnContexts->rewind();
 		while ($this->addOnContexts->valid()) {
 			$this->addOnContexts->current()->finalize($this);
@@ -582,4 +597,10 @@ class AppN2nContext implements N2nContext, ShutdownListener {
 //		return $appN2nContext;
 //	}
 
+}
+
+enum AppN2nContextState {
+	case OPEN;
+	case FINALIZING;
+	case FINALIZED;
 }
