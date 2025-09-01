@@ -496,6 +496,10 @@ class AppN2nContext implements N2nContext, ShutdownListener {
 		return $this->state === AppN2nContextState::FINALIZED;
 	}
 
+	function isOpen(): bool {
+		return $this->state === AppN2nContextState::OPEN;
+	}
+
 	function isFinalizing(): bool {
 		return $this->state === AppN2nContextState::FINALIZING;
 	}
@@ -560,7 +564,7 @@ class AppN2nContext implements N2nContext, ShutdownListener {
 	}
 
 	function __destruct() {
-		if (!$this->isFinalized()) {
+		if ($this->isOpen()) {
 			$this->finalize();
 		}
 	}
