@@ -27,7 +27,8 @@ class Transaction {
 	private $tcRef;
 	private $readOnly;
 
-	public function __construct(TransactionManager $transactionalContext, $level, $tcRef, $readOnly) {
+	public function __construct(TransactionManager $transactionalContext, $level, $tcRef, $readOnly,
+			private ?string $isolationLevel = null) {
 		$this->transactionalContext = $transactionalContext;
 		$this->level = $level;
 		$this->tcRef = $tcRef;
@@ -40,6 +41,15 @@ class Transaction {
 
 	public function getTransactionManager() {
 		return $this->transactionalContext;
+	}
+
+	/**
+	 * Specific isolation level used for this transaction, if null every {@link TransactionalResource} may define its
+	 * isolation level on its own.
+	 * @return string|null
+	 */
+	function getIsolationLevel(): ?string {
+		return $this->isolationLevel;
 	}
 
 	public function isRoot() {
