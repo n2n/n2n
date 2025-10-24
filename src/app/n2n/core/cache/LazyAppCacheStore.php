@@ -4,6 +4,7 @@ namespace n2n\core\cache;
 
 use n2n\cache\CacheStore;
 use n2n\cache\CacheItem;
+use n2n\cache\CharacteristicsList;
 
 class LazyAppCacheStore implements CacheStore {
 
@@ -18,25 +19,25 @@ class LazyAppCacheStore implements CacheStore {
 				?? $this->decoratedCache = $this->appCache->lookupCacheStore($this->namespace, $this->shared);
 	}
 
-	public function store(string $name, array $characteristics, mixed $data, ?\DateInterval $ttl = null,
+	public function store(string $name, CharacteristicsList $characteristicsList, mixed $data, ?\DateInterval $ttl = null,
 			?\DateTimeInterface $now = null): void {
-		$this->cacheStore()->store($name, $characteristics, $data, $ttl, $now);
+		$this->cacheStore()->store($name, $characteristicsList, $data, $ttl, $now);
 	}
 
-	public function get(string $name, array $characteristics, ?\DateTimeInterface $now = null): ?CacheItem {
-		return $this->cacheStore()->get($name, $characteristics, $now);
+	public function get(string $name, CharacteristicsList $characteristicsList, ?\DateTimeInterface $now = null): ?CacheItem {
+		return $this->cacheStore()->get($name, $characteristicsList, $now);
 	}
 
-	public function remove(string $name, array $characteristics): void {
-		$this->cacheStore()->remove($name, $characteristics);
+	public function remove(string $name, CharacteristicsList $characteristicsList): void {
+		$this->cacheStore()->remove($name, $characteristicsList);
 	}
 
-	public function findAll(string $name, ?array $characteristicNeedles = null, ?\DateTimeInterface $now = null): array {
-		return $this->cacheStore()->findAll($name, $characteristicNeedles, $now);
+	public function findAll(string $name, ?CharacteristicsList $characteristicNeedlesList = null, ?\DateTimeInterface $now = null): array {
+		return $this->cacheStore()->findAll($name, $characteristicNeedlesList, $now);
 	}
 
-	public function removeAll(?string $name, ?array $characteristicNeedles = null): void {
-		$this->cacheStore()->removeAll($name, $characteristicNeedles);
+	public function removeAll(?string $name, ?CharacteristicsList $characteristicNeedlesList = null): void {
+		$this->cacheStore()->removeAll($name, $characteristicNeedlesList);
 	}
 
 	public function garbageCollect(?\DateInterval $maxLifetime = null, ?\DateTimeInterface $now = null): void {

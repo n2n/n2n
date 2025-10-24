@@ -6,6 +6,7 @@ use PHPUnit\Framework\TestCase;
 use n2n\util\ex\err\impl\FatalError;
 use n2n\util\ex\err\impl\WarningError;
 use n2n\util\ex\err\TriggeredError;
+use n2n\util\ex\err\impl\NoticeError;
 
 class ExceptionHandlerTest extends TestCase {
 	/**
@@ -77,12 +78,12 @@ class ExceptionHandlerTest extends TestCase {
 		$exceptionHandler = new ExceptionHandler(true);
 		$exceptionHandler->setStrictAttitude(true);
 
-		$this->expectException(FatalError::class);
-		$this->expectExceptionCode(E_USER_ERROR);
+		$this->expectException(NoticeError::class);
+		$this->expectExceptionCode(E_USER_NOTICE);
 		$this->expectExceptionMessage('Packets out of order. Expected 1 received 0. Packet size=145');
 
 		try {
-			trigger_error('Packets out of order. Expected 1 received 0. Packet size=145', E_USER_ERROR);
+			trigger_error('Packets out of order. Expected 1 received 0. Packet size=145', E_USER_NOTICE);
 		} finally {
 			$exceptionHandler->unregister();
 		}

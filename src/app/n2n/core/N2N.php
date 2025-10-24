@@ -55,6 +55,7 @@ use n2n\core\container\N2nContext;
 use n2n\util\ex\IllegalStateException;
 use n2n\core\cache\impl\N2nCaches;
 use n2n\core\ext\ConfigN2nExtension;
+use n2n\cache\CharacteristicsList;
 
 define('N2N_CRLF', "\r\n");
 
@@ -135,9 +136,9 @@ class N2N {
 			return $appConfig;
 		}
 
-		$characteristics = array('version' => N2N::VERSION, 'stage' => N2N::getStage(),
-				'hashCode' => $hashCode, 'publicDir' => $publicDirPath);
-		if (null !== ($cacheItem = $cacheStore->get(self::CONFIG_CACHE_NAME, $characteristics))) {
+		$characteristicsList = CharacteristicsList::fromArg(array('version' => N2N::VERSION, 'stage' => N2N::getStage(),
+				'hashCode' => $hashCode, 'publicDir' => $publicDirPath));
+		if (null !== ($cacheItem = $cacheStore->get(self::CONFIG_CACHE_NAME, $characteristicsList))) {
 			$cachedAppConfig = $cacheItem->getData();
 			if ($cachedAppConfig instanceof AppConfig) {
 				$appConfig = $cachedAppConfig;
@@ -150,7 +151,7 @@ class N2N {
 		$appConfig = $appConfigFactory->create($combinedConfigSource, N2N::getStage());
 		self::applyConfiguration($appConfig, $n2nCache, $varStore);
 		$cacheStore->removeAll(self::CONFIG_CACHE_NAME);
-		$cacheStore->store(self::CONFIG_CACHE_NAME, $characteristics, $appConfig);
+		$cacheStore->store(self::CONFIG_CACHE_NAME, $characteristicsList, $appConfig);
 
 		return $appConfig;
 	}
