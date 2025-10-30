@@ -47,6 +47,8 @@ class VarStore {
 	
 	private $moduleOverwrittenPaths = array();
 
+	private ?bool $sharedAvailable = null;
+
 	/**
 	 *
 	 * @param string $varPath
@@ -73,6 +75,14 @@ class VarStore {
 	
 	public function getFilePerm(): ?string {
 		return $this->filePerm;
+	}
+
+	function setSharedEnabled(bool $sharedAvailable): void {
+		$this->sharedAvailable = $sharedAvailable;
+	}
+
+	function isSharedEnabled(): bool {
+		return $this->sharedAvailable;
 	}
 	
 	public function overwritePath(string $category, string $moduleNamespace, string $path): void {
@@ -107,6 +117,13 @@ class VarStore {
 			throw new InvalidArgumentException('Invalid var category \'' . $category . '\'. Available categories: '
 					. implode(', ', self::getCategories()));
 		}
+
+		if ($shared && $this->sharedAvailable === null) {
+			throw new InvalidArgumentException('Shared VarStore folder not yet available.'
+					. ' Too early in n2n initialization process.');
+		}
+
+		$shared = $shared && $this->sharedAvailable;
 		
 		$dirPath = null;
 		if (!$shared && $moduleNamespace !== null && isset($this->moduleOverwrittenPaths[$category][$moduleNamespace])) {
