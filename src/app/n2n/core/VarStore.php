@@ -119,7 +119,7 @@ class VarStore {
 		}
 
 		if ($shared && $this->sharedAvailable === null) {
-			throw new InvalidArgumentException('Shared VarStore folder not yet available.'
+			throw new IllegalStateException('Shared VarStore folder not yet available.'
 					. ' Too early in n2n initialization process.');
 		}
 
