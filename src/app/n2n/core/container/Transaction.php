@@ -21,6 +21,8 @@
  */
 namespace n2n\core\container;
 
+use n2n\spec\tx\TransactionIsolationLevel;
+
 class Transaction {
 	private $transactionalContext;
 	private $level;
@@ -28,7 +30,7 @@ class Transaction {
 	private $readOnly;
 
 	public function __construct(TransactionManager $transactionalContext, $level, $tcRef, $readOnly,
-			private ?string $isolationLevel = null) {
+			private ?TransactionIsolationLevel $isolationLevel = null) {
 		$this->transactionalContext = $transactionalContext;
 		$this->level = $level;
 		$this->tcRef = $tcRef;
@@ -46,9 +48,9 @@ class Transaction {
 	/**
 	 * Specific isolation level used for this transaction, if null every {@link TransactionalResource} may define its
 	 * isolation level on its own.
-	 * @return string|null
+	 * @return TransactionIsolationLevel|null
 	 */
-	function getIsolationLevel(): ?string {
+	function getIsolationLevel(): ?TransactionIsolationLevel {
 		return $this->isolationLevel;
 	}
 
