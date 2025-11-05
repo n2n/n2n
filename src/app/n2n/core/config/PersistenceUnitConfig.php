@@ -81,6 +81,9 @@ class PersistenceUnitConfig {
 		return $this->sslCaCertificatePath;
 	}
 
+	/**
+	 * @deprecated use {@link TransactionIsolationLevel::cases()}
+	 */
 	public static function getTransactionIsolationLevels(): array {
 		return TransactionIsolationLevel::cases();
 	}
