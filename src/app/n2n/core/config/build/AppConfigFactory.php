@@ -46,6 +46,7 @@ use n2n\core\config\RoutingConfig;
 use n2n\core\config\routing\RoutingRule;
 use n2n\core\config\routing\ControllerDef;
 use n2n\core\config\web\SessionSaveMode;
+use n2n\spec\dbo\TransactionIsolationLevel;
 
 class AppConfigFactory {
 	const GROUP_GENERAL = 'general';
@@ -361,16 +362,16 @@ class AppConfigFactory {
 					$groupReader->getString($name . self::KEY_EXT_DSN_URI, true),
 					$groupReader->getString($name . self::KEY_EXT_USER, true),
 					$groupReader->getString($name . self::KEY_EXT_PASSWORD, false),
-					$groupReader->getString($name . self::KEY_EXT_READ_WRITE . self::KEY_EXT_TRANSACTION_ISOLATION_LEVEL,
-							false, null) ?? $groupReader->getString($name . self::KEY_EXT_TRANSACTION_ISOLATION_LEVEL, false,
-							PersistenceUnitConfig::TIL_SERIALIZABLE),
+					$groupReader->getEnum($name . self::KEY_EXT_READ_WRITE . self::KEY_EXT_TRANSACTION_ISOLATION_LEVEL,
+							TransactionIsolationLevel::cases(),false, null) ?? $groupReader->getEnum($name . self::KEY_EXT_TRANSACTION_ISOLATION_LEVEL,
+					TransactionIsolationLevel::cases(),false, TransactionIsolationLevel::TIL_SERIALIZABLE),
 					$groupReader->getString($name . self::KEY_EXT_DIALECT_CLASS, true),
 					$groupReader->getBool($name . self::KEY_EXT_SSl_VERIFY, false, true),
 					$groupReader->getString($name . self::KEY_EXT_CA_CERTIFICATE_PATH, false),
 					$groupReader->getBool($name . self::KEY_EXT_PERSISTENT, false, false),
-					$groupReader->getString($name . self::KEY_EXT_READ_ONLY . self::KEY_EXT_TRANSACTION_ISOLATION_LEVEL,
-							false, null) ?? $groupReader->getString($name . self::KEY_EXT_TRANSACTION_ISOLATION_LEVEL, false,
-					PersistenceUnitConfig::TIL_REPEATABLE_READ));
+					$groupReader->getEnum($name . self::KEY_EXT_READ_ONLY . self::KEY_EXT_TRANSACTION_ISOLATION_LEVEL,
+							TransactionIsolationLevel::cases(),false, null) ?? $groupReader->getEnum($name . self::KEY_EXT_TRANSACTION_ISOLATION_LEVEL,
+					TransactionIsolationLevel::cases(), false,TransactionIsolationLevel::TIL_REPEATABLE_READ));
 		}
 				
 // 		$persistenceUnitConfigs[] = new PersistenceUnitConfig('default', 

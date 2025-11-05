@@ -22,52 +22,54 @@
 namespace n2n\core\config;
 
 use n2n\util\type\ArgUtils;
+use n2n\spec\dbo\TransactionIsolationLevel;
 
 class PersistenceUnitConfig {
-	const TIL_READ_UNCOMMITTED = "READ UNCOMMITTED";
-	const TIL_READ_COMMITTED = "READ COMMITTED";
-	const TIL_REPEATABLE_READ = "REPEATABLE READ";
-	const TIL_SERIALIZABLE = "SERIALIZABLE";
+//	const TIL_READ_UNCOMMITTED = "READ UNCOMMITTED";
+//	const TIL_READ_COMMITTED = "READ COMMITTED";
+//	const TIL_REPEATABLE_READ = "REPEATABLE READ";
+//	const TIL_SERIALIZABLE = "SERIALIZABLE";
 	
 	public function __construct(private string $name, private string $dsnUri, private string $user, private ?string $password,
-			private string $readWriteTransactionIsolationLevel, private string $dialectClassName, private bool $sslVerify = true,
-			private ?string $sslCaCertificatePath = null, private bool $persistent = false, private string $readOnlyTransactionIsolationLevel = PersistenceUnitConfig::TIL_REPEATABLE_READ) {
+			private TransactionIsolationLevel $readWriteTransactionIsolationLevel, private string $dialectClassName, private bool $sslVerify = true,
+			private ?string $sslCaCertificatePath = null, private bool $persistent = false,
+			private TransactionIsolationLevel $readOnlyTransactionIsolationLevel = TransactionIsolationLevel::TIL_REPEATABLE_READ) {
 		ArgUtils::valEnum($this->readWriteTransactionIsolationLevel, self::getTransactionIsolationLevels());
 		ArgUtils::valEnum($this->readOnlyTransactionIsolationLevel, self::getTransactionIsolationLevels());
 	}
 	
-	public function getName() {
+	public function getName(): string {
 		return $this->name;
 	}
 	
-	public function getDsnUri() {
+	public function getDsnUri(): string {
 		return $this->dsnUri;
 	}
 	
-	public function getUser() {
+	public function getUser(): string {
 		return $this->user;		
 	}
 	
-	public function getPassword() {
+	public function getPassword(): ?string {
 		return $this->password;
 	}
 
 	/**
 	 * @deprecated default use readWriteTransactionIsolationLevel
 	 */
-	public function getTransactionIsolationLevel() {
+	public function getTransactionIsolationLevel(): TransactionIsolationLevel {
 		return $this->readWriteTransactionIsolationLevel;
 	}
 
-	public function getReadWriteTransactionIsolationLevel() {
+	public function getReadWriteTransactionIsolationLevel(): TransactionIsolationLevel {
 		return $this->readWriteTransactionIsolationLevel;
 	}
 
-	public function getReadOnlyTransactionIsolationLevel() {
+	public function getReadOnlyTransactionIsolationLevel(): TransactionIsolationLevel {
 		return $this->readOnlyTransactionIsolationLevel;
 	}
 	
-	public function getDialectClassName() {
+	public function getDialectClassName(): string {
 		return $this->dialectClassName;
 	}
 
@@ -79,9 +81,8 @@ class PersistenceUnitConfig {
 		return $this->sslCaCertificatePath;
 	}
 
-	public static function getTransactionIsolationLevels() {
-		return array(self::TIL_READ_UNCOMMITTED, self::TIL_READ_COMMITTED, 
-				self::TIL_REPEATABLE_READ, self::TIL_SERIALIZABLE);
+	public static function getTransactionIsolationLevels(): array {
+		return TransactionIsolationLevel::cases();
 	}
 
 	public function isPersistent(): bool {

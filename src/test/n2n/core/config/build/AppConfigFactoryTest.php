@@ -210,18 +210,18 @@ class AppConfigFactoryTest extends TestCase {
 		$this->assertEquals('dbuser', $persistenceUnitConfig1->getUser());
 		$this->assertEquals('', $persistenceUnitConfig1->getPassword());
 		$this->assertEquals('n2n\persistence\meta\impl\mysql\MysqlDialect', $persistenceUnitConfig1->getDialectClassName());
-		$this->assertEquals('SERIALIZABLE', $persistenceUnitConfig1->getTransactionIsolationLevel());
-		$this->assertEquals('SERIALIZABLE', $persistenceUnitConfig1->getReadWriteTransactionIsolationLevel());
-		$this->assertEquals('REPEATABLE READ', $persistenceUnitConfig1->getReadOnlyTransactionIsolationLevel());
+		$this->assertEquals('SERIALIZABLE', $persistenceUnitConfig1->getTransactionIsolationLevel()->value);
+		$this->assertEquals('SERIALIZABLE', $persistenceUnitConfig1->getReadWriteTransactionIsolationLevel()->value);
+		$this->assertEquals('REPEATABLE READ', $persistenceUnitConfig1->getReadOnlyTransactionIsolationLevel()->value);
 		$this->assertEquals(true, $persistenceUnitConfig1->isSslVerify());
 		$this->assertEquals(false, $persistenceUnitConfig1->isPersistent());
 
 		$this->assertEquals('path/to/ca.crt', $persistenceUnitConfig2->getSslCaCertificatePath());
 		$this->assertEquals(false, $persistenceUnitConfig2->isSslVerify());
 		$this->assertEquals(true, $persistenceUnitConfig2->isPersistent());
-		$this->assertEquals('READ COMMITTED', $persistenceUnitConfig2->getTransactionIsolationLevel());
-		$this->assertEquals('READ COMMITTED', $persistenceUnitConfig2->getReadWriteTransactionIsolationLevel());
-		$this->assertEquals('SERIALIZABLE', $persistenceUnitConfig2->getReadOnlyTransactionIsolationLevel());
+		$this->assertEquals('READ COMMITTED', $persistenceUnitConfig2->getTransactionIsolationLevel()->value);
+		$this->assertEquals('READ COMMITTED', $persistenceUnitConfig2->getReadWriteTransactionIsolationLevel()->value);
+		$this->assertEquals('SERIALIZABLE', $persistenceUnitConfig2->getReadOnlyTransactionIsolationLevel()->value);
 	}
 
 	function testOrm() {
