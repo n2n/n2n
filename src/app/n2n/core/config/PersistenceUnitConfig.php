@@ -22,7 +22,7 @@
 namespace n2n\core\config;
 
 use n2n\util\type\ArgUtils;
-use n2n\spec\dbo\TransactionIsolationLevel;
+use n2n\spec\tx\TransactionIsolationLevel;
 
 class PersistenceUnitConfig {
 //	const TIL_READ_UNCOMMITTED = "READ UNCOMMITTED";

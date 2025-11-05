@@ -46,7 +46,7 @@ use n2n\core\config\RoutingConfig;
 use n2n\core\config\routing\RoutingRule;
 use n2n\core\config\routing\ControllerDef;
 use n2n\core\config\web\SessionSaveMode;
-use n2n\spec\dbo\TransactionIsolationLevel;
+use n2n\spec\tx\TransactionIsolationLevel;
 
 class AppConfigFactory {
 	const GROUP_GENERAL = 'general';
