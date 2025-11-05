@@ -8,18 +8,25 @@
 	],
 	"homepage" : "https://www.n2n.ch",
 	"license" : "LGPL-3.0-or-later",
-	"authors" : [{
+	"authors" : [
+		{
 			"name" : "Andreas von Burg",
 			"email" : "a@von-burg.net",
 			"homepage" : "https://andreas.von-burg.net"
-		}, {
+		},
+		{
 			"name" : "Bert Hofmänner",
 			"email" : "hofmaenner@hnm.ch",
-			"homepage" : "http://www.hnm.ch"
-		}, {
+			"homepage" : "https://www.hnm.ch"
+		},
+		{
 			"name" : "Thomas Günther",
 			"email" : "guenther@hnm.ch"
-		}
+    	},
+		{
+			"name" : "David Meier",
+      		"email" : "meier@hnm.ch"
+        }
 	],
 	"minimum-stability" : "dev",
 	"prefer-stable" : true,
