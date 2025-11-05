@@ -39,8 +39,8 @@
 	"require" : {
 		"n2n/n2n-composer-module-installer" : "^7.1.5",
         "n2n/n2n-spec-tx": "^1.0",
-        "n2n/n2n-config" : "~7.4",
-        "n2n/n2n-context" : "~7.5",
+        "n2n/n2n-config" : "~7.5.0",
+        "n2n/n2n-context" : "~7.5.0",
 		"n2n/n2n-l10n" : "~7.4",
 		"n2n/n2n-log4php" : "~7.4",
 		"n2n/n2n-reflection" : "~7.4",
