@@ -25,12 +25,11 @@ use n2n\l10n\N2nLocale;
 use n2n\util\magic\MagicContext;
 use n2n\core\VarStore;
 use n2n\core\module\ModuleManager;
-use n2n\web\http\HttpContext;
-use n2n\web\http\HttpContextNotAvailableException;
 use n2n\context\LookupManager;
 use n2n\core\util\N2nUtil;
 use n2n\core\ext\N2nMonitor;
 use n2n\core\ext\N2nHttp;
+use n2n\core\ext\N2nBatch;
 
 interface N2nContext extends MagicContext {
 
@@ -45,11 +44,6 @@ interface N2nContext extends MagicContext {
 	function getVarStore(): VarStore;
 
 	function isHttpContextAvailable(): bool;
-
-	/**
-	 * @deprecated
-	 */
-	function getHttpContext(): HttpContext;
 
 	function getAppCache(): \n2n\core\cache\AppCache;
 
@@ -68,6 +62,8 @@ interface N2nContext extends MagicContext {
 	function isFinalized(): bool;
 
 	function finalize(): void;
+
+	function getBatch(): ?N2nBatch;
 
 	function getHttp(): ?N2nHttp;
 

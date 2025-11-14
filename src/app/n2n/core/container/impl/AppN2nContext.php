@@ -22,12 +22,8 @@
 namespace n2n\core\container\impl;
 
 use n2n\core\ShutdownListener;
-use n2n\web\http\Request;
-use n2n\web\http\Response;
 use n2n\l10n\N2nLocale;
 use n2n\context\LookupManager;
-use n2n\reflection\ReflectionUtils;
-use n2n\web\http\HttpContextNotAvailableException;
 use n2n\core\module\UnknownModuleException;
 use n2n\l10n\DynamicTextCollection;
 use n2n\context\LookupFailedException;
@@ -36,7 +32,6 @@ use n2n\core\VarStore;
 use n2n\core\container\N2nContext;
 use n2n\core\container\TransactionManager;
 use n2n\core\module\ModuleManager;
-use n2n\web\http\HttpContext;
 use n2n\core\cache\AppCache;
 use n2n\util\ex\IllegalStateException;
 use n2n\core\config\GeneralConfig;
@@ -61,6 +56,7 @@ use n2n\core\N2nApplication;
 use n2n\core\err\DispatchedException;
 use Throwable;
 use n2n\util\EnumUtils;
+use n2n\core\ext\N2nBatch;
 
 class AppN2nContext implements N2nContext, ShutdownListener {
 	private array $moduleConfigs = array();
@@ -72,6 +68,7 @@ class AppN2nContext implements N2nContext, ShutdownListener {
 	private \SplObjectStorage $addOnContexts;
 
 	private \SplObjectStorage $finalizeCallbacks;
+	private ?N2nBatch $batch = null;
 	private ?N2nHttp $http = null;
 	private ?N2nMonitor $monitor = null;
 	private readonly PhpVars $phpVars;
@@ -191,6 +188,18 @@ class AppN2nContext implements N2nContext, ShutdownListener {
 		throw new IllegalStateException('No AppCache defined.');
 	}
 
+	function setBatch(?N2nBatch $batch): void {
+		$this->ensureNotFinalized();
+
+		$this->batch = $batch;
+	}
+
+	function getBatch(): ?N2nBatch {
+		$this->ensureNotFinalized();
+
+		return $this->batch;
+	}
+
 	function setHttp(?N2nHttp $http): void {
 		$this->ensureNotFinalized();
 
@@ -220,20 +229,6 @@ class AppN2nContext implements N2nContext, ShutdownListener {
 
 		$this->monitor = $monitor;
 	}
-
-	/**
-	 * @deprecated
-	 */
-	public function getHttpContext(): HttpContext {
-		$this->ensureNotFinalized();
-
-		if ($this->http !== null) {
-			return $this->lookup(HttpContext::class);
-		}
-
-		throw new HttpContextNotAvailableException();
-	}
-
 
 	/**
 	 * {@inheritDoc}

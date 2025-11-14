@@ -11,9 +11,9 @@ use n2n\core\container\impl\AppN2nContext;
 use n2n\core\container\impl\PhpVars;
 use n2n\context\config\SimpleLookupSession;
 use n2n\context\LookupManager;
-use n2n\core\cache\AppCache;
-use n2n\util\magic\MagicContext;
 use n2n\core\cache\AppCacheSupplier;
+use n2n\core\container\N2nContext;
+use n2n\util\ex\IllegalStateException;
 
 class N2nApplication {
 	private array $n2nExtensions = [];
@@ -76,5 +76,16 @@ class N2nApplication {
 		$n2nContext->setLookupManager($lookupManager);
 
 		return $n2nContext;
+	}
+
+	function forkN2nContext(N2nContext $n2nContext, bool $keepTransactionContext = false): AppN2nContext {
+		$transactionManager = null;
+		if ($keepTransactionContext) {
+			$transactionManager = $n2nContext->getTransactionManager();
+			IllegalStateException::assertTrue(!$transactionManager->hasOpenTransaction(),
+					'Current TransactionManager can not be kept because it has open transactions.');
+		}
+
+		return $this->createN2nContext($transactionManager);
 	}
 }

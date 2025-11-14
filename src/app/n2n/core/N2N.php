@@ -21,16 +21,11 @@
  */
 namespace n2n\core;
 
-use n2n\context\config\SimpleLookupSession;
-use n2n\core\container\TransactionManager;
 use n2n\log4php\Logger;
 use n2n\core\module\Module;
 use n2n\core\err\ExceptionHandler;
 use n2n\l10n\N2nLocale;
 use n2n\util\io\IoUtils;
-use n2n\batch\BatchJobRegistry;
-use n2n\context\LookupManager;
-use n2n\web\http\controller\ControllerRegistry;
 use n2n\core\config\AppConfig;
 use n2n\core\module\ModuleFactory;
 use n2n\core\module\impl\LazyModule;
@@ -40,22 +35,18 @@ use n2n\core\config\build\AppConfigFactory;
 use n2n\l10n\L10n;
 use n2n\core\module\ModuleManager;
 use n2n\core\container\impl\AppN2nContext;
-use n2n\util\type\CastUtils;
 use n2n\core\module\impl\EtcModuleFactory;
-use n2n\l10n\MessageContainer;
-use n2n\web\dispatch\DispatchContext;
 use n2n\util\StringUtils;
 use n2n\core\module\UnknownModuleException;
 use n2n\core\err\LogMailer;
-use n2n\core\container\impl\PhpVars;
 use n2n\core\ext\N2nExtension;
 use n2n\config\InvalidConfigurationException;
 use n2n\core\cache\N2NCache;
-use n2n\core\container\N2nContext;
 use n2n\util\ex\IllegalStateException;
 use n2n\core\cache\impl\N2nCaches;
 use n2n\core\ext\ConfigN2nExtension;
 use n2n\cache\CharacteristicsList;
+use n2n\core\ext\BatchTriggerConfig;
 
 define('N2N_CRLF', "\r\n");
 
@@ -99,7 +90,7 @@ class N2N {
 	private static function initModules(ModuleFactory $moduleFactory, VarStore $varStore,
 			CombinedConfigSource $combinedConfigSource): ModuleManager {
 		$moduleFactory->init($varStore);
-		
+
 		$combinedConfigSource->setMain($moduleFactory->getMainAppConfigSource());
 		$moduleManager = new ModuleManager();
 		
@@ -210,30 +201,6 @@ class N2N {
 		}
 	}
 
-	
-// 	private function initRegistry() {
-// 		$this->batchJobRegistry = new BatchJobRegistry($this->n2nContext->getLookupManager(),
-// 				$this->varStore->requestDirFsPath(VarStore::CATEGORY_TMP, self::NS, self::SRV_BATCH_DIR));
-		
-// 		foreach ($this->appConfig->general()->getBatchControllerClassNames() as $batchJobClassName) {
-// 			$this->batchJobRegistry->registerBatchControllerClassName($batchJobClassName);
-// 		}
-		
-// 		if (N2N::isHttpContextAvailable()) {
-// 			$webConfig = $this->appConfig->web();
-		
-// 			$this->contextControllerRegistry = new ControllerRegistry();
-// 			foreach ($webConfig->getFilterControllerDefs() as $contextControllerDef) {
-// 				$this->contextControllerRegistry->registerFilterControllerDef($contextControllerDef);
-// 			}
-// 			foreach ($webConfig->getMainControllerDefs() as $contextControllerDef) {
-// 				$this->contextControllerRegistry->registerMainControllerDef($contextControllerDef);
-// 			}
-// 			foreach ($this->appConfig->locale()->getN2nLocales() as $alias => $n2nLocale) {
-// 				$this->contextControllerRegistry->setContextN2nLocale($alias, $n2nLocale);
-// 			}
-// 		}
-// 	}
 	/*
 	 * STATIC
 	 */
@@ -366,15 +333,9 @@ class N2N {
 	}
 
 	static function forkN2nContext(bool $keepTransactionContext = false): AppN2nContext {
-		$transactionManager = null;
-		if ($keepTransactionContext && self::$n2nContext !== null) {
-			$transactionManager = self::$n2nContext->getTransactionManager();
-			IllegalStateException::assertTrue(!$transactionManager->hasOpenTransaction(),
-					'Current TransactionManager can not be kept because it has open transactions.');
-		}
-
-		return self::_i()->createN2nContext($transactionManager);
+		return self::_i()->forkN2nContext(self::$n2nContext, keepTransactionContext: $keepTransactionContext);
 	}
+
 	/**
 	 * 
 	 */
@@ -515,77 +476,10 @@ class N2N {
 		
 		throw new N2nLocaleNotFoundException('N2nLocale not found: ' . $n2nLocaleId);
 	}
-//	/**
-//	 *
-//	 * @return array
-//	 */
-//	public static function getN2nLocaleIds() {
-//		return array_keys(self::_i()->n2nLocales);
-//	}
-//	/**
-//	 *
-//	 * @param \n2n\l10n\Language $language
-//	 * @return array<\n2n\l10n\N2nLocale>
-//	 */
-//	public static function getN2nLocalesByLanguage(Language $language) {
-//		return self::getN2nLocalesByLanguageId($language);
-//	}
-//	/**
-//	 *
-//	 * @param string $languageShort
-//	 * @return array<\n2n\l10n\N2nLocale>
-//	 */
-//	public static function getN2nLocalesByLanguageId($languageShort) {
-//		$languageShort = (string) $languageShort;
-//		$n2nLocales = array();
-//		foreach (self::getN2nLocales() as $n2nLocale) {
-//			if ($n2nLocale->getLanguage()->getShort() == $languageShort) {
-//				$n2nLocales[] = $n2nLocale;
-//			}
-//		}
-//		return $n2nLocales;
-//	}
-//	/**
-//	 *
-//	 * @param \n2n\l10n\Region $region
-//	 * @return array<\n2n\l10n\N2nLocale>
-//	 */
-//	public static function getN2nLocalesByRegion(Region $region) {
-//		return self::getN2nLocalesByLanguageId($region);
-//	}
-//	/**
-//	 *
-//	 * @param string $regionShort
-//	 * @return array<\n2n\l10n\N2nLocale>
-//	 */
-//	public static function getN2nLocalesByRegionShort($regionShort) {
-//		$regionShort = (string) $regionShort;
-//		$n2nLocales = array();
-//		foreach (self::getN2nLocales() as $n2nLocale) {
-//			if ($n2nLocale->getRegion()->getShort() == $regionShort) {
-//				$n2nLocales[] = $n2nLocale;
-//			}
-//		}
-//		return $n2nLocales;
-//	}
-//	/**
-//	 *
-//	 * @return array<\n2n\l10n\Language>
-//	 */
-//	public static function getLanguages() {
-//		return self::_i()->languages;
-//	}
-//	/**
-//	 *
-//	 * @param string $languageShort
-//	 * @return boolean
-//	 */
-//	public static function hasLanguage($languageShort) {
-//		return isset(self::_i()->languages[(string) $languageShort]);
-//	}
+
 	/**
 	 *
-	 * @return \n2n\core\module\Module[]
+	 * @return Module[]
 	 */
 	public static function getModules() {
 		return self::_i()->getModuleManager()->getModules();
@@ -624,121 +518,15 @@ class N2N {
 	public static function getN2nContext(): AppN2nContext {
 		return self::$n2nContext;
 	}
-	/**
-	 * 
-	 * @return boolean
-	 */
-	public static function isHttpContextAvailable(): bool {
-		return self::$n2nContext->isHttpContextAvailable();
-	}
-
-	/**
-	 * @return \n2n\web\http\HttpContext
-	 */
-	public static function getHttpContext() {
-		return self::$n2nContext->getHttpContext();
-	}
-	/**
-	 * 
-	 * @throws \n2n\web\http\HttpContextNotAvailableException
-	 * @return \n2n\web\http\Request
-	 */
-	public static function getCurrentRequest() {
-		return self::getHttpContext()->getRequest();
-	}
-	/**
-	 * 
-	 * @throws \n2n\web\http\HttpContextNotAvailableException
-	 * @return \n2n\web\http\Response
-	 */
-	public static function getCurrentResponse() {
-		return self::getHttpContext()->getResponse();
-	}
 	
-//	public static function createControllingPlan($subsystemName = null) {
-//		$request = self::$n2nContext->getHttpContext()->getRequest();
-//		if ($subsystemName === null) {
-//			$subsystemName = $request->getSubsystemName();
-//		}
-//
-//		/**
-//		 * @var ControllerRegistry
-//		 */
-//		$controllerRegistry = self::$n2nContext->lookup(ControllerRegistry::class);
-//
-//		return $controllerRegistry->createControllingPlan(
-//				self::$n2nContext, $request->getCmdPath(), $subsystemName);
-//	}
-	
-	public static function autoInvokeBatchJobs() {
-		$n2nContext = self::$n2nContext;
-		$batchJobRegistry = $n2nContext->lookup(BatchJobRegistry::class);
-		CastUtils::assertTrue($batchJobRegistry instanceof BatchJobRegistry);
-		$batchJobRegistry->trigger();
+	public static function autoInvokeBatchJobs(?BatchTriggerConfig $config = null): void {
+		self::$n2nContext->getBatch()?->trigger();
 		
 	}
 	
 	public static function autoInvokeControllers(): void {
 		self::$n2nContext->getHttp()?->invokerControllers(true);
 	}
-	
-//	public static function invokerControllers(?string $subsystemName = null, ?Path $cmdPath = null) {
-//		$n2nContext = self::$n2nContext;
-//		$httpContext = $n2nContext->getHttpContext();
-//		$request = $httpContext->getRequest();
-//
-//        $subsystem = null;
-//		if ($subsystemName !== null) {
-//			$subsystem = $httpContext->getAvailableSubsystemByName($subsystemName);
-//		}
-//		$request->setSubsystem($subsystem);
-//
-//
-//		$controllerRegistry = $n2nContext->lookup(ControllerRegistry::class);
-//
-//		if ($cmdPath === null) {
-//			$cmdPath = $request->getCmdPath();
-//		}
-//		$controllerRegistry->createControllingPlan($request->getCmdPath(), $request->getSubsystemName())->execute();
-//	}
-	/**
-	 * @return \n2n\context\LookupManager
-	 */
-	public static function getLookupManager() {
-		return self::$n2nContext->getLookupManager();
-	}
-	/**
-	 * @return \n2n\core\container\PdoPool
-	 */
-	public static function getPdoPool(): container\PdoPool {
-		return self::$n2nContext->lookup(\n2n\core\container\PdoPool::class);
-	}
-	/**
-	 * 
-	 * @return \n2n\l10n\MessageContainer
-	 */
-	public static function getMessageContainer() {
-		return self::$n2nContext->lookup(MessageContainer::class);
-	}
-	/**
-	 *
-	 * @return \n2n\web\dispatch\DispatchContext
-	 */
-	public static function getDispatchContext() {
-		return self::$n2nContext->lookup(DispatchContext::class);
-	}
-	/**
-	 * 
-	 * @return \n2n\core\container\TransactionManager
-	 */
-	public static function getTransactionManager() {
-		return self::$n2nContext->getTransactionManager();
-	}
-	
-// 	public static function setTransactionContext(TransactionManager $transactionManager) {
-// 		self::_i()->transactionalContext = $transactionManager;
-// 	}
-
 
 	/**
 	 *
