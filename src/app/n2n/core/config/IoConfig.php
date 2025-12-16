@@ -21,41 +21,30 @@
  */
 namespace n2n\core\config;
 
-use n2n\util\type\ArgUtils;
+use n2n\util\io\fs\FsPerm;
 
 class IoConfig {
 
-	public function __construct(private ?string $publicDirPermission = null,
-			private ?string $publicFilePermission = null,
-			private ?string $privateDirPermission = null,
-			private ?string $privateFilePermission = null) {
-        ArgUtils::assertTrue($this->publicDirPermission === null
-						|| preg_match('/^[0][0-7]{3}$/', $this->publicDirPermission) !== false,
-                'Use the 4 digit dir permission style, default = 0700');
-        ArgUtils::assertTrue($this->publicFilePermission === null
-						|| preg_match('/^[0][0-7]{3}$/', $this->publicFilePermission) !== false,
-                'Use the 4 digit file permission style, default = 0600');
-        ArgUtils::assertTrue($this->privateDirPermission === null
-						|| preg_match('/^[0][0-7]{3}$/', $this->privateDirPermission) !== false,
-                'Use the 4 digit dir permission style, default = 0700');
-        ArgUtils::assertTrue($this->privateFilePermission === null
-						|| preg_match('/^[0][0-7]{3}$/', $this->privateFilePermission) !== false,
-                'Use the 4 digit file permission style, default = 0600');
+	public function __construct(private ?FsPerm $publicDirPermission = null,
+			private ?FsPerm $publicFilePermission = null,
+			private ?FsPerm $privateDirPermission = null,
+			private ?FsPerm $privateFilePermission = null) {
+
 	}
 
-	public function getPublicDirPermission(): ?string {
+	public function getPublicDirPermission(): ?FsPerm {
 		return $this->publicDirPermission;
 	}
 
-	public function getPublicFilePermission(): ?string {
+	public function getPublicFilePermission(): ?FsPerm {
 		return $this->publicFilePermission;
 	}
 
-	public function getPrivateDirPermission(): ?string {
+	public function getPrivateDirPermission(): ?FsPerm {
 		return $this->privateDirPermission;
 	}
 
-	public function getPrivateFilePermission(): ?string {
+	public function getPrivateFilePermission(): ?FsPerm {
 		return $this->privateFilePermission;
 	}
 }

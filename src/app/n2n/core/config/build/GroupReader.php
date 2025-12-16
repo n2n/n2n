@@ -27,6 +27,7 @@ use n2n\l10n\N2nLocale;
 use n2n\l10n\IllegalN2nLocaleFormatException;
 use n2n\util\io\IoUtils;
 use n2n\util\type\attrs\InvalidAttributeException;
+use n2n\util\io\fs\FsPerm;
 
 class GroupReader {
 	private $groupName;
@@ -166,6 +167,18 @@ class GroupReader {
 			try {
 				return $def->getAttributes()->getString($attributeName);
 			} catch (AttributesException $e) {
+				throw $this->createInvalidAttributeException($attributeName, $def, $e);
+			}
+		}
+
+		return $defaultValue;
+	}
+
+	public function getFsPerm(string $attributeName, bool $mandatory, ?FsPerm $defaultValue = null): ?FsPerm {
+		if (null !== ($def = $this->findAttributesDef($attributeName, $mandatory))) {
+			try {
+				return FsPerm::build($def->getAttributes()->getString($attributeName));
+			} catch (AttributesException|\InvalidArgumentException $e) {
 				throw $this->createInvalidAttributeException($attributeName, $def, $e);
 			}
 		}

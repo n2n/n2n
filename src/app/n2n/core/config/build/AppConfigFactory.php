@@ -282,12 +282,12 @@ class AppConfigFactory {
 	const PRIVATE_FILE_PERMISSION_KEY = 'private.file_permission';
 
 	
-	private function createIoConfig(GroupReader $groupReader) {
+	private function createIoConfig(GroupReader $groupReader): IoConfig {
 		return new IoConfig(
-				$groupReader->getString(self::PUBLIC_DIR_PERMISSION_KEY, false),
-				$groupReader->getString(self::PUBLIC_FILE_PERMISSION_KEY, false),
-				$groupReader->getString(self::PRIVATE_DIR_PERMISSION_KEY, false),
-				$groupReader->getString(self::PRIVATE_FILE_PERMISSION_KEY, false));
+				$groupReader->getFsPerm(self::PUBLIC_DIR_PERMISSION_KEY, false),
+				$groupReader->getFsPerm(self::PUBLIC_FILE_PERMISSION_KEY, false),
+				$groupReader->getFsPerm(self::PRIVATE_DIR_PERMISSION_KEY, false),
+				$groupReader->getFsPerm(self::PRIVATE_FILE_PERMISSION_KEY, false));
 	}
 
 	const ASSETS_DIR_KEY = 'assets.dir';
