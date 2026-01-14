@@ -10,4 +10,8 @@ class BatchTriggerConfig {
 			public ?array $filterBatchJobNames = null,
 			public ?N2nContext $n2nContext = null) {
 	}
+
+	static function filter(string ...$filterBatchJobNames): BatchTriggerConfig {
+		return new BatchTriggerConfig(filterBatchJobNames: $filterBatchJobNames);
+	}
 }
