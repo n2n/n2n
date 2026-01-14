@@ -518,6 +518,14 @@ class N2N {
 	public static function getN2nContext(): AppN2nContext {
 		return self::$n2nContext;
 	}
+
+	/**
+	 * @return bool
+	 * @deprecated
+	 */
+	static function isHttpContextAvailable(): bool {
+		return null !== self::getN2nContext()->getHttp();
+	}
 	
 	public static function autoInvokeBatchJobs(?BatchTriggerConfig $config = null): void {
 		self::$n2nContext->getBatch()?->trigger();
