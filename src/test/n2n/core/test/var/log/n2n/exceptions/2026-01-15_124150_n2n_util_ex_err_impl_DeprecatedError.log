@@ -1,0 +1,61 @@
+n2n\util\ex\err\impl\DeprecatedError occurred
++++++++++++++++++++++++++++++++++++++++++++++
+
+SebastianBergmann\Exporter\Exporter::shortenedRecursiveExport(): Implicitly marking parameter $context as nullable is deprecated, the explicit nullable type must be used instead
+
+File: /tmp/cimonkey134914694584935463/src/vendor/sebastian/exporter/src/Exporter.php
+Line: 80
+
+STACK TRACE
+-----------
+n2n\util\ex\err\impl\DeprecatedError: #0 /tmp/cimonkey134914694584935463/src/app/n2n/core/err/ExceptionHandler.php(216): n2n\util\ex\err\TriggeredError::create()
+#1 /tmp/cimonkey134914694584935463/src/vendor/composer/ClassLoader.php(576): n2n\core\err\ExceptionHandler->handleTriggeredError()
+#2 /tmp/cimonkey134914694584935463/src/vendor/composer/ClassLoader.php(576): include('...')
+#3 /tmp/cimonkey134914694584935463/src/vendor/composer/ClassLoader.php(427): {closure:Composer\Autoload\ClassLoader::initializeIncludeClosure():575}()
+#4 /tmp/cimonkey134914694584935463/src/vendor/sebastian/comparator/src/Comparator.php(31): Composer\Autoload\ClassLoader->loadClass()
+#5 /tmp/cimonkey134914694584935463/src/vendor/sebastian/comparator/src/Factory.php(122): SebastianBergmann\Comparator\Comparator->__construct()
+#6 /tmp/cimonkey134914694584935463/src/vendor/sebastian/comparator/src/Factory.php(51): SebastianBergmann\Comparator\Factory->registerDefaultComparators()
+#7 /tmp/cimonkey134914694584935463/src/vendor/sebastian/comparator/src/Factory.php(40): SebastianBergmann\Comparator\Factory->__construct()
+#8 /tmp/cimonkey134914694584935463/src/vendor/phpunit/phpunit/src/Framework/TestCase.php(2560): SebastianBergmann\Comparator\Factory::getInstance()
+#9 /tmp/cimonkey134914694584935463/src/vendor/phpunit/phpunit/src/Framework/TestCase.php(1300): PHPUnit\Framework\TestCase->unregisterCustomComparators()
+#10 /tmp/cimonkey134914694584935463/src/vendor/phpunit/phpunit/src/Framework/TestResult.php(729): PHPUnit\Framework\TestCase->runBare()
+#11 /tmp/cimonkey134914694584935463/src/vendor/phpunit/phpunit/src/Framework/TestCase.php(973): PHPUnit\Framework\TestResult->run()
+#12 /tmp/cimonkey134914694584935463/src/vendor/phpunit/phpunit/src/Framework/TestSuite.php(685): PHPUnit\Framework\TestCase->run()
+#13 /tmp/cimonkey134914694584935463/src/vendor/phpunit/phpunit/src/Framework/TestSuite.php(685): PHPUnit\Framework\TestSuite->run()
+#14 /tmp/cimonkey134914694584935463/src/vendor/phpunit/phpunit/src/Framework/TestSuite.php(685): PHPUnit\Framework\TestSuite->run()
+#15 /tmp/cimonkey134914694584935463/src/vendor/phpunit/phpunit/src/TextUI/TestRunner.php(651): PHPUnit\Framework\TestSuite->run()
+#16 /tmp/cimonkey134914694584935463/src/vendor/phpunit/phpunit/src/TextUI/Command.php(146): PHPUnit\TextUI\TestRunner->run()
+#17 /tmp/cimonkey134914694584935463/src/vendor/phpunit/phpunit/src/TextUI/Command.php(99): PHPUnit\TextUI\Command->run()
+#18 /tmp/cimonkey134914694584935463/src/vendor/phpunit/phpunit/phpunit(107): PHPUnit\TextUI\Command::main()
+#19 /tmp/cimonkey134914694584935463/src/vendor/bin/phpunit(122): include('...')
+#20 {main}
+
+
+SERVER VARS
+-----------
+Array
+(
+    [DOCKER_BUILDKIT] => *HIDDEN*
+    [HOSTNAME] => *HIDDEN*
+    [SHLVL] => *HIDDEN*
+    [HOME] => *HIDDEN*
+    [NODE_OPTIONS] => *HIDDEN*
+    [ENV] => *HIDDEN*
+    [_] => *HIDDEN*
+    [PATH] => /opt/ant/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+    [ANT_HOME] => *HIDDEN*
+    [PWD] => *HIDDEN*
+    [PHP_SELF] => vendor/bin/phpunit
+    [SCRIPT_NAME] => vendor/bin/phpunit
+    [SCRIPT_FILENAME] => vendor/bin/phpunit
+    [PATH_TRANSLATED] => vendor/bin/phpunit
+    [DOCUMENT_ROOT] => 
+    [REQUEST_TIME_FLOAT] => 1768480910.4379
+    [REQUEST_TIME] => 1768480910
+    [argv] => Array
+        (
+            [0] => vendor/bin/phpunit
+        )
+
+    [argc] => 1
+)
