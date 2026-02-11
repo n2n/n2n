@@ -68,7 +68,7 @@ class TransactionManager extends ObjectAdapter {
 	 */
 	private ?array $pendingCommitPreparations = null;
 
-	public function createTransaction($readOnly = false): Transaction {
+	public function createTransaction(bool $readOnly = false, bool $nestedTransactionAllowed = false): Transaction {
 		if (!in_array($this->phase, [TransactionPhase::CLOSED, TransactionPhase::OPEN])) {
 			throw new TransactionStateException('Can not create transaction in '
 					. EnumUtils::unitToBacked($this->phase) . ' phase.');
@@ -79,6 +79,11 @@ class TransactionManager extends ObjectAdapter {
 		$transaction = new Transaction($this, $this->currentLevel, $this->tRef, $readOnly);
 
 		if ($this->currentLevel > 1) {
+			if (!$nestedTransactionAllowed) {
+				throw new TransactionStateException(
+						'Creation of nested transaction is not allowed. Root Transaction already created.');
+			}
+
 			if ($this->readOnly && !$readOnly) {
 				throw new TransactionStateException(
 						'Cannot create non readonly transaction in readonly transaction.');
