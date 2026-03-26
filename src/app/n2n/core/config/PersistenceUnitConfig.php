@@ -91,4 +91,9 @@ class PersistenceUnitConfig {
 	public function isPersistent(): bool {
 		return $this->persistent;
 	}
+
+	public function setPersistent(bool $persistent): static {
+		$this->persistent = $persistent;
+		return $this;
+	}
 }
