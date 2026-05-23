@@ -9,5 +9,7 @@ interface N2nBatch {
 	 * @return array arbitrary result object per successfully invoked batch job.
 	 */
 	function trigger(?BatchTriggerConfig $config = null): array;
+
+	function dispatch(object $message, ?MessageDispatchConfig $config = null): void;
 }
 
