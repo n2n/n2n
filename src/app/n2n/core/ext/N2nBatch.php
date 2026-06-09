@@ -10,6 +10,6 @@ interface N2nBatch {
 	 */
 	function trigger(?BatchTriggerConfig $config = null): array;
 
-	function dispatch(object $message, ?MessageDispatchConfig $config = null): void;
+	function dispatch(object $message, ?MessageDispatchConfig $config = null): array;
 }
 
