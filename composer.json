@@ -46,6 +46,7 @@
 		"n2n/n2n-reflection" : "~7.5.0",
         "n2n/n2n-util": "~7.5.0",
         "n2n/n2n-util-attr": "~7.5.0",
+        "n2n/n2n-util-crypt": "~7.5.0",
         "ext-mbstring": "*"
     },
 	"autoload" : {
