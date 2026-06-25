@@ -23,7 +23,6 @@ namespace n2n\core\config\build;
 
 use n2n\config\source\ConfigSource;
 use n2n\config\InvalidConfigurationException;
-use n2n\util\type\attrs\Attributes;
 use n2n\util\ex\IllegalStateException;
 
 class GroupedConfigSourceReader {
@@ -102,7 +101,7 @@ class GroupedConfigSourceReader {
 					$groupReader = $this->getExtendedGroupReaderByNames($groupName, $groupExtensionName);
 				}
 				$groupReader->addAttributeDef(
-						new AttributesDef(new Attributes((array) $attrs), (string) $configSource, $stage !== null), 
+						new AttributesDef(new DataSet((array) $attrs), (string) $configSource, $stage !== null),
 						$main);
 			}
 		}

@@ -151,13 +151,13 @@ n2n\\reflection\\property\\ValueIncompatibleWithConstraintsException
 n2n\util\type\ValueIncompatibleWithConstraintsException
 
 n2n\\config\\Attribut
-n2n\util\type\attrs\Attribut
+n2n\util\attr\Attribut
 
 n2n\\config\\InvalidAttributeException
-n2n\util\type\attrs\InvalidAttributeException
+n2n\util\attr\InvalidAttributeException
 
 n2n\\config\\LenientAttributeReader
-n2n\util\type\attrs\LenientAttributeReader
+n2n\util\attr\LenientAttributeReader
 
 n2n\\config\\MissingAttributeFieldException
-n2n\util\type\attrs\MissingAttributeFieldException
+n2n\util\attr\MissingAttributeFieldException

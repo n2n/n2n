@@ -33,7 +33,7 @@ use n2n\config\source\WritableConfigSource;
 use n2n\util\ex\IllegalStateException;
 use n2n\core\module\Module;
 use n2n\core\module\ConfigDescriber;
-use n2n\util\type\attrs\Attributes;
+use n2n\util\attr\DataSet;
 
 class LazyModule implements Module {	
 	const GROUP_INFO = 'info';
@@ -112,14 +112,14 @@ class LazyModule implements Module {
 			throw new IllegalStateException('ModuleInfo not editable.');
 		}
 		
-		$infoAttributes = new Attributes();
+		$infoAttributes = new DataSet();
 		$infoAttributes->appendAll(array(
 				self::NAME_KEY => $moduleInfo->getName(),
 				self::AUTHOR_KEY => $moduleInfo->getAuthor(),
 				self::WEBSITE_KEY => $moduleInfo->getWebsite(),
 				self::LICENSE_KEY => $moduleInfo->getLicense()), true);
 		
-		$metaAttributes = new Attributes();
+		$metaAttributes = new DataSet();
 		$metaAttributes->appendAll(array(
 				self::VERSION_KEY => $moduleInfo->getVersion(),
 				self::DEPENDENCIES_KEY => $moduleInfo->getDependencies(),

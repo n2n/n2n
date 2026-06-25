@@ -22,11 +22,11 @@
 namespace n2n\core\config\build;
 
 use n2n\config\InvalidConfigurationException;
-use n2n\util\type\attrs\AttributesException;
+use n2n\util\attr\AttributesException;
 use n2n\l10n\N2nLocale;
 use n2n\l10n\IllegalN2nLocaleFormatException;
 use n2n\util\io\IoUtils;
-use n2n\util\type\attrs\InvalidAttributeException;
+use n2n\util\attr\InvalidAttributeException;
 use n2n\util\io\fs\FsPerm;
 
 class GroupReader {
