@@ -24,6 +24,7 @@ namespace n2n\core\config\build;
 use n2n\config\source\ConfigSource;
 use n2n\config\InvalidConfigurationException;
 use n2n\util\ex\IllegalStateException;
+use n2n\util\attr\DataSet;
 
 class GroupedConfigSourceReader {
 	const STAGE_SEPARATOR = ':';
