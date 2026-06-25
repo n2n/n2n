@@ -21,20 +21,20 @@
  */
 namespace n2n\core\config\build;
 
-use n2n\util\type\attrs\Attributes;
+use n2n\util\attr\DataSet;
 
 class AttributesDef {
 	private $attributes;
 	private $configSourceName;
 	private $stageRestricted;
 	
-	public function __construct(Attributes $attributes, string $configSourceName, bool $stageRestricted) {
+	public function __construct(DataSet $attributes, string $configSourceName, bool $stageRestricted) {
 		$this->attributes = $attributes;
 		$this->configSourceName = $configSourceName;
 		$this->stageRestricted = $stageRestricted;
 	}
 	
-	public function getAttributes(): Attributes {
+	public function getAttributes(): DataSet {
 		return $this->attributes;
 	}
 	
