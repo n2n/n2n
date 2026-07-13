@@ -239,7 +239,7 @@ class ExceptionHandler {
 		return $throwable;
 	}
 
-		/**
+	/**
 	 * Will be registered as php exception_handler while ExceptionHandler initialization
 	 * @see http://php.net/manual/de/function.set-exception-handler.php
 	 *
@@ -612,21 +612,7 @@ class ExceptionHandler {
 			$debugContent .= 'URL' . PHP_EOL . '---' . PHP_EOL . $url . PHP_EOL . PHP_EOL;
 		}
 
-		// build query info for PDOExceptions
-		if ($e instanceof QueryStumble) {
-			$debugContent .= 'STATEMENT' . PHP_EOL
-					. '---------' . PHP_EOL;
-			$debugContent .= $e->getQueryString() . PHP_EOL . PHP_EOL;
-
-			if ($e instanceof PdoPreparedExecutionException) {
-				$boundValuesStr = "";
-				foreach($e->getBoundValues() as $name => $value) {
-					if (!mb_strlen($boundValuesStr)) $boundValuesStr .= ', ';
-					$boundValuesStr .= $name . '=' . TypeUtils::buildScalar($value) . PHP_EOL;
-				}
-				$debugContent .= 'Bound values: ' . $boundValuesStr . PHP_EOL;
-			}
-		}
+		$debugContent .= $this->buildStatementLogMessage($e);
 
 		if ($e instanceof LogInfo && null !== ($logMessage = $e->getLogMessage())) {
 			$debugContent .= 'LOG MESSAGE' . PHP_EOL
@@ -682,6 +668,31 @@ class ExceptionHandler {
 		}
 
 		return $debugContent;
+	}
+
+	private function buildStatementLogMessage(\Throwable $e): string {
+		$debugContent = '';
+
+		do {
+			// build query info for PDOExceptions
+			if (!($e instanceof QueryStumble)) {
+				continue;
+			}
+
+			$debugContent .= 'STATEMENT' . PHP_EOL
+					. '---------' . PHP_EOL;
+			$debugContent .= $e->getQueryString() . PHP_EOL . PHP_EOL;
+
+			if ($e instanceof PdoPreparedExecutionException) {
+				$boundValuesStr = "";
+				foreach($e->getBoundValues() as $name => $value) {
+					if (!mb_strlen($boundValuesStr)) $boundValuesStr .= ', ';
+					$boundValuesStr .= $name . '=' . TypeUtils::buildScalar($value) . PHP_EOL;
+				}
+				$debugContent .= 'Bound values: ' . $boundValuesStr . PHP_EOL. PHP_EOL;
+			}
+		} while ($e = $e->getPrevious());
+
 	}
 
 	private function buildUrlStr(): ?string {
