@@ -693,6 +693,7 @@ class ExceptionHandler {
 			}
 		} while ($e = $e->getPrevious());
 
+		return $debugContent;
 	}
 
 	private function buildUrlStr(): ?string {
