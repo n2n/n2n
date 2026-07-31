@@ -224,7 +224,7 @@ class AppConfigFactoryTest extends TestCase {
 		$this->assertEquals('SERIALIZABLE', $persistenceUnitConfig2->getReadOnlyTransactionIsolationLevel()->value);
 	}
 
-	function testOrm() {
+	function testOrm(): void {
 		$appConfig = $this->createFromFsPath('orm.app.ini');
 
 		$this->assertEquals(['example\bo\Example'], $appConfig->orm()->getEntityClassNames());
