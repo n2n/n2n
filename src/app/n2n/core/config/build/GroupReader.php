@@ -28,14 +28,20 @@ use n2n\l10n\IllegalN2nLocaleFormatException;
 use n2n\util\io\IoUtils;
 use n2n\util\attr\InvalidAttributeException;
 use n2n\util\io\fs\FsPerm;
+use n2n\util\ex\IllegalStateException;
 
 class GroupReader {
-	private $groupName;
-	private $stage;
-	private $configSourceName;
-
-	private $mainAttributesDefs = array();
-	private $additionalAttributesDefs = array();
+	private string $groupName;
+	private ?string $stage;
+	private string $configSourceName;
+	/**
+	 * @var AttributesDef[]
+	 */
+	private array $mainAttributesDefs = array();
+	/**
+	 * @var AttributesDef[]
+	 */
+	private array $additionalAttributesDefs = array();
 
 	public function __construct(string $groupName, ?string $stage, string $configSourceName) {
 		$this->groupName = $groupName;
@@ -43,18 +49,24 @@ class GroupReader {
 		$this->configSourceName = $configSourceName;
 	}
 
-	public function addAttributeDef(AttributesDef $attributesDef, bool $main) {
+	public function addAttributeDef(AttributesDef $attributesDef, bool $main): void {
 		if ($main) {
 			$this->mainAttributesDefs[] = $attributesDef;
 		} else {
 			$this->additionalAttributesDefs[] = $attributesDef;
 		}
 	}
-	
+
+	/**
+	 * @return AttributesDef[]
+	 */
 	public function getMainAttributesDefs(): array {
 		return $this->mainAttributesDefs;
 	}
-	
+
+	/**
+	 * @return AttributesDef[]
+	 */
 	public function getAdditionalAttributesDefs(): array {
 		return $this->additionalAttributesDefs;
 	}
@@ -67,13 +79,14 @@ class GroupReader {
 //		 throw new \InvalidArgumentException('Unknown attribute name: ' . $attributeName);
 //	 }
 
-	public function createInvalidAttributeException(string $attributeName, AttributesDef $attributesDef, \Throwable $previous) {
+	public function createInvalidAttributeException(string $attributeName, AttributesDef $attributesDef, \Throwable $previous): InvalidConfigurationException {
 		return new InvalidConfigurationException('Invalid attribute \'' . $attributeName . '\' (group: '
 				. $this->groupName . ') defined' . ($this->stage !== null ? ' for stage ' . $this->stage : '')
 				. ' in config source: ' . $this->buildConfigSourceName($attributesDef), 0, $previous);
 	}
 
-	private function findAttributesDef(string $attributeName, bool $mandatory) {
+
+	private function findAttributesDef(string $attributeName, bool $mandatory): ?AttributesDef {
 		$current = null;
 
 		foreach ($this->mainAttributesDefs as $mainAttributesDef) {
@@ -108,10 +121,15 @@ class GroupReader {
 			return false;
 		}
 
-		if ($current->getAttributes()->get($name) === $new->getAttributes()->get($name)) {
-			return false;
+		try {
+			if ($current->getAttributes()->req($name) === $new->getAttributes()->req($name)) {
+				return false;
+			}
+		} catch (AttributesException $e) {
+			throw new IllegalStateException('Should not happen: ' . $e->getMessage(),
+					previous: $e);
 		}
-		
+
 		return true;
 	}
 	
@@ -146,7 +164,7 @@ class GroupReader {
 		return array_unique($names);
 	}
 
-	public function contains(string $attributeName) {
+	public function contains(string $attributeName): bool {
 		foreach ($this->mainAttributesDefs as $attributesDef) {
 			if ($attributesDef->getAttributes()->contains($attributeName)) {
 				return true;
@@ -217,10 +235,10 @@ class GroupReader {
 		return $defaultValue;
 	}
 
-	public function getFloat(string $attributeName, bool $mandatory, ?float $defaultValue = null) {
+	public function getFloat(string $attributeName, bool $mandatory, ?float $defaultValue = null): ?float {
 		if (null !== ($def = $this->findAttributesDef($attributeName, $mandatory))) {
 			try {
-				return $def->getAttributes()->reqNumeric($attributeName);
+				return $def->getAttributes()->reqFloat($attributeName);
 			} catch (AttributesException $e) {
 				throw $this->createInvalidAttributeException($attributeName, $def, $e);
 			}
@@ -267,13 +285,13 @@ class GroupReader {
 		return $defaultValue;
 	}
 	
-	public function getScalarArray(string $attributeName) {
+	public function getScalarArray(string $attributeName): array {
 		$arrayMerger = new ArrayMerger($this);
 		$arrayMerger->loadScalarArray($attributeName);
 		return $arrayMerger->getArray();
 	}
 	
-	public function getN2nLocaleArray(string $attributeName) {
+	public function getN2nLocaleArray(string $attributeName): array {
 		$arrayMerger = new ArrayMerger($this);
 		$arrayMerger->loadScalarArray($attributeName);
 		
@@ -289,7 +307,7 @@ class GroupReader {
 		return $n2nLocales;
 	}
 	
-	public function getN2nLocaleKeyArray(string $attributeName) {
+	public function getN2nLocaleKeyArray(string $attributeName): array {
 		$arrayMerger = new ArrayMerger($this);
 		$arrayMerger->loadScalarArray($attributeName);
 	
@@ -303,76 +321,5 @@ class GroupReader {
 			}
 		}
 		return $n2nLocales;
-	}
-}
-
-class ArrayMerger {
-	private $groupReader; 
-	private $attributeName;
-	
-	private $arr = array();
-	private $mainArr = array();
-	private $attributesDefs = array();
-	
-	public function __construct(GroupReader $groupReader) {
-		$this->groupReader = $groupReader;
-	}
-	
-	public function loadScalarArray(string $attributeName) {
-		$this->attributeName = $attributeName;
-		$this->arr = array();
-		$this->mainArr = array();
-		$this->attributesDefs = array();
-
-		foreach ($this->groupReader->getMainAttributesDefs() as $def) {
-			try {
-				$this->merge($def->getAttributes()->getScalarArray($attributeName, false), $def, true);
-			} catch (AttributesException $e) {
-				throw $this->groupReader->createInvalidAttributeException($attributeName, $def, $e);
-			}
-		}
-		
-		foreach ($this->groupReader->getAdditionalAttributesDefs() as $def) {
-			try {
-				$this->merge($def->getAttributes()->getScalarArray($attributeName, false), $def, false);
-			} catch (AttributesException $e) {
-				throw $this->groupReader->createInvalidAttributeException($attributeName, $def, $e);
-			}
-		}
-	}
-	
-	private function merge(array $arr, AttributesDef $attributesDef, bool $main) {
-		foreach ($arr as $key => $value) {
-			if (is_numeric($key)) {
-				$this->arr[] = $value;
-				continue;
-			}
-			
-			if (!array_key_exists($key, $this->arr) || (!$this->mainArr[$key] && $main)) {
-				$this->arr[$key] = $value;
-				$this->mainArr[$key] = $main;
-				$this->attributesDefs[$key] = $attributesDef;
-				continue;
-			}
-			
-			if (($this->mainArr[$key] && !$main) || $this->arr[$key] === $value) {
-				continue;
-			}
-			
-			throw $this->groupReader->createConflictException($this->attributeName . '[' . $key . ']', 
-					$this->attributesDefs[$key], $attributesDef);
-		}
-	}
-	
-	public function getArray() {
-		return $this->arr;
-	}
-	
-	public function getAttributesDefByKey($key) {
-		if (isset($this->attributesDefs[$key])) {
-			return $this->attributesDefs[$key];
-		}
-		
-		throw new \OutOfBoundsException();
 	}
 }

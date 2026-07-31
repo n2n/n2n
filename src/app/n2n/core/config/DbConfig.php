@@ -35,7 +35,7 @@ class DbConfig {
 		return $this->persistenceUnitConfigs;
 	}
 
-	public function setPersistenceUnitConfigs(array $persistenceUnitConfigs) {
+	public function setPersistenceUnitConfigs(array $persistenceUnitConfigs): void {
 		$this->persistenceUnitConfigs = $persistenceUnitConfigs;
 	}
 }

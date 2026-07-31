@@ -86,9 +86,9 @@ class TypeLoader {
 	 * @param string $typeName
 	 * @throws TypeLoaderErrorException
 	 */
-	public static function load($typeName) {
+	public static function load(string $typeName): bool {
 		try {
-			self::requireScript(self::getFilePathOfTypeWihtoutCheck($typeName), $typeName);
+			self::requireScript(self::getFilePathOfType($typeName), $typeName);
 			return true;
 		} catch (TypeNotFoundException $e) {
 			$lutp = N2N::getLastUserTracePoint();
@@ -98,8 +98,8 @@ class TypeLoader {
 		} /*catch (\Exception $e) {
 			self::$exceptionHandler->handleThrowable($e);
 			die();
-		}*/
-		return false;
+		}
+		return false;*/
 	}
 	/**
 	 * 
@@ -191,7 +191,7 @@ class TypeLoader {
 		}
 	}
 	
-	public static function getFilePathOfType(string $typeName, $fileExt = self::SCRIPT_FILE_EXTENSION) {
+	public static function getFilePathOfType(string $typeName, $fileExt = self::SCRIPT_FILE_EXTENSION): string {
 		if (self::isTypeUnsafe($typeName)) {
 			throw new \InvalidArgumentException('Type name contains invalid characters: ' . $typeName);
 		}
