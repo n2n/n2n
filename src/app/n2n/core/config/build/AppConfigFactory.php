@@ -79,9 +79,9 @@ class AppConfigFactory {
 	 * @param string|null $stage
 	 * @return \n2n\core\config\AppConfig
 	 */
-	public function create(CombinedConfigSource $combinedConfigSource, ?string $stage, bool $stageExplizit = false) {
+	public function create(CombinedConfigSource $combinedConfigSource, ?string $stage, bool $stageExplicit = false): AppConfig {
 		$reader = new GroupedConfigSourceReader($combinedConfigSource);
-		$reader->initialize($stage, $stageExplizit, self::getGroupNames(), array(self::GROUP_ROUTING));
+		$reader->initialize($stage, $stageExplicit, self::getGroupNames(), array(self::GROUP_ROUTING));
 
 		return new AppConfig(
 				$this->createGeneralConfig($reader->getGroupReaderByGroupName(self::GROUP_GENERAL)),
@@ -108,7 +108,7 @@ class AppConfigFactory {
 	const APPLICATION_REPLICATABLE_KEY = 'application.replicatable';
 	const EXTENSION_CLASS_NAMES_KEY = 'extensions';
 	
-	private function createGeneralConfig(GroupReader $groupReader) {
+	private function createGeneralConfig(GroupReader $groupReader): GeneralConfig {
 		return new GeneralConfig(
 				$groupReader->getString(self::PAGE_NAME_KEY, false, GeneralConfig::PAGE_NAME_DEFAULT),
 				$groupReader->getString(self::PAGE_URL_KEY, false),

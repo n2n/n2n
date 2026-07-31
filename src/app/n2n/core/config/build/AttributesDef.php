@@ -24,9 +24,9 @@ namespace n2n\core\config\build;
 use n2n\util\attr\DataSet;
 
 class AttributesDef {
-	private $attributes;
-	private $configSourceName;
-	private $stageRestricted;
+	private DataSet $attributes;
+	private string $configSourceName;
+	private bool $stageRestricted;
 	
 	public function __construct(DataSet $attributes, string $configSourceName, bool $stageRestricted) {
 		$this->attributes = $attributes;

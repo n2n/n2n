@@ -92,7 +92,9 @@ class GroupedConfigSourceReader {
 						. $configSource);
 			}
 
-			if (!is_array($attrs)) continue;
+			if (!is_array($attrs)) {
+				continue;
+			}
 
 			if ($this->stage === $stage || (!$this->stageExplicit && $stage === null)) {
 				$groupReader = null;
@@ -101,8 +103,13 @@ class GroupedConfigSourceReader {
 				} else {
 					$groupReader = $this->getExtendedGroupReaderByNames($groupName, $groupExtensionName);
 				}
+
+				$configSourceName =  (string) $configSource;
+
+				$dataSet = new EnvAttributeInjector($attrs, $configSourceName)->injectEnv();
+
 				$groupReader->addAttributeDef(
-						new AttributesDef(new DataSet((array) $attrs), (string) $configSource, $stage !== null),
+						new AttributesDef($dataSet, (string) $configSource, $stage !== null),
 						$main);
 			}
 		}

@@ -28,9 +28,7 @@ use n2n\core\config\WebConfig;
 use n2n\util\uri\Url;
 use n2n\core\config\ErrorConfig;
 use n2n\core\config\FilesConfig;
-use n2n\core\config\IoConfig;
 use n2n\core\config\MailConfig;
-use n2n\core\config\DbConfig;
 use PHPUnit\Framework\TestCase;
 use n2n\util\io\fs\FsPath;
 use n2n\config\source\impl\IniFileConfigSource;
@@ -39,15 +37,19 @@ use n2n\core\N2N;
 use n2n\core\config\AppConfig;
 use n2n\core\config\GeneralConfig;
 use n2n\util\crypt\EncryptionDescriptor;
-use n2n\l10n\N2nLocale;
 use n2n\l10n\L10nConfig;
-use n2n\core\config\PersistenceUnitConfig;
 use n2n\core\config\web\SessionSaveMode;
+use n2n\config\InvalidConfigurationException;
 
 class AppConfigFactoryTest extends TestCase {
+	protected function tearDown(): void {
+		putenv('DB_HOST');
+		putenv('DB_USER');
+		parent::tearDown();
+	}
 
 	private function createFromFsPath(string $iniFileName, array $additionalIniFileNames = [],
-			string $stage = N2N::STAGE_LIVE): AppConfig {
+			?string $stage = null): AppConfig {
 		ArgUtils::valArray($additionalIniFileNames, 'string');
 
 		$source = new CombinedConfigSource(new IniFileConfigSource($this->determineFsPath($iniFileName)));
@@ -174,6 +176,17 @@ class AppConfigFactoryTest extends TestCase {
 		$this->assertEquals('username', $appConfig->mail()->getDefaultSmtpConfig()->getUser());
 		$this->assertEquals('pass', $appConfig->mail()->getDefaultSmtpConfig()->getPassword());
 	}
+	function testMailSmtp2() {
+		$appConfig = $this->createFromFsPath('smtp2.app.ini');
+
+		$this->assertTrue($appConfig->mail()->isSendingMailEnabled());
+		$this->assertEquals('smtp.myapp.test', $appConfig->mail()->getDefaultSmtpConfig()->getHost());
+		$this->assertEquals('587', $appConfig->mail()->getDefaultSmtpConfig()->getPort());
+		$this->assertEquals('tls', $appConfig->mail()->getDefaultSmtpConfig()->getSecurityMode());
+		$this->assertTrue($appConfig->mail()->getDefaultSmtpConfig()->doAuthenticate());
+		$this->assertEquals('username', $appConfig->mail()->getDefaultSmtpConfig()->getUser());
+		$this->assertEquals('pass', $appConfig->mail()->getDefaultSmtpConfig()->getPassword());
+	}
 
 	function testIo() {
 		$appConfig = $this->createFromFsPath('io.app.ini');
@@ -194,6 +207,10 @@ class AppConfigFactoryTest extends TestCase {
 		$this->assertTrue($appConfig->error()->isLogSendMailEnabled());
 		$this->assertTrue($appConfig->error()->isLogHandleStatusExceptionsEnabled());
 		$this->assertFalse($appConfig->error()->isMonitorEnabled());
+		$this->assertEquals('5000', $appConfig->error()->getMonitorSlowQueryTime());
+		$this->assertEquals(['404','401'], $appConfig->error()->getLogExcludedHttpStatus());
+		$this->assertFalse($appConfig->error()->isLoggingForStatusExceptionEnabled(404));
+		$this->assertTrue($appConfig->error()->isLoggingForStatusExceptionEnabled(200));
 	}
 
 	function testDatabase() {
@@ -304,5 +321,47 @@ class AppConfigFactoryTest extends TestCase {
 		$this->assertEquals(FsPath::create(['public', 'hidemyfiles']), $appConfig->files()->getManagerPublicDir());
 		$this->assertEquals(Url::create('hidemyfiles'), $appConfig->files()->getManagerPublicUrl());
 		$this->assertEquals(FsPath::create(['hidemyprivatefiles']), $appConfig->files()->getManagerPrivateDir());
+	}
+
+	function testNoEnvNoFallback() {
+		$this->expectException(InvalidConfigurationException::class);
+		$appConfig = $this->createFromFsPath('dbwithenv.app.ini');
+		$persistenceUnitConfigs = $appConfig->db()->getPersistenceUnitConfigs();
+		$persistenceUnitConfig1 = $persistenceUnitConfigs['default'];
+	}
+	function testNoEnvButFallbacks() {
+		$appConfig = $this->createFromFsPath('dbenvwithfallbacks.app.ini');
+		$persistenceUnitConfigs = $appConfig->db()->getPersistenceUnitConfigs();
+		$persistenceUnitConfig1 = $persistenceUnitConfigs['default'];
+
+		$this->assertEquals('mysql:host=host;dbname=testdbname', $persistenceUnitConfig1->getDsnUri());
+		$this->assertEquals('dbuser', $persistenceUnitConfig1->getUser());
+		$this->assertEquals('', $persistenceUnitConfig1->getPassword());
+		$this->assertEquals('n2n\persistence\meta\impl\mysql\MysqlDialect', $persistenceUnitConfig1->getDialectClassName());
+	}
+
+	function testEnvNoFallback() {
+		putenv('DB_HOST=test-host');
+		putenv('DB_USER=test-user');
+		putenv('DB_NAME=test-name');
+
+		$appConfig = $this->createFromFsPath('dbwithenv.app.ini');
+		$persistenceUnitConfigs = $appConfig->db()->getPersistenceUnitConfigs();
+		$persistenceUnitConfig1 = $persistenceUnitConfigs['default'];
+
+		$this->assertEquals('mysql:host=test-host;dbname=test-name', $persistenceUnitConfig1->getDsnUri());
+		$this->assertEquals('test-user', $persistenceUnitConfig1->getUser());
+		$this->assertEquals('', $persistenceUnitConfig1->getPassword());
+		$this->assertEquals('n2n\persistence\meta\impl\mysql\MysqlDialect', $persistenceUnitConfig1->getDialectClassName());
+	}
+
+	function testAttributesDefStageRestricted() {
+		$appConfig = $this->createFromFsPath('routingrestricted.app.ini', ['routing.app.ini','orm.app.ini'], N2N::STAGE_TEST);
+		$this->assertEquals('huii.ch', $appConfig->routing()->getRoutingRules()[0]->getHostName());
+		$this->assertEquals(['example\bo\Example'], $appConfig->orm()->getEntityClassNames());
+
+		$appConfig = $this->createFromFsPath('routingrestricted.app.ini', ['routing.app.ini','orm.app.ini'], N2N::STAGE_DEVELOPMENT);
+		$this->assertEquals('www.local.huii.ch', $appConfig->routing()->getRoutingRules()[0]->getHostName());
+		$this->assertEquals(['example\bo\Example'], $appConfig->orm()->getEntityClassNames());
 	}
 }
