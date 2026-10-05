@@ -35,6 +35,7 @@ use n2n\core\container\err\CommitPreparationFailedException;
 use n2n\core\container\err\TransactionPhasePostInterruptedException;
 use n2n\core\container\err\TransactionPhasePreInterruptedException;
 use Throwable;
+use n2n\spec\tx\TransactionIsolationLevel;
 
 class TransactionManager extends ObjectAdapter {
 	/**
@@ -68,15 +69,21 @@ class TransactionManager extends ObjectAdapter {
 	 */
 	private ?array $pendingCommitPreparations = null;
 
-	public function createTransaction(bool $readOnly = false, bool $nestedTransactionAllowed = false): Transaction {
+	public function createTransaction(bool $readOnly = false, bool $nestedTransactionAllowed = false,
+			?TransactionIsolationLevel $isolationLevel = null): Transaction {
 		if (!in_array($this->phase, [TransactionPhase::CLOSED, TransactionPhase::OPEN])) {
 			throw new TransactionStateException('Can not create transaction in '
 					. EnumUtils::unitToBacked($this->phase) . ' phase.');
 		}
 
+		if ($this->hasOpenTransaction() && null !== $isolationLevel) {
+			throw new TransactionStateException(
+					'Cannot override isolation level of nested transaction. Root Transaction already created.');
+		}
+
 		$this->currentLevel++;
 
-		$transaction = new Transaction($this, $this->currentLevel, $this->tRef, $readOnly);
+		$transaction = new Transaction($this, $this->currentLevel, $this->tRef, $readOnly, $isolationLevel);
 
 		if ($this->currentLevel > 1) {
 			if (!$nestedTransactionAllowed) {

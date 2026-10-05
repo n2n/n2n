@@ -33,6 +33,7 @@ use n2n\core\container\err\UnexpectedRollbackException;
 use n2n\core\container\mock\CommitListenerMock;
 use n2n\core\container\mock\ReleasableResourceMock;
 use n2n\core\container\err\CommitPreparationFailedException;
+use n2n\spec\tx\TransactionIsolationLevel;
 
 class TransactionManagerTest extends TestCase {
 
@@ -400,4 +401,16 @@ class TransactionManagerTest extends TestCase {
 
 	}
 
+	function testIsolationLevel(): void {
+		$tm = new TransactionManager();
+		$tx = $tm->createTransaction(isolationLevel: TransactionIsolationLevel::TIL_READ_UNCOMMITTED);
+		$this->assertSame(TransactionIsolationLevel::TIL_READ_UNCOMMITTED, $tx->getIsolationLevel());
+	}
+
+	function testSecondLevelIsolationLevelException(): void {
+		$tm = new TransactionManager();
+		$tm->createTransaction();
+		$this->expectException(TransactionStateException::class);
+		$tx = $tm->createTransaction(isolationLevel: TransactionIsolationLevel::TIL_READ_UNCOMMITTED);
+	}
 }
