@@ -26,6 +26,7 @@ use n2n\core\container\TransactionManager;
 use n2n\reflection\magic\MagicMethodInvoker;
 use n2n\core\container\err\TransactionStateException;
 use n2n\core\container\TransactionPhase;
+use n2n\spec\tx\TransactionIsolationLevel;
 
 class ContainerUtil {
 	function __construct(private N2nContext $n2nContext) {
@@ -212,7 +213,7 @@ class ContainerUtil {
 	 * @return mixed
 	 */
 	function execIsolated(\Closure $closure, int $tries = 3, ?\Closure $deadlockHandler = null,
-			bool $readOnly = false): mixed {
+			bool $readOnly = false, ?TransactionIsolationLevel $isolationLevel = null): mixed {
 		$deadlockMmi = null;
 		if ($deadlockHandler !== null) {
 			$deadlockMmi = $this->createMmiFromClosure($deadlockHandler);
@@ -221,6 +222,6 @@ class ContainerUtil {
 		$restartableTransaction = new IsolatedProcedure($this->getTransactionManager(),
 				$this->createMmiFromClosure($closure), $deadlockMmi);
 		$restartableTransaction->setTries($tries);
-		return $restartableTransaction->exec($readOnly);
+		return $restartableTransaction->exec($readOnly, $isolationLevel);
 	}
 }
