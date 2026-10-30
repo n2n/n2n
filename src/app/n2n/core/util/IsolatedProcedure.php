@@ -8,6 +8,7 @@ use n2n\reflection\magic\MagicMethodInvoker;
 use n2n\util\type\ArgUtils;
 use n2n\core\container\err\TransactionalProcessFailedException;
 use n2n\core\container\TransactionExecutionException;
+use n2n\spec\tx\TransactionIsolationLevel;
 
 class IsolatedProcedure {
 
@@ -29,14 +30,14 @@ class IsolatedProcedure {
 		return $this;
 	}
 
-	function exec(bool $readOnly = false): mixed {
+	function exec(bool $readOnly = false, ?TransactionIsolationLevel $isolationLevel = null): mixed {
 		if ($this->tm->hasOpenTransaction()) {
 			throw new IllegalStateException('IsolatedProcedure must not be executed inside an already open '
 					. ' transaction so it can create and possible recreate a root transaction.');
 		}
 
 		for ($i = 1; $i <= $this->tries; $i++) {
-			$tx = $this->tm->createTransaction($readOnly);
+			$tx = $this->tm->createTransaction($readOnly, isolationLevel: $isolationLevel);
 			try {
 				/**
 				 * @return mixed
