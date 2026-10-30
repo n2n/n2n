@@ -8,6 +8,7 @@ use n2n\core\container\TransactionManager;
 use n2n\core\container\mock\TransactionalResourceMock;
 use n2n\core\container\err\CommitPreparationFailedException;
 use n2n\core\container\err\TransactionalProcessFailedException;
+use n2n\spec\tx\TransactionIsolationLevel;
 
 class ContainerUtilTest extends TestCase {
 
@@ -138,10 +139,12 @@ class ContainerUtilTest extends TestCase {
 					$callsNum++;
 					$this->assertTrue($this->transactionManager->hasOpenTransaction());
 					$this->assertTrue($this->transactionManager->isReadyOnly());
+					$this->assertEquals(TransactionIsolationLevel::TIL_READ_UNCOMMITTED,
+							$this->transactionManager->getRootTransaction()->getIsolationLevel());
 					if ($callsNum < 3) {
 						$tr->prepareOnce = fn () => throw new CommitPreparationFailedException(deadlock: true);
 					}
-				}, 3, fn () => $this->fail('should not be called'), true);
+				}, 3, fn () => $this->fail('should not be called'), true, TransactionIsolationLevel::TIL_READ_UNCOMMITTED);
 
 		$this->assertEquals(3, $callsNum);
 		$this->assertCount(10, $tr->callMethods);
