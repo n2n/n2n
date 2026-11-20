@@ -366,7 +366,7 @@ class N2N {
 	 * @deprecated unsafe can cause memory leaks
 	 */
 	public static function registerShutdownListener(ShutdownListener $shutdownListener): void {
-		self::$shutdownListeners[spl_object_hash($shutdownListener)] = $shutdownListener;
+		self::$shutdownListeners[spl_object_id($shutdownListener)] = $shutdownListener;
 	}
 	/**
 	 * 
@@ -374,7 +374,7 @@ class N2N {
 	 * @deprecated unsafe can cause memory leaks
 	 */
 	public static function unregisterShutdownListener(ShutdownListener $shutdownListener): void {
-		unset(self::$shutdownListeners[spl_object_hash($shutdownListener)]);
+		unset(self::$shutdownListeners[spl_object_id($shutdownListener)]);
 	}
 	/**
 	 * @return N2nApplication

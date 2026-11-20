@@ -88,11 +88,11 @@ class SmtpConfig {
 	}
 	
 	public function setAuthenticate($auth) {
-		$this->authenticate = (boolean) $auth;
+		$this->authenticate = (bool) $auth;
 	}
 	
 	public function doAuthenticate() {
-		return (boolean) $this->authenticate;
+		return (bool) $this->authenticate;
 	}
 	
 	public function setDebugMode($mode) {

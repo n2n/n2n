@@ -132,8 +132,8 @@ class Lock {
 	
 	public function __construct($resource, $exclusive, $blocked, $fileName) {
 		$this->resource = $resource;
-		$this->exclusive = (boolean) $exclusive;
-		$this->blocked = (boolean) $blocked;
+		$this->exclusive = (bool) $exclusive;
+		$this->blocked = (bool) $blocked;
 		$this->fileName = $fileName;
 	}
 

@@ -39,7 +39,7 @@ class N2nApplication {
 	}
 
 	function registerN2nExtension(N2nExtension $n2nExtension): void {
-		$this->n2nExtensions[spl_object_hash($n2nExtension)] = $n2nExtension;
+		$this->n2nExtensions[spl_object_id($n2nExtension)] = $n2nExtension;
 	}
 
 	/**

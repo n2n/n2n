@@ -263,7 +263,7 @@ class AppN2nContext implements N2nContext, ShutdownListener {
 	function addAddonContext(AddOnContext $addOnContext): void {
 		$this->ensureNotFinalized();
 
-		$this->addOnContexts->attach($addOnContext);
+		$this->addOnContexts->offsetSet($addOnContext);
 	}
 
 	function getAddonContexts(): array {
@@ -275,7 +275,7 @@ class AppN2nContext implements N2nContext, ShutdownListener {
 	function removeAddonContext(AddOnContext $addOnContext): void {
 		$this->ensureNotFinalized();
 
-		$this->addOnContexts->detach($addOnContext);
+		$this->addOnContexts->offsetUnset($addOnContext);
 	}
 
 	function removeAddonContextByType(string $className): bool {
@@ -479,12 +479,12 @@ class AppN2nContext implements N2nContext, ShutdownListener {
 
 	function onFinalize(\Closure $callback): void {
 		$this->ensureNotFinalized();
-		$this->finalizeCallbacks->attach($callback);
+		$this->finalizeCallbacks->offsetSet($callback);
 	}
 
 	function offFinalize(\Closure $callback): void {
 		$this->ensureNotFinalized();
-		$this->finalizeCallbacks->detach($callback);
+		$this->finalizeCallbacks->offsetUnset($callback);
 	}
 
 	function isFinalized(): bool {

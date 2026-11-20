@@ -519,7 +519,7 @@ class TransactionManager extends ObjectAdapter {
 					. EnumUtils::unitToBacked($this->phase) . ' phase.');
 		}
 
-		$objHash = spl_object_hash($resource);
+		$objHash = spl_object_id($resource);
 		$this->releasableResources[$objHash] = $resource;
 
 		if (!($resource instanceof TransactionalResource)) {
@@ -539,23 +539,23 @@ class TransactionManager extends ObjectAdapter {
 	}
 
 	public function unregisterResource(TransactionalResource|ReleasableResource $resource): void {
-		$objHash = spl_object_hash($resource);
+		$objHash = spl_object_id($resource);
 		unset($this->transactionalResources[$objHash]);
 		unset($this->releasableResources[$objHash]);
 	}
 
 	public function registerCommitListener(CommitListener $commitListener, bool $prioritize = false): void {
 		if ($prioritize) {
-			$this->commitListeners = [spl_object_hash($commitListener) => $commitListener] + $this->commitListeners;
+			$this->commitListeners = [spl_object_id($commitListener) => $commitListener] + $this->commitListeners;
 		} else {
-			$this->commitListeners[spl_object_hash($commitListener)] = $commitListener;
+			$this->commitListeners[spl_object_id($commitListener)] = $commitListener;
 		}
 
 		$this->walkingCommitListenersIterator?->append($commitListener);
 	}
 
 	public function unregisterCommitListener(CommitListener $commitListener): void {
-		unset($this->commitListeners[spl_object_hash($commitListener)]);
+		unset($this->commitListeners[spl_object_id($commitListener)]);
 	}
 
 	private ?\ArrayIterator $walkingCommitListenersIterator = null;
