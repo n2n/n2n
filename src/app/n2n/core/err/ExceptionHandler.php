@@ -501,7 +501,7 @@ class ExceptionHandler {
 					}
 				} catch (\Exception $e) {
 					$logE = $this->createLoggingFailedException($e);;
-					$this->pendingLogException[spl_object_hash($logE)] = $logE;
+					$this->pendingLogException[spl_object_id($logE)] = $logE;
 				}
 			}
 		}
@@ -514,7 +514,7 @@ class ExceptionHandler {
 				$this->logger->error($simpleMessage, $e);
 			} catch (\Throwable $e) {
 				$logE = $this->createLoggingFailedException($e);
-				$this->pendingLogException[spl_object_hash($logE)] = $logE;
+				$this->pendingLogException[spl_object_id($logE)] = $logE;
 			}
 		}
 	}

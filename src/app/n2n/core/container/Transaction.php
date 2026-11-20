@@ -34,7 +34,7 @@ class Transaction {
 		$this->transactionalContext = $transactionalContext;
 		$this->level = $level;
 		$this->tcRef = $tcRef;
-		$this->readOnly = (boolean) $readOnly;
+		$this->readOnly = (bool) $readOnly;
 	}
 
 	public function getLevel() {
